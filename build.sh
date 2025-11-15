@@ -34,17 +34,28 @@ log() {
 log "${BLUE}🚀 Building ${APP_NAME} v${APP_VERSION}${NC}"
 
 log "${YELLOW}1. Cleaning previous builds...${NC}"
-rm -rf \
-  build \
-  "$DIST_DIR" \
-  ${APP_NAME}*.dmg \
-  "$DMG_TEMP" \
-  "$DMG_STAGING" \
-  build.log \
-  __pycache__ \
-  .DS_Store \
-  "$DIST_DIR"/.DS_Store \
-  2>/dev/null || true
+
+# Remove core build output directories
+rm -rf build/ "$DIST_DIR"/ dist_mac/ 2>/dev/null || true
+
+# Remove all DMG files related to this app
+rm -f ${APP_NAME}*.dmg "$DMG_TEMP" 2>/dev/null || true
+
+# Remove DMG staging directories
+rm -rf "$DMG_STAGING" "${DIST_DIR}"/*_dmg/ 2>/dev/null || true
+
+# Remove log files
+rm -f build.log *.log 2>/dev/null || true
+
+# Remove Python cache files
+find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+find . -type f -name "*.pyc" -delete 2>/dev/null || true
+find . -type f -name "*.pyo" -delete 2>/dev/null || true
+
+# Remove .egg-info and macOS metadata files
+rm -rf *.egg-info/ 2>/dev/null || true
+find . -name ".DS_Store" -delete 2>/dev/null || true
+
 mkdir -p "$DIST_DIR"
 log "${GREEN}✔ Clean slate ready${NC}"
 
