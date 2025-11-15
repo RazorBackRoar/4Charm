@@ -1156,11 +1156,20 @@ class MainWindow(QMainWindow):
 
         # URL input area
         self.url_input = QTextEdit()
+        self.url_input.setAcceptRichText(False)
+        self.url_input.setLineWrapMode(QTextEdit.LineWrapMode.NoWrap)
+        self.url_input.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        self.url_input.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.url_input.setPlaceholderText(
             "1. https://boards.4chan.org/g/thread/123456789\n2. https://boards.4chan.org/pol/thread/987654321\n3. https://boards.4chan.org/b/thread/555666777\n4. https://boards.4chan.org/v/thread/888999000\n5. https://boards.4chan.org/gif/thread/111222333"
         )
-        self.url_input.setMaximumHeight(280)
-        self.url_input.setMinimumHeight(220)
+        line_height = self.url_input.fontMetrics().lineSpacing()
+        min_lines = 10
+        padding = 24
+        min_height = (line_height * min_lines) + padding
+        max_height = (line_height * (min_lines + 2)) + padding
+        self.url_input.setMinimumHeight(min_height)
+        self.url_input.setMaximumHeight(max_height)
         self.url_input.setStyleSheet(
             "background-color: #2d2d2d; color: #ffffff; border: none; padding: 12px 16px; font-size: 16px; selection-background-color: #4a9eff; line-height: 1.4;"
         )
