@@ -102,6 +102,7 @@ sleep 2
 log "${YELLOW}8. Compressing DMG...${NC}"
 hdiutil convert "$DMG_TEMP" -format UDZO -o "$DMG_PATH" >/dev/null
 rm -f "$DMG_TEMP"
+rm -rf "$DMG_STAGING"
 log "${GREEN}✔ DMG ready at $DMG_PATH${NC}"
 
 APP_SIZE=$(du -sh "$APP_PATH" | cut -f1)
