@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 
 set -euo pipefail
+setopt EXTENDED_GLOB NULL_GLOB
 
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
@@ -16,6 +17,16 @@ APP_PATH="$DIST_DIR/${APP_NAME}.app"
 DMG_PATH="$DIST_DIR/${APP_NAME}.dmg"
 DMG_STAGING="$DIST_DIR/${APP_NAME}_dmg"
 DMG_TEMP="$DIST_DIR/${APP_NAME}_temp.dmg"
+MOUNT_DIR=""
+
+cleanup() {
+  if [[ -n "$MOUNT_DIR" ]]; then
+    hdiutil detach "$MOUNT_DIR" -force >/dev/null 2>&1 || true
+  fi
+  rm -f "$DMG_TEMP" >/dev/null 2>&1 || true
+}
+
+trap cleanup EXIT
 
 log() {
   printf "%b\n" "$1"
@@ -73,7 +84,10 @@ tell application "Finder"
 end tell
 OSA
 
-hdiutil detach "$MOUNT_DIR" -force >/dev/null
+cleanup
+trap - EXIT
+MOUNT_DIR=""
+trap cleanup EXIT
 sleep 2
 
 log "${YELLOW}8. Compressing DMG...${NC}"
