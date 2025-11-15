@@ -1,136 +1,68 @@
 #!/usr/bin/env zsh
-
 set -euo pipefail
-setopt EXTENDED_GLOB NULL_GLOB
-
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
-RED='\033[0;31m'
-NC='\033[0m'
 
 APP_NAME="4Charm"
-APP_VERSION="3.0.0"
 PYTHON_EXE="$HOME/.venvs/razor/bin/python"
 DIST_DIR="dist"
-APP_PATH="$DIST_DIR/${APP_NAME}.app"
-DMG_PATH="$DIST_DIR/${APP_NAME}.dmg"
 DMG_STAGING="$DIST_DIR/${APP_NAME}_dmg"
 DMG_TEMP="$DIST_DIR/${APP_NAME}_temp.dmg"
+DMG_FINAL="$DIST_DIR/${APP_NAME}.dmg"
 MOUNT_DIR=""
 
 cleanup() {
-  if [[ -n "$MOUNT_DIR" ]]; then
-    hdiutil detach "$MOUNT_DIR" -force >/dev/null 2>&1 || true
-  fi
+  [[ -n "${MOUNT_DIR:-}" ]] && hdiutil detach "$MOUNT_DIR" -force 2>/dev/null || true
 }
-
 trap cleanup EXIT
 
-log() {
-  printf "%b\n" "$1"
-}
+echo "🔨 Building ${APP_NAME}..."
 
-log "${BLUE}🚀 Building ${APP_NAME} v${APP_VERSION}${NC}"
-
-log "${YELLOW}1. Cleaning previous builds...${NC}"
-
-# Remove core build output directories
-rm -rf build/ "$DIST_DIR"/ dist_mac/ 2>/dev/null || true
-
-# Remove all DMG files related to this app
-rm -f ${APP_NAME}*.dmg "$DMG_TEMP" 2>/dev/null || true
-
-# Remove DMG staging directories
-rm -rf "$DMG_STAGING" "${DIST_DIR}"/*_dmg/ 2>/dev/null || true
-
-# Remove log files
-rm -f build.log *.log 2>/dev/null || true
-
-# Remove Python cache files
-find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-find . -type f -name "*.pyc" -delete 2>/dev/null || true
-find . -type f -name "*.pyo" -delete 2>/dev/null || true
-
-# Remove .egg-info and macOS metadata files
-rm -rf *.egg-info/ 2>/dev/null || true
-find . -name ".DS_Store" -delete 2>/dev/null || true
-
+# Clean
+rm -rf build "$DIST_DIR" 2>/dev/null || true
 mkdir -p "$DIST_DIR"
-log "${GREEN}✔ Clean slate ready${NC}"
 
-log "${YELLOW}2. Verifying dependencies...${NC}"
-"$PYTHON_EXE" -c "import PySide6, requests, bs4" >/dev/null
-log "${GREEN}✔ Dependencies available${NC}"
-
-log "${YELLOW}3. Building app bundle with py2app...${NC}"
+# Verify & build
+"$PYTHON_EXE" -c "import PySide6, requests, bs4" >/dev/null || { echo "❌ Missing deps"; exit 1; }
 "$PYTHON_EXE" setup.py py2app > build.log 2>&1
-log "${GREEN}✔ Application bundle created${NC}"
+[[ -d "$DIST_DIR/${APP_NAME}.app" ]] || { echo "❌ Build failed"; exit 1; }
 
-if [[ ! -d "$APP_PATH" ]]; then
-  log "${RED}❌ Missing ${APP_PATH}${NC}"
-  exit 1
-fi
-
-log "${YELLOW}4. Code signing (ad-hoc)...${NC}"
-codesign --force --deep --sign - "$APP_PATH"
-log "${GREEN}✔ App signed${NC}"
-
-log "${YELLOW}5. Preparing DMG contents...${NC}"
-rm -rf "$DMG_STAGING"
+# Stage
 mkdir -p "$DMG_STAGING"
-cp -R "$APP_PATH" "$DMG_STAGING/"
+cp -R "$DIST_DIR/${APP_NAME}.app" "$DMG_STAGING/"
 cp LICENSE "$DMG_STAGING/License.txt"
-cp README "$DMG_STAGING/README"
+cp README "$DMG_STAGING/"
 ln -s /Applications "$DMG_STAGING/Applications"
-rm -f "$DMG_STAGING/.DS_Store"
-log "${GREEN}✔ DMG staging ready${NC}"
 
-log "${YELLOW}6. Creating temporary writable DMG...${NC}"
-hdiutil create -volname "$APP_NAME" -srcfolder "$DMG_STAGING" -ov -format UDRW "$DMG_TEMP" >/dev/null
+# Create, mount, layout
+hdiutil create -volname "$APP_NAME" -srcfolder "$DMG_STAGING" -ov -format UDRW "$DMG_TEMP"
 MOUNT_DIR=$(hdiutil attach "$DMG_TEMP" -nobrowse | awk '/Volumes/{print $3; exit}')
 
-log "${YELLOW}7. Configuring Finder window (400x400 2x2 layout)...${NC}"
-osascript <<OSA
-tell application "Finder"
-  tell disk "${APP_NAME}"
+osascript <<EOF
+tell app "Finder"
+  tell disk "$APP_NAME"
     open
-    set current view of container window to icon view
-    set toolbar visible of container window to false
-    set statusbar visible of container window to false
-    set the bounds of container window to {100, 100, 500, 500} -- 400x400 window
-    set icon size of the icon view options of container window to 64
-    set arrangement of the icon view options of container window to not arranged
-    -- 2x2 grid layout
-    set position of item "4Charm.app" of container window to {100, 130} -- Top-left
-    set position of item "Applications" of container window to {260, 130} -- Top-right
-    set position of item "License.txt" of container window to {100, 290} -- Bottom-left
-    set position of item "README" of container window to {260, 290} -- Bottom-right
-    update without registering applications
+    set current view to icon view
+    set toolbar visible to false
+    set statusbar visible to false
+    set bounds to {100, 100, 600, 600}
+    set icon size to 80
+    set arrangement to not arranged
+    set position of item "${APP_NAME}.app" to {150, 180}
+    set position of item "Applications" to {350, 180}
+    set position of item "License.txt" to {150, 380}
+    set position of item "README" to {350, 380}
+    update
     delay 1
     close
   end tell
 end tell
-OSA
+EOF
 
 cleanup
-trap - EXIT
-MOUNT_DIR=""
-trap cleanup EXIT
-sleep 2
+sleep 1
 
-log "${YELLOW}8. Compressing DMG...${NC}"
-hdiutil convert "$DMG_TEMP" -format UDZO -o "$DMG_PATH" >/dev/null
-rm -f "$DMG_TEMP"
-rm -rf "$DMG_STAGING"
-log "${GREEN}✔ DMG ready at $DMG_PATH${NC}"
+# Finish
+hdiutil convert "$DMG_TEMP" -format UDZO -o "$DMG_FINAL"
+rm -rf "$DMG_STAGING" "$DMG_TEMP"
 
-log "${YELLOW}9. Opening DMG in Finder (window will stay open)...${NC}"
-open "$DMG_PATH" || log "${YELLOW}⚠️ Unable to auto-open DMG. Open manually at: $DMG_PATH${NC}"
-
-APP_SIZE=$(du -sh "$APP_PATH" | cut -f1)
-DMG_SIZE=$(du -sh "$DMG_PATH" | cut -f1)
-
-log "${BLUE}📦 App size: $APP_SIZE${NC}"
-log "${BLUE}📀 DMG size: $DMG_SIZE${NC}"
-log "${GREEN}✅ Build complete!${NC}"
+echo "✅ Done: $DMG_FINAL"
+open "$DMG_FINAL"
