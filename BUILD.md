@@ -80,13 +80,11 @@ Before building, verify your project has the correct structure:
 4Charm/
 ├── main.py                          # Application entry point
 ├── resources/
-│   └── 4Charm.icns               # Application icon
+│   └── 4Charm.icns                  # Application icon
 ├── setup.py                         # py2app configuration
-├── release.sh                       # Build automation script
-├── LICENSE.rtf                      # EULA for DMG (optional)
-└── .github/
-    └── workflows/
-        └── release.yml              # CI/CD workflow
+├── build.sh                         # Build automation script (py2app + DMG)
+├── LICENSE                          # MIT License
+└── README.md                        # Project README
 ```
 
 ### Check Required Files
@@ -103,6 +101,23 @@ test -f setup.py && echo "✓ setup.py found" || echo "✗ setup.py missing"
 ```
 
 ## Step-by-Step Build Instructions
+
+### 0. Quick Build (Recommended)
+
+To perform a full clean build (app bundle + DMG) in one step, run:
+
+```bash
+./build.sh
+```
+
+This script will:
+
+- Clean previous build artifacts (build, dist, DMGs, caches)
+- Run `py2app` to create `dist/4Charm.app`
+- Ad-hoc sign the app with `codesign`
+- Create `dist/4Charm.dmg` with the 2×2 Finder layout
+
+The sections below document the **equivalent manual commands** that `build.sh` performs.
 
 ### 1. Clean Previous Builds
 
@@ -153,7 +168,14 @@ codesign --verify --deep --verbose=2 dist/4Charm.app
 
 ### 4. Create the DMG Installer
 
-Generate a professional DMG installer:
+If you use `./build.sh`, the script will automatically:
+
+- Stage `4Charm.app`, `License.txt`, and `README`
+- Create a temporary DMG with `hdiutil`
+- Set the Finder window to a compact 2×2 layout
+- Convert it to a compressed DMG at `dist/4Charm.dmg`
+
+If you prefer to create a DMG manually (advanced use or CI), you can also use `create-dmg` as shown below:
 
 ```bash
 create-dmg \
