@@ -1,2 +1,7 @@
 cd /Users/home/Zshrc/Windsurf/4Charm
 ./build.sh
+
+
+cd /Users/home/Zshrc/Windsurf/4Charm
+rm -rf build dist 4Charm*.dmg build.log __pycache__ .DS_Store
+./build.sh
