@@ -72,6 +72,7 @@ cp -R "$APP_PATH" "$DMG_STAGING/"
 cp LICENSE "$DMG_STAGING/License.txt"
 cp README "$DMG_STAGING/README"
 ln -s /Applications "$DMG_STAGING/Applications"
+rm -f "$DMG_STAGING/.DS_Store"
 log "${GREEN}✔ DMG staging ready${NC}"
 
 log "${YELLOW}6. Creating temporary writable DMG...${NC}"
@@ -89,11 +90,13 @@ tell application "Finder"
     set the bounds of container window to {100, 100, 500, 500}
     set icon size of the icon view options of container window to 72
     set arrangement of the icon view options of container window to not arranged
-    set position of item "4Charm.app" of container window to {120, 260}
-    set position of item "Applications" of container window to {280, 260}
-    set position of item "License.txt" of container window to {120, 120}
-    set position of item "README" of container window to {280, 120}
+    set position of item "4Charm.app" of container window to {130, 300}
+    set position of item "Applications" of container window to {290, 300}
+    set position of item "License.txt" of container window to {130, 140}
+    set position of item "README" of container window to {290, 140}
+    update without registering applications
     delay 1
+    close
   end tell
 end tell
 OSA
