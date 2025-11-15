@@ -543,7 +543,7 @@ class FourChanScraper:
                     break
                 thread_id = str(thread.get("no", ""))
                 if thread_id.isdigit():
-                    thread_media = self.scrape_thread(board, thread_id)
+                    thread_media, _thread_title = self.scrape_thread(board, thread_id)
                     media_files.extend(thread_media)
                     threads_processed += 1
                     time.sleep(0.5)
@@ -765,7 +765,9 @@ class DownloadWorker(QObject):
 
             if url_type == "thread" and thread_id:
                 url_folder_name = self.scraper.build_session_base_name(self.parsed_url)
-                media_files = self.scraper.scrape_thread(board, thread_id)
+                media_files, _thread_title = self.scraper.scrape_thread(
+                    board, thread_id
+                )
             elif url_type == "catalog":
                 url_folder_name = self.scraper.build_session_base_name(self.parsed_url)
                 media_files = self.scraper.scrape_catalog(board, 10)
@@ -1316,7 +1318,7 @@ class MainWindow(QMainWindow):
             self.validate_urls
         )  # Trigger validation on Enter
         self.download_shortcut = QShortcut(
-            QKeySequence(Qt.Key.Key_Return | Qt.KeyboardModifier.ControlModifier),
+            QKeySequence("Ctrl+Return"),
             self.url_input,
         )
         self.download_shortcut.activated.connect(
@@ -1534,7 +1536,6 @@ class MainWindow(QMainWindow):
 
     def _update_url_status(self, text: str, state: str):
         """Update the URL status label with appropriate text and color."""
-        self.url_status.setText(text)
         colors = {
             "valid": "#4a9eff",
             "invalid": "#f44336",
@@ -1542,8 +1543,9 @@ class MainWindow(QMainWindow):
             "idle": "#888888",
         }
         color = colors.get(state, "#888888")
-        self.url_status.setStyleSheet(
-            f"color: {color}; font-size: 14px; font-weight: 600; padding: 8px 0;"
+        self.status_bar.showMessage(text)
+        self.status_bar.setStyleSheet(
+            f"QStatusBar {{ color: {color}; font-size: 14px; font-weight: 600; padding: 8px 0; }}"
         )
 
     def update_progress(
