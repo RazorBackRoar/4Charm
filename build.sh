@@ -105,6 +105,9 @@ rm -f "$DMG_TEMP"
 rm -rf "$DMG_STAGING"
 log "${GREEN}✔ DMG ready at $DMG_PATH${NC}"
 
+log "${YELLOW}9. Opening DMG in Finder (window will stay open)...${NC}"
+open "$DMG_PATH" || log "${YELLOW}⚠️ Unable to auto-open DMG. Open manually at: $DMG_PATH${NC}"
+
 APP_SIZE=$(du -sh "$APP_PATH" | cut -f1)
 DMG_SIZE=$(du -sh "$DMG_PATH" | cut -f1)
 
