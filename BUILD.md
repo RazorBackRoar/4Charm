@@ -21,7 +21,8 @@ Before building 4Charm, ensure you have the following tools installed:
 
 ### Required Software
 
-**Python 3.10 or later**
+#### Python 3.10 or later
+
 ```bash
 # Check Python version
 python3 --version
@@ -30,17 +31,20 @@ python3 --version
 brew install python@3.10
 ```
 
-**py2app** (Python to macOS app bundler)
+#### py2app (Python to macOS app bundler)
+
 ```bash
 pip install py2app
 ```
 
-**create-dmg** (DMG installer creator)
+#### create-dmg (DMG installer creator)
+
 ```bash
 brew install create-dmg
 ```
 
-**Xcode Command Line Tools** (for code signing)
+#### Xcode Command Line Tools (for code signing)
+
 ```bash
 xcode-select --install
 ```
@@ -48,6 +52,7 @@ xcode-select --install
 ### Python Dependencies
 
 Install all required Python packages:
+
 ```bash
 pip install PySide6 requests urllib3 certifi
 ```
@@ -55,6 +60,7 @@ pip install PySide6 requests urllib3 certifi
 ### Verify Installation
 
 Check that all tools are available:
+
 ```bash
 # Verify py2app
 python3 -c "import py2app; print('py2app installed')"
@@ -70,7 +76,7 @@ which codesign
 
 Before building, verify your project has the correct structure:
 
-```
+```text
 4Charm/
 ├── main.py                          # Application entry point
 ├── resources/
@@ -101,6 +107,7 @@ test -f setup.py && echo "✓ setup.py found" || echo "✗ setup.py missing"
 ### 1. Clean Previous Builds
 
 Remove any existing build artifacts:
+
 ```bash
 rm -rf build dist
 ```
@@ -108,11 +115,13 @@ rm -rf build dist
 ### 2. Build the App Bundle
 
 Run py2app to create the .app bundle:
+
 ```bash
 python3 setup.py py2app
 ```
 
 This will:
+
 - Analyze dependencies in main.py
 - Bundle Python interpreter and libraries
 - Create `dist/4Charm.app` with all resources
@@ -120,7 +129,8 @@ This will:
 - Copy icon to Resources directory
 
 Expected output:
-```
+
+```text
 creating dist/4Charm.app
 copying resources -> dist/4Charm.app/Contents/Resources
 creating application bundle
@@ -130,11 +140,13 @@ done
 ### 3. Sign the Application
 
 Apply ad-hoc code signing:
+
 ```bash
 codesign --force --deep --sign - dist/4Charm.app
 ```
 
 Verify the signature:
+
 ```bash
 codesign --verify --deep --verbose=2 dist/4Charm.app
 ```
@@ -142,6 +154,7 @@ codesign --verify --deep --verbose=2 dist/4Charm.app
 ### 4. Create the DMG Installer
 
 Generate a professional DMG installer:
+
 ```bash
 create-dmg \
   --volname "4Charm" \
@@ -159,6 +172,7 @@ create-dmg \
 ### 5. Test the Build
 
 Mount and test the DMG:
+
 ```bash
 # Mount the DMG
 open 4Charm_1.0.0.dmg
@@ -217,13 +231,16 @@ setup(
 
 ### Key Configuration Options
 
-**Entry Point**
+#### Entry Point
+
 - `APP = ['main.py']` - Specifies the main Python file to bundle
 
-**Resources**
+#### Resources
+
 - `DATA_FILES` - Includes the icon file in the bundle
 
-**Bundle Metadata (plist)**
+#### Bundle Metadata (plist)
+
 - `CFBundleName` - Internal bundle name
 - `CFBundleDisplayName` - Name shown in Finder and menu bar
 - `CFBundleIdentifier` - Unique identifier (reverse domain notation)
@@ -232,12 +249,14 @@ setup(
 - `NSHighResolutionCapable` - Enables Retina display support
 - `NSRequiresAquaSystemAppearance` - Set to False for dark mode support
 
-**Dependencies**
+#### Dependencies
+
 - `packages` - Python packages to include
 - `includes` - Specific modules to ensure are bundled
 - `excludes` - Packages to exclude (reduces bundle size)
 
-**Special Settings**
+#### Special Settings
+
 - `argv_emulation: False` - Prevents command-line argument issues in bundled apps
 
 ## Code Signing
@@ -250,7 +269,8 @@ setup(
 codesign --force --deep --sign - dist/4Charm.app
 ```
 
-**Parameters:**
+#### Parameters
+
 - `--force` - Replace existing signature if present
 - `--deep` - Sign all nested code (frameworks, libraries)
 - `--sign -` - Use ad-hoc signature (no certificate)
@@ -271,14 +291,16 @@ codesign --display --verbose=4 dist/4Charm.app
 ### Limitations of Ad-hoc Signing
 
 **Pros:**
-- ✅ Free (no Apple Developer Program required)
-- ✅ Allows app to run on macOS
-- ✅ Prevents tampering
+
+- Free (no Apple Developer Program required)
+- Allows app to run on macOS
+- Prevents tampering
 
 **Cons:**
-- ❌ Shows security warning on first launch
-- ❌ Cannot be notarized by Apple
-- ❌ Requires user to right-click → Open
+
+- Shows security warning on first launch
+- Cannot be notarized by Apple
+- Requires user to right-click → Open
 
 ### Upgrading to Developer ID Signing
 
@@ -313,19 +335,23 @@ create-dmg \
 
 ### DMG Options Explained
 
-**Volume Settings**
+#### Volume Settings
+
 - `--volname "4Charm"` - Name shown when DMG is mounted
 - `--volicon "resources/4Charm.icns"` - Custom volume icon
 
-**Window Layout**
+#### Window Layout
+
 - `--window-size 600 400` - DMG window dimensions (pixels)
 - `--icon-size 100` - Size of icons in the window
 
-**Icon Positioning**
+#### Icon Positioning
+
 - `--icon "4Charm.app" 175 120` - Position of app icon (x, y)
 - `--app-drop-link 425 120` - Position of Applications folder link
 
-**Additional Options**
+#### Additional Options
+
 - `--eula LICENSE.rtf` - Display license agreement on mount
 - `--codesign "-"` - Apply ad-hoc signing to the DMG
 - `--background image.png` - Custom background image (optional)
@@ -367,6 +393,7 @@ The `release.sh` script automates the entire build process.
 ### Script Workflow
 
 The script performs these steps automatically:
+
 1. Cleans previous builds (`rm -rf build dist`)
 2. Builds app bundle (`python3 setup.py py2app`)
 3. Signs the application (`codesign`)
@@ -376,6 +403,7 @@ The script performs these steps automatically:
 ### Make Script Executable
 
 If you get a permission error:
+
 ```bash
 chmod +x release.sh
 ```
@@ -383,7 +411,8 @@ chmod +x release.sh
 ### Script Output
 
 Successful build output:
-```
+
+```text
 Building 4Charm v1.0.0...
 Cleaning previous builds...
 Building app bundle...
@@ -395,6 +424,7 @@ Creating DMG...
 ### Error Handling
 
 The script uses `set -e` to exit immediately on any error. If a step fails:
+
 1. Check the error message
 2. Verify prerequisites are installed
 3. Ensure required files exist
@@ -417,36 +447,36 @@ on:
 jobs:
   build:
     runs-on: macos-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      
+
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-      
+
       - name: Install Python dependencies
         run: |
           pip install py2app PySide6 requests urllib3 certifi
-      
+
       - name: Install create-dmg
         run: |
           brew install create-dmg
-      
+
       - name: Build app bundle
         run: |
           python3 setup.py py2app
-      
+
       - name: Sign application
         run: |
           codesign --force --deep --sign - dist/4Charm.app
-      
+
       - name: Extract version from tag
         id: get_version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-      
+
       - name: Create DMG
         run: |
           create-dmg \
@@ -460,7 +490,7 @@ jobs:
             --codesign "-" \
             "4Charm_${{ steps.get_version.outputs.VERSION }}.dmg" \
             "dist/4Charm.app"
-      
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
@@ -474,17 +504,20 @@ jobs:
 ### Triggering a Release
 
 1. **Commit all changes:**
+
    ```bash
    git add .
    git commit -m "Release v1.0.0"
    ```
 
 2. **Create a version tag:**
+
    ```bash
    git tag v1.0.0
    ```
 
 3. **Push the tag:**
+
    ```bash
    git push origin v1.0.0
    ```
@@ -511,6 +544,7 @@ git push origin v0.9.0-beta
 ```
 
 Then delete the test release and tag:
+
 ```bash
 # Delete remote tag
 git push --delete origin v0.9.0-beta
@@ -586,48 +620,56 @@ git push --delete origin v1.0.0
 
 ### py2app Not Installed
 
-**Error:**
-```
+#### Error (py2app)
+
+```text
 ModuleNotFoundError: No module named 'py2app'
 ```
 
-**Solution:**
+#### Solution (py2app)
+
 ```bash
 pip install py2app
 ```
 
 ### create-dmg Not Installed
 
-**Error:**
-```
+#### Error (create-dmg missing)
+
+```text
 command not found: create-dmg
 ```
 
-**Solution:**
+#### Solution (create-dmg install)
+
 ```bash
 brew install create-dmg
 ```
 
 ### Missing main.py
 
-**Error:**
-```
+#### Error (missing main.py)
+
+```text
 error: [Errno 2] No such file or directory: 'main.py'
 ```
 
-**Solution:**
+#### Solution
+
 - Verify you're in the project root directory
 - Ensure main.py exists: `ls -la main.py`
 - Check setup.py has correct APP entry point
 
 ### Missing Icon File
 
-**Error:**
-```
+#### Error (missing icon)
+
+```text
 error: [Errno 2] No such file or directory: 'resources/4Charm.icns'
 ```
 
-**Solution:**
+#### Solution (missing icon)
+
 ```bash
 # Check if icon exists
 ls -la resources/4Charm.icns
@@ -640,12 +682,14 @@ mkdir -p resources
 
 ### Code Signing Failure
 
-**Error:**
-```
+#### Error (code signing)
+
+```text
 code object is not signed at all
 ```
 
-**Solution:**
+#### Solution (code signing)
+
 ```bash
 # Ensure Xcode Command Line Tools are installed
 xcode-select --install
@@ -656,36 +700,42 @@ codesign --force --deep --sign - --verbose=4 dist/4Charm.app
 
 ### DMG Creation Fails
 
-**Error:**
-```
+#### Error (create-dmg failure)
+
+```text
 create-dmg: command failed with exit code 1
 ```
 
-**Solutions:**
+#### Solutions (create-dmg failure)
 
 1. **Check if DMG already exists:**
+
    ```bash
    rm -f 4Charm_1.0.0.dmg
    ```
 
 2. **Verify app bundle exists:**
+
    ```bash
    ls -la dist/4Charm.app
    ```
 
 3. **Check disk space:**
+
    ```bash
    df -h .
    ```
 
 ### Insufficient Disk Space
 
-**Error:**
-```
+#### Error (disk space)
+
+```text
 OSError: [Errno 28] No space left on device
 ```
 
-**Solution:**
+#### Solution (disk space)
+
 ```bash
 # Check available space
 df -h
@@ -698,42 +748,52 @@ rm -rf build dist *.dmg
 
 ### App Won't Launch
 
-**Issue:** Double-clicking the app does nothing or shows an error.
+#### Issue (app launch)
 
-**Solutions:**
+Double-clicking the app does nothing or shows an error.
+
+#### Solutions (app launch)
 
 1. **Check for crash logs:**
+
    ```bash
    open ~/Library/Logs/DiagnosticReports/
    ```
 
 2. **Run from terminal to see errors:**
+
    ```bash
    dist/4Charm.app/Contents/MacOS/4Charm
    ```
 
 3. **Verify all dependencies are bundled:**
+
    ```bash
    ls -la dist/4Charm.app/Contents/Resources/lib/python3.*/
    ```
 
 4. **Check Info.plist is valid:**
+
    ```bash
    plutil -lint dist/4Charm.app/Contents/Info.plist
    ```
 
 ### Gatekeeper Blocks App
 
-**Issue:** macOS shows "4Charm cannot be opened because it is from an unidentified developer"
+#### Issue (Gatekeeper)
 
-**Solutions:**
+macOS shows "4Charm cannot be opened because it is from an unidentified developer"
+
+#### Solutions (Gatekeeper)
 
 1. **Right-click → Open method:**
+
    - Right-click (or Control-click) on 4Charm.app
    - Select "Open" from the menu
    - Click "Open" in the security dialog
 
 2. **Remove quarantine attribute:**
+
    ```bash
    xattr -cr /Applications/4Charm.app
    ```
@@ -745,22 +805,27 @@ rm -rf build dist *.dmg
 
 ### GitHub Actions Workflow Fails
 
-**Issue:** CI/CD build fails on GitHub
+#### Issue (GitHub Actions)
 
-**Debugging steps:**
+CI/CD build fails on GitHub
+
+#### Debugging steps (GitHub Actions)
 
 1. **Check workflow logs:**
+
    - Go to Actions tab in GitHub
    - Click on failed workflow
    - Review each step's output
 
 2. **Common issues:**
+
    - Missing files in repository
    - Incorrect file paths
    - Python version mismatch
    - Missing dependencies
 
 3. **Test locally first:**
+
    ```bash
    # Ensure local build works
    ./release.sh
@@ -768,12 +833,14 @@ rm -rf build dist *.dmg
 
 ### Python Version Mismatch
 
-**Error:**
-```
+#### Error (python version)
+
+```text
 RuntimeError: Python 3.10 or later is required
 ```
 
-**Solution:**
+#### Solution (python version)
+
 ```bash
 # Check Python version
 python3 --version
@@ -787,16 +854,20 @@ export PATH="/usr/local/opt/python@3.10/bin:$PATH"
 
 ### Bundle Size Too Large
 
-**Issue:** App bundle is over 300 MB
+#### Issue (bundle size)
 
-**Solutions:**
+App bundle is over 300 MB
+
+#### Solutions (bundle size)
 
 1. **Check what's included:**
+
    ```bash
    du -sh dist/4Charm.app/*
    ```
 
 2. **Add more exclusions to setup.py:**
+
    ```python
    'excludes': [
        'PyQt6', 'PyQt5', 'tkinter',
@@ -806,6 +877,7 @@ export PATH="/usr/local/opt/python@3.10/bin:$PATH"
    ```
 
 3. **Enable optimization:**
+
    ```python
    OPTIONS = {
        'optimize': 2,
