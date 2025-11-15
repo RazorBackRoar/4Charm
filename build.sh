@@ -79,7 +79,7 @@ log "${YELLOW}6. Creating temporary writable DMG...${NC}"
 hdiutil create -volname "$APP_NAME" -srcfolder "$DMG_STAGING" -ov -format UDRW "$DMG_TEMP" >/dev/null
 MOUNT_DIR=$(hdiutil attach "$DMG_TEMP" -nobrowse | awk '/Volumes/{print $3; exit}')
 
-log "${YELLOW}7. Configuring Finder window (2x2 layout)...${NC}"
+log "${YELLOW}7. Configuring Finder window (400x400 2x2 layout)...${NC}"
 osascript <<OSA
 tell application "Finder"
   tell disk "${APP_NAME}"
@@ -87,13 +87,14 @@ tell application "Finder"
     set current view of container window to icon view
     set toolbar visible of container window to false
     set statusbar visible of container window to false
-    set the bounds of container window to {100, 100, 500, 500}
-    set icon size of the icon view options of container window to 72
+    set the bounds of container window to {100, 100, 500, 500} -- 400x400 window
+    set icon size of the icon view options of container window to 64
     set arrangement of the icon view options of container window to not arranged
-    set position of item "4Charm.app" of container window to {130, 300}
-    set position of item "Applications" of container window to {290, 300}
-    set position of item "License.txt" of container window to {130, 140}
-    set position of item "README" of container window to {290, 140}
+    -- 2x2 grid layout
+    set position of item "4Charm.app" of container window to {100, 130} -- Top-left
+    set position of item "Applications" of container window to {260, 130} -- Top-right
+    set position of item "License.txt" of container window to {100, 290} -- Bottom-left
+    set position of item "README" of container window to {260, 290} -- Bottom-right
     update without registering applications
     delay 1
     close
