@@ -1,68 +1,122 @@
 #!/usr/bin/env zsh
-set -euo pipefail
 
+set -euo pipefail
+setopt EXTENDED_GLOB NULL_GLOB
+
+# Colors for output
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+# App configuration
 APP_NAME="4Charm"
+APP_VERSION="3.0.0"
 PYTHON_EXE="$HOME/.venvs/razor/bin/python"
 DIST_DIR="dist"
+APP_PATH="$DIST_DIR/${APP_NAME}.app"
+DMG_FINAL="$DIST_DIR/${APP_NAME}.dmg"
 DMG_STAGING="$DIST_DIR/${APP_NAME}_dmg"
 DMG_TEMP="$DIST_DIR/${APP_NAME}_temp.dmg"
-DMG_FINAL="$DIST_DIR/${APP_NAME}.dmg"
 MOUNT_DIR=""
 
+# Cleanup function - detaches DMG if mounted
 cleanup() {
-  [[ -n "${MOUNT_DIR:-}" ]] && hdiutil detach "$MOUNT_DIR" -force 2>/dev/null || true
+  [[ -n "${MOUNT_DIR:-}" ]] && hdiutil detach "$MOUNT_DIR" -force >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
-echo "🔨 Building ${APP_NAME}..."
+log() {
+  printf "%b\n" "$1"
+}
 
-# Clean
-rm -rf build "$DIST_DIR" 2>/dev/null || true
+log "${BLUE}🚀 Building ${APP_NAME} v${APP_VERSION}${NC}"
+
+# --- Build Process ---
+log "${YELLOW}1. Cleaning previous builds...${NC}"
+rm -rf build/ "$DIST_DIR"/ dist_mac/ 2>/dev/null || true
+rm -f ${APP_NAME}*.dmg "$DMG_TEMP" 2>/dev/null || true
+rm -rf "$DMG_STAGING" "${DIST_DIR}"/*_dmg/ 2>/dev/null || true
+rm -f build.log *.log 2>/dev/null || true
+find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+find . -type f -name "*.pyc" -delete 2>/dev/null || true
+find . -type f -name "*.pyo" -delete 2>/dev/null || true
+rm -rf *.egg-info/ 2>/dev/null || true
+find . -name ".DS_Store" -delete 2>/dev/null || true
+
 mkdir -p "$DIST_DIR"
+log "${GREEN}✔ Clean slate ready${NC}"
 
-# Verify & build
-"$PYTHON_EXE" -c "import PySide6, requests, bs4" >/dev/null || { echo "❌ Missing deps"; exit 1; }
+log "${YELLOW}2. Verifying dependencies...${NC}"
+"$PYTHON_EXE" -c "import PySide6, requests, bs4" >/dev/null
+log "${GREEN}✔ Dependencies available${NC}"
+
+log "${YELLOW}3. Building app bundle with py2app...${NC}"
 "$PYTHON_EXE" setup.py py2app > build.log 2>&1
-[[ -d "$DIST_DIR/${APP_NAME}.app" ]] || { echo "❌ Build failed"; exit 1; }
+log "${GREEN}✔ Application bundle created${NC}"
 
-# Stage
+[[ -d "$APP_PATH" ]] || { log "${RED}❌ Missing ${APP_PATH}${NC}"; exit 1; }
+
+log "${YELLOW}4. Code signing (ad-hoc)...${NC}"
+codesign --force --deep --sign - "$APP_PATH"
+log "${GREEN}✔ App signed${NC}"
+
+log "${YELLOW}5. Preparing DMG contents...${NC}"
+rm -rf "$DMG_STAGING"
 mkdir -p "$DMG_STAGING"
-cp -R "$DIST_DIR/${APP_NAME}.app" "$DMG_STAGING/"
+cp -R "$APP_PATH" "$DMG_STAGING/"
 cp LICENSE "$DMG_STAGING/License.txt"
-cp README "$DMG_STAGING/"
+cp README "$DMG_STAGING/README"
 ln -s /Applications "$DMG_STAGING/Applications"
+rm -f "$DMG_STAGING/.DS_Store"
+log "${GREEN}✔ DMG staging ready${NC}"
 
-# Create, mount, layout
-hdiutil create -volname "$APP_NAME" -srcfolder "$DMG_STAGING" -ov -format UDRW "$DMG_TEMP"
+log "${YELLOW}6. Creating temporary DMG...${NC}"
+hdiutil create -volname "$APP_NAME" -srcfolder "$DMG_STAGING" -ov -format UDRW "$DMG_TEMP" >/dev/null
 MOUNT_DIR=$(hdiutil attach "$DMG_TEMP" -nobrowse | awk '/Volumes/{print $3; exit}')
 
-osascript <<EOF
-tell app "Finder"
-  tell disk "$APP_NAME"
-    open
-    set current view to icon view
-    set toolbar visible to false
-    set statusbar visible to false
-    set bounds to {100, 100, 600, 600}
-    set icon size to 80
-    set arrangement to not arranged
-    set position of item "${APP_NAME}.app" to {150, 180}
-    set position of item "Applications" to {350, 180}
-    set position of item "License.txt" to {150, 380}
-    set position of item "README" to {350, 380}
-    update
-    delay 1
-    close
-  end tell
+log "${YELLOW}7. Configuring Finder window layout...${NC}"
+osascript <<OSA
+tell application "Finder"
+  set d to disk "${APP_NAME}"
+  open d
+  delay 1
+  set w to container window of d
+
+  set current view of w to icon view
+  set toolbar visible of w to false
+  set statusbar visible of w to false
+  set bounds of w to {100, 100, 600, 600}
+  set icon size of icon view options of w to 80
+  set arrangement of icon view options of w to not arranged
+
+  set position of item "${APP_NAME}.app" of w to {150, 180}
+  set position of item "Applications" of w to {350, 180}
+  set position of item "License.txt" of w to {150, 380}
+  set position of item "README" of w to {350, 380}
+
+  update d
+  delay 1
+  close w
 end tell
-EOF
+OSA
 
 cleanup
 sleep 1
 
-# Finish
-hdiutil convert "$DMG_TEMP" -format UDZO -o "$DMG_FINAL"
-rm -rf "$DMG_STAGING" "$DMG_TEMP"
+log "${YELLOW}8. Compressing DMG...${NC}"
+hdiutil convert "$DMG_TEMP" -format UDZO -o "$DMG_FINAL" >/dev/null
+rm -f "$DMG_TEMP"
+rm -rf "$DMG_STAGING"
+log "${GREEN}✔ DMG ready at $DMG_FINAL${NC}"
 
-echo "✅ Done: $DMG_FINAL"
-open "$DMG_FINAL"
+log "${YELLOW}9. Opening DMG in Finder...${NC}"
+open "$DMG_FINAL" || log "${YELLOW}⚠️  Unable to auto-open DMG. Path: $DMG_FINAL${NC}"
+
+# --- Summary ---
+APP_SIZE=$(du -sh "$APP_PATH" | cut -f1)
+DMG_SIZE=$(du -sh "$DMG_FINAL" | cut -f1)
+log "${BLUE}📦 App size: $APP_SIZE${NC}"
+log "${BLUE}📀 DMG size: $DMG_SIZE${NC}"
+log "${GREEN}✅ Build complete!${NC}"
