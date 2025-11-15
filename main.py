@@ -1159,7 +1159,9 @@ class MainWindow(QMainWindow):
         self.url_input.setAcceptRichText(False)
         self.url_input.setLineWrapMode(QTextEdit.LineWrapMode.NoWrap)
         self.url_input.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
-        self.url_input.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.url_input.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
+        )
         self.url_input.setPlaceholderText(
             "1. https://boards.4chan.org/g/thread/123456789\n2. https://boards.4chan.org/pol/thread/987654321\n3. https://boards.4chan.org/b/thread/555666777\n4. https://boards.4chan.org/v/thread/888999000\n5. https://boards.4chan.org/gif/thread/111222333"
         )
@@ -1377,6 +1379,7 @@ class MainWindow(QMainWindow):
             cursor.movePosition(QTextCursor.MoveOperation.End)
             self.url_input.setTextCursor(cursor)
             self._renumbering = False
+            self._scroll_url_input_to_end()
 
         urls = cleaned_urls
 
@@ -1659,6 +1662,7 @@ class MainWindow(QMainWindow):
                 cursor.movePosition(QTextCursor.MoveOperation.End)
                 cursor.insertText("\n")
                 self.url_input.setTextCursor(cursor)
+                self._scroll_url_input_to_end()
 
                 self.validate_urls()  # Trigger validation after paste
 
@@ -1681,7 +1685,18 @@ class MainWindow(QMainWindow):
         if valid_urls:
             numbered_urls = [f"{i+1}. {url}" for i, url in enumerate(valid_urls)]
             self.url_input.setPlainText("\n".join(numbered_urls))
+            self._scroll_url_input_to_end()
             self.validate_urls()  # Trigger validation after drop
+
+    def _scroll_url_input_to_end(self):
+        """Scroll URL input to the newest entry so users can see recent additions."""
+        cursor = self.url_input.textCursor()
+        cursor.movePosition(QTextCursor.MoveOperation.End)
+        self.url_input.setTextCursor(cursor)
+        self.url_input.ensureCursorVisible()
+        scrollbar = self.url_input.verticalScrollBar()
+        if scrollbar:
+            scrollbar.setValue(scrollbar.maximum())
 
 
 def main():
