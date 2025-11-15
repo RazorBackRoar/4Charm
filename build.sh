@@ -34,7 +34,17 @@ log() {
 log "${BLUE}🚀 Building ${APP_NAME} v${APP_VERSION}${NC}"
 
 log "${YELLOW}1. Cleaning previous builds...${NC}"
-rm -rf build "$DIST_DIR" ${APP_NAME}*.dmg "$DMG_TEMP" "$DMG_STAGING" build.log __pycache__ 2>/dev/null || true
+rm -rf \
+  build \
+  "$DIST_DIR" \
+  ${APP_NAME}*.dmg \
+  "$DMG_TEMP" \
+  "$DMG_STAGING" \
+  build.log \
+  __pycache__ \
+  .DS_Store \
+  "$DIST_DIR"/.DS_Store \
+  2>/dev/null || true
 mkdir -p "$DIST_DIR"
 log "${GREEN}✔ Clean slate ready${NC}"
 
