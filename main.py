@@ -1093,9 +1093,9 @@ class MainWindow(QMainWindow):
         """
         )
 
-        self.scraper = None
-        self.download_thread = None
-        self.download_worker = None
+        self.scraper = FourChanScraper()
+        self.download_thread: Optional[QThread] = None
+        self.download_worker: Optional["MultiUrlDownloadWorker"] = None
         self.is_paused = False
 
         self.setup_ui()
