@@ -191,8 +191,8 @@ class MediaFile:
         self.size = 0
         self.downloaded = False
         self.download_speed = 0.0
-        self.start_time = None
-        self.hash = None
+        self.start_time: Optional[float] = None
+        self.hash: Optional[str] = None
 
     def calculate_hash(self, file_path: Path) -> str:
         """Calculate SHA256 hash of file for duplicate detection."""
