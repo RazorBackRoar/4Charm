@@ -51,20 +51,6 @@ sudo xattr -cr /Applications/4Charm.app
 
 After running this command, you can launch 4Charm normally from your Applications folder.
 
-### Code Signing Comparison
-
-| Feature | Free (Ad-hoc) Signing | Paid Developer ID |
-|---------|----------------------|-------------------|
-| **Cost** | Free | $99/year |
-| **App Functionality** | ✅ Full functionality | ✅ Full functionality |
-| **Security Warning** | ⚠️ Shows on first launch | ✅ No warning |
-| **User Override Required** | ✅ Right-click → Open | ❌ Not needed |
-| **Notarization** | ❌ Not available | ✅ Available |
-| **Distribution** | ✅ GitHub Releases | ✅ Anywhere |
-| **Source Code** | ✅ Open source | ✅ Open source |
-
-**4Charm uses free ad-hoc signing** to keep the software completely free while maintaining full functionality.
-
 ## Usage
 
 1. **Launch 4Charm** from your Applications folder
@@ -72,9 +58,10 @@ After running this command, you can launch 4Charm normally from your Application
    - Thread: `https://boards.4chan.org/g/thread/12345678`
    - Catalog: `https://boards.4chan.org/g/catalog`
    - Board: `https://boards.4chan.org/g/`
-3. **Click Download** or press Enter
-4. **Monitor Progress** in the log window
-5. **Find Downloads** in `~/Downloads/4 Chan/`
+3. **Choose Download Location** (on first download, you'll be prompted to select where to save files)
+4. **Click Download** or press Enter
+5. **Monitor Progress** in the log window
+6. **Find Downloads** in your chosen folder
 
 ### Keyboard Shortcuts
 
@@ -87,10 +74,10 @@ After running this command, you can launch 4Charm normally from your Application
 
 ## Download Organization
 
-Files are automatically organized in your Downloads folder:
+Files are automatically organized in your chosen download folder:
 
-```
-~/Downloads/4 Chan/
+```text
+Your Download Folder/
 ├── board-threadid/
 │   ├── image1.jpg
 │   ├── image2.png
