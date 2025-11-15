@@ -1166,10 +1166,10 @@ class MainWindow(QMainWindow):
             "1. https://boards.4chan.org/g/thread/123456789\n2. https://boards.4chan.org/pol/thread/987654321\n3. https://boards.4chan.org/b/thread/555666777\n4. https://boards.4chan.org/v/thread/888999000\n5. https://boards.4chan.org/gif/thread/111222333"
         )
         line_height = self.url_input.fontMetrics().lineSpacing()
-        min_lines = 10
+        min_lines = 12
         padding = 24
         min_height = (line_height * min_lines) + padding
-        max_height = (line_height * (min_lines + 2)) + padding
+        max_height = (line_height * (min_lines + 4)) + padding
         self.url_input.setMinimumHeight(min_height)
         self.url_input.setMaximumHeight(max_height)
         self.url_input.setStyleSheet(
