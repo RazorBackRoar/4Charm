@@ -68,7 +68,7 @@ class Config:
     MIN_FREE_SPACE_MB = 100
     PROGRESS_UPDATE_INTERVAL = 0.1
     MAX_FOLDER_NAME_LENGTH = 60
-    
+
     # Smart rate limiting
     BASE_DELAY = 0.3
     BACKOFF_MULTIPLIER = 1.5
@@ -101,7 +101,7 @@ class Config:
 
 class DownloadQueue:
     """Manage download queue without UI changes"""
-    
+
     def __init__(self):
         self.queue = []
         self.history = []
@@ -134,11 +134,9 @@ class DownloadQueue:
             self.active_downloads.remove(url)
         if url not in self.completed:
             self.completed.append(url)
-            self.history.append({
-                'url': url,
-                'completed_at': datetime.now(),
-                'status': 'completed'
-            })
+            self.history.append(
+                {"url": url, "completed_at": datetime.now(), "status": "completed"}
+            )
 
     def fail_download(self, url, error=None):
         """Mark URL as failed"""
@@ -146,21 +144,26 @@ class DownloadQueue:
             self.active_downloads.remove(url)
         if url not in self.failed:
             self.failed.append(url)
-            self.history.append({
-                'url': url,
-                'completed_at': datetime.now(),
-                'status': 'failed',
-                'error': str(error)
-            })
+            self.history.append(
+                {
+                    "url": url,
+                    "completed_at": datetime.now(),
+                    "status": "failed",
+                    "error": str(error),
+                }
+            )
 
     def get_stats(self):
         """Get queue statistics"""
         return {
-            'queued': len(self.queue),
-            'active': len(self.active_downloads),
-            'completed': len(self.completed),
-            'failed': len(self.failed),
-            'total': len(self.queue) + len(self.active_downloads) + len(self.completed) + len(self.failed)
+            "queued": len(self.queue),
+            "active": len(self.active_downloads),
+            "completed": len(self.completed),
+            "failed": len(self.failed),
+            "total": len(self.queue)
+            + len(self.active_downloads)
+            + len(self.completed)
+            + len(self.failed),
         }
 
     def clear_completed(self):
@@ -251,63 +254,67 @@ class FourChanScraper:
         if success:
             self.current_delay = max(Config.BASE_DELAY, self.current_delay / 1.1)
         else:
-            self.current_delay = min(Config.MAX_DELAY, self.current_delay * Config.BACKOFF_MULTIPLIER)
+            self.current_delay = min(
+                Config.MAX_DELAY, self.current_delay * Config.BACKOFF_MULTIPLIER
+            )
         time.sleep(self.current_delay)
 
     def handle_network_error(self, error, url, context=""):
         """Handle different types of network errors with appropriate responses"""
         error_info = {
-            'type': type(error).__name__,
-            'message': str(error),
-            'url': url,
-            'context': context
+            "type": type(error).__name__,
+            "message": str(error),
+            "url": url,
+            "context": context,
         }
-        
+
         if isinstance(error, requests.exceptions.ConnectionError):
             logger.error(f"Connection error {context} for {url}: {str(error)}")
             self.adaptive_delay(success=False)
-            error_info['category'] = 'connection'
+            error_info["category"] = "connection"
             return error_info
-            
+
         elif isinstance(error, requests.exceptions.Timeout):
             logger.error(f"Timeout error {context} for {url}: {str(error)}")
             self.adaptive_delay(success=False)
-            error_info['category'] = 'timeout'
+            error_info["category"] = "timeout"
             return error_info
-            
+
         elif isinstance(error, requests.exceptions.HTTPError):
-            status_code = getattr(error.response, 'status_code', 0)
-            error_info['status_code'] = status_code
-            
+            status_code = getattr(error.response, "status_code", 0)
+            error_info["status_code"] = status_code
+
             if status_code == 429:  # Rate limited
                 logger.warning(f"Rate limited by server for {url}, increasing delay")
                 self.current_delay = min(Config.MAX_DELAY, self.current_delay * 2)
                 time.sleep(self.current_delay)
-                error_info['category'] = 'rate_limited'
+                error_info["category"] = "rate_limited"
                 return error_info
-                
+
             elif status_code in [403, 404]:
                 logger.error(f"Access denied or not found for {url}: {status_code}")
                 self.adaptive_delay(success=False)
-                error_info['category'] = 'access'
+                error_info["category"] = "access"
                 return error_info
-                
+
             else:
-                logger.error(f"HTTP error {status_code} {context} for {url}: {str(error)}")
+                logger.error(
+                    f"HTTP error {status_code} {context} for {url}: {str(error)}"
+                )
                 self.adaptive_delay(success=False)
-                error_info['category'] = 'http'
+                error_info["category"] = "http"
                 return error_info
-                
+
         elif isinstance(error, requests.exceptions.TooManyRedirects):
             logger.error(f"Too many redirects {context} for {url}: {str(error)}")
             self.adaptive_delay(success=False)
-            error_info['category'] = 'redirects'
+            error_info["category"] = "redirects"
             return error_info
-            
+
         else:
             logger.error(f"Unknown error {context} for {url}: {str(error)}")
             self.adaptive_delay(success=False)
-            error_info['category'] = 'unknown'
+            error_info["category"] = "unknown"
             return error_info
 
     def sanitize_filename(self, filename: str) -> str:
@@ -441,7 +448,7 @@ class FourChanScraper:
             return thread_data
         except Exception as e:
             error_info = self.handle_network_error(e, api_url, "getting thread data")
-            if error_info.get('category') == 'rate_limited':
+            if error_info.get("category") == "rate_limited":
                 # Retry once after rate limit handling
                 try:
                     time.sleep(2)
@@ -471,7 +478,7 @@ class FourChanScraper:
             return catalog_data
         except Exception as e:
             error_info = self.handle_network_error(e, api_url, "getting catalog data")
-            if error_info.get('category') == 'rate_limited':
+            if error_info.get("category") == "rate_limited":
                 # Retry once after rate limit handling
                 try:
                     time.sleep(2)
@@ -549,7 +556,7 @@ class FourChanScraper:
         """Enhanced download with progress tracking, duplicate detection, and resume capability."""
         # Track download in queue
         self.download_queue.start_download(media_file.url)
-        
+
         if self.cancelled:
             self.download_queue.fail_download(media_file.url, "Cancelled")
             return False
@@ -606,7 +613,9 @@ class FourChanScraper:
                     self.stats_mutex.lock()
                     self.stats["failed"] += 1
                     self.stats_mutex.unlock()
-                    self.download_queue.fail_download(media_file.url, "Insufficient disk space")
+                    self.download_queue.fail_download(
+                        media_file.url, "Insufficient disk space"
+                    )
                     return False
 
                 # Check for partial download and attempt resume
@@ -616,7 +625,9 @@ class FourChanScraper:
                     existing_size = file_path.stat().st_size
                     if existing_size > 0:
                         headers["Range"] = f"bytes={existing_size}-"
-                        logger.info(f"Resuming {media_file.filename} from byte {existing_size}")
+                        logger.info(
+                            f"Resuming {media_file.filename} from byte {existing_size}"
+                        )
 
                 media_file.start_time = time.time()
                 response = self.session.get(
@@ -626,7 +637,7 @@ class FourChanScraper:
                     timeout=Config.DOWNLOAD_TIMEOUT,
                     allow_redirects=True,
                 )
-                
+
                 # Handle resume response
                 if response.status_code == 206:  # Partial content
                     mode = "ab"  # Append to existing file
@@ -709,7 +720,7 @@ class FourChanScraper:
                     self.download_queue.fail_download(media_file.url, str(e))
                     return False
                 time.sleep(2**attempt)
-        
+
         # If we exit the loop without success, mark as failed
         self.download_queue.fail_download(media_file.url, "Max retries exceeded")
         return False
@@ -1079,7 +1090,7 @@ class MainWindow(QMainWindow):
         self.download_thread = None
         self.download_worker = None
         self.is_paused = False
-        
+
         self.setup_ui()
         self.setup_connections()
         self._update_ui_for_state("idle")
@@ -1160,7 +1171,7 @@ class MainWindow(QMainWindow):
         control_layout = QHBoxLayout()
         control_layout.setSpacing(15)
         control_layout.addStretch()
-        
+
         # Folder chooser button
         self.folder_btn = QPushButton("📁 Choose Folder")
         self.folder_btn.setMinimumWidth(150)
@@ -1168,7 +1179,7 @@ class MainWindow(QMainWindow):
             "color: #ffffff; background-color: #5a5a5a; font-size: 15px; font-weight: 600; padding: 8px 16px; border-radius: 8px;"
         )
         control_layout.addWidget(self.folder_btn)
-        
+
         self.start_cancel_btn = QPushButton("🚀 Start Download")
         self.start_cancel_btn.setObjectName("startBtn")
         self.start_cancel_btn.setMinimumWidth(180)
@@ -1210,6 +1221,14 @@ class MainWindow(QMainWindow):
         progress_info_layout.addWidget(self.progress_label)
         progress_info_layout.addStretch()
         progress_info_layout.addWidget(self.speed_label)
+
+        # Version label (bottom right)
+        version_label = QLabel("v3.0.0")
+        version_label.setStyleSheet(
+            "font-size: 12px; color: #666; padding: 4px 8px; background-color: transparent;"
+        )
+        progress_info_layout.addWidget(version_label)
+
         progress_layout.addLayout(progress_info_layout)
 
         main_layout.addWidget(progress_group)
@@ -1310,12 +1329,9 @@ class MainWindow(QMainWindow):
         """Open folder chooser dialog to select download location."""
         current_dir = str(self.scraper.download_dir)
         folder = QFileDialog.getExistingDirectory(
-            self,
-            "Choose Download Folder",
-            current_dir,
-            QFileDialog.Option.ShowDirsOnly
+            self, "Choose Download Folder", current_dir, QFileDialog.Option.ShowDirsOnly
         )
-        
+
         if folder:
             self.scraper.download_dir = Path(folder)
             self.scraper.download_dir.mkdir(parents=True, exist_ok=True)
@@ -1403,13 +1419,13 @@ class MainWindow(QMainWindow):
                 self,
                 "Choose Download Folder",
                 str(Path.home()),
-                QFileDialog.Option.ShowDirsOnly
+                QFileDialog.Option.ShowDirsOnly,
             )
-            
+
             if not folder:
                 self.add_log_message("❌ Download cancelled - no folder selected")
                 return
-            
+
             self.scraper.download_dir = Path(folder)
             self.scraper.download_dir.mkdir(parents=True, exist_ok=True)
             self.add_log_message(f"📁 Download folder set to: {folder}")
@@ -1558,7 +1574,10 @@ class MainWindow(QMainWindow):
     def update_download_stats(self):
         """Update folder, file, and size statistics using macOS du command."""
         try:
-            if self.scraper.download_dir is None or not self.scraper.download_dir.exists():
+            if (
+                self.scraper.download_dir is None
+                or not self.scraper.download_dir.exists()
+            ):
                 self.folders_label.setText("Folders: 0")
                 self.files_label.setText("Files: 0")
                 self.size_label.setText("Size: 0 MB")
@@ -1569,7 +1588,9 @@ class MainWindow(QMainWindow):
             folder_count = len(folders)
 
             # Count files recursively
-            file_count = sum(1 for _ in self.scraper.download_dir.rglob("*") if _.is_file())
+            file_count = sum(
+                1 for _ in self.scraper.download_dir.rglob("*") if _.is_file()
+            )
 
             # Get size using macOS du command (more accurate)
             try:
@@ -1585,12 +1606,16 @@ class MainWindow(QMainWindow):
                 else:
                     # Fallback to Python calculation
                     size_mb = sum(
-                        f.stat().st_size for f in self.scraper.download_dir.rglob("*") if f.is_file()
+                        f.stat().st_size
+                        for f in self.scraper.download_dir.rglob("*")
+                        if f.is_file()
                     ) / (1024 * 1024)
             except (subprocess.TimeoutExpired, subprocess.SubprocessError, ValueError):
                 # Fallback to Python calculation
                 size_mb = sum(
-                    f.stat().st_size for f in self.scraper.download_dir.rglob("*") if f.is_file()
+                    f.stat().st_size
+                    for f in self.scraper.download_dir.rglob("*")
+                    if f.is_file()
                 ) / (1024 * 1024)
 
             # Update labels
