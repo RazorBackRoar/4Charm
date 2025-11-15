@@ -396,6 +396,8 @@ class FourChanScraper:
 
     def check_disk_space(self, required_mb: float = 0) -> bool:
         """Check if sufficient disk space is available."""
+        if self.download_dir is None:
+            return False
         try:
             free_space_bytes = shutil.disk_usage(self.download_dir).free
             free_space_mb = free_space_bytes / (1024 * 1024)
