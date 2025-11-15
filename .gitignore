@@ -34,7 +34,7 @@ Icon?
 
 # Build artifacts
 *.dmg
-*.app
+release-token.txt
 *.log
 *_dmg/
 *_temp.dmg
