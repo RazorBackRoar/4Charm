@@ -49,6 +49,18 @@ if [ -f "/Users/home/Desktop/4Charm.dmg" ]; then
 fi
 log "${GREEN}✔ Volumes checked and ejected${NC}"
 
+# --- Remove previously installed copies ---
+log "${YELLOW}0.5 Removing old application installs...${NC}"
+if [[ -d "/Applications/${APP_NAME}.app" ]]; then
+  log "${YELLOW}   Deleting /Applications/${APP_NAME}.app${NC}"
+  rm -rf -- "/Applications/${APP_NAME}.app"
+fi
+if [[ -d "$APP_PATH" ]]; then
+  log "${YELLOW}   Deleting $APP_PATH${NC}"
+  rm -rf -- "$APP_PATH"
+fi
+log "${GREEN}✔ Old installs removed${NC}"
+
 # --- Build Process ---
 log "${YELLOW}1. Cleaning previous builds...${NC}"
 # Remove all build artifacts
