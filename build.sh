@@ -68,7 +68,7 @@ log "${YELLOW}6. Creating temporary writable DMG...${NC}"
 hdiutil create -volname "$APP_NAME" -srcfolder "$DMG_STAGING" -ov -format UDRW "$DMG_TEMP" >/dev/null
 MOUNT_DIR=$(hdiutil attach "$DMG_TEMP" | awk '/Volumes/{print $3; exit}')
 
-log "${YELLOW}7. Configuring Finder window (400x400)...${NC}"
+log "${YELLOW}7. Configuring Finder window (2x2 layout)...${NC}"
 osascript <<OSA
 tell application "Finder"
   tell disk "${APP_NAME}"
@@ -76,7 +76,7 @@ tell application "Finder"
     set current view of container window to icon view
     set toolbar visible of container window to false
     set statusbar visible of container window to false
-    set the bounds of container window to {100, 100, 500, 500}
+    set the bounds of container window to {100, 100, 580, 420}
     set icon size of the icon view options of container window to 72
     delay 1
   end tell
