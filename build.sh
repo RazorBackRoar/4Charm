@@ -33,16 +33,40 @@ log() {
 
 log "${BLUE}🚀 Building ${APP_NAME} v${APP_VERSION}${NC}"
 
+# --- Pre-Build: Eject any mounted 4Charm volumes ---
+log "${YELLOW}0. Checking for mounted 4Charm volumes...${NC}"
+# Eject all 4Charm volumes that might be mounted
+for vol in /Volumes/4Charm*; do
+  if [ -d "$vol" ]; then
+    log "${YELLOW}   Ejecting: $vol${NC}"
+    hdiutil detach "$vol" -force 2>/dev/null || true
+  fi
+done
+# Also check Desktop for DMG files
+if [ -f "/Users/home/Desktop/4Charm.dmg" ]; then
+  log "${YELLOW}   Removing old DMG from Desktop${NC}"
+  rm -f "/Users/home/Desktop/4Charm.dmg" 2>/dev/null || true
+fi
+log "${GREEN}✔ Volumes checked and ejected${NC}"
+
 # --- Build Process ---
 log "${YELLOW}1. Cleaning previous builds...${NC}"
-rm -rf build/ "$DIST_DIR"/ dist_mac/ 2>/dev/null || true
-rm -f ${APP_NAME}*.dmg "$DMG_TEMP" 2>/dev/null || true
-rm -rf "$DMG_STAGING" "${DIST_DIR}"/*_dmg/ 2>/dev/null || true
+# Remove all build artifacts
+rm -rf build/ 2>/dev/null || true
+rm -rf dist/ 2>/dev/null || true
+rm -rf dist_mac/ 2>/dev/null || true
+rm -f ${APP_NAME}*.dmg 2>/dev/null || true
+rm -f "$DMG_TEMP" 2>/dev/null || true
+rm -rf "$DMG_STAGING" 2>/dev/null || true
 rm -f build.log *.log 2>/dev/null || true
+
+# Clean Python cache files
 find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 find . -type f -name "*.pyc" -delete 2>/dev/null || true
 find . -type f -name "*.pyo" -delete 2>/dev/null || true
 rm -rf *.egg-info/ 2>/dev/null || true
+
+# Clean macOS files
 find . -name ".DS_Store" -delete 2>/dev/null || true
 
 mkdir -p "$DIST_DIR"
@@ -73,10 +97,10 @@ rm -f "$DMG_STAGING/.DS_Store"
 log "${GREEN}✔ DMG staging ready${NC}"
 
 log "${YELLOW}6. Creating temporary DMG...${NC}"
-hdiutil create -volname "$APP_NAME" -srcfolder "$DMG_STAGING" -ov -format UDRW "$DMG_TEMP" >/dev/null
+hdiutil create -volname "$APP_NAME" -srcfolder "$DMG_STAGING" -ov -format UDRW "$DMG_TEMP" >/dev/null 2>&1
 MOUNT_DIR=$(hdiutil attach "$DMG_TEMP" -nobrowse | awk '/Volumes/{print $3; exit}')
 
-log "${YELLOW}7. Configuring Finder window layout...${NC}"
+log "${YELLOW}7. Configuring Finder window layout (2x2 grid, no scrollbars)...${NC}"
 osascript <<OSA
 tell application "Finder"
   set d to disk "${APP_NAME}"
@@ -87,14 +111,15 @@ tell application "Finder"
   set current view of w to icon view
   set toolbar visible of w to false
   set statusbar visible of w to false
-  set bounds of w to {100, 100, 600, 600}
-  set icon size of icon view options of w to 80
+  set bounds of w to {100, 80, 510, 520}
+  set icon size of icon view options of w to 72
   set arrangement of icon view options of w to not arranged
 
-  set position of item "${APP_NAME}.app" of w to {150, 180}
-  set position of item "Applications" of w to {350, 180}
-  set position of item "License.txt" of w to {150, 380}
-  set position of item "README" of w to {350, 380}
+  -- 2x2 grid layout - just slightly bigger than 400x400 to avoid scrollbars
+  set position of item "${APP_NAME}.app" of w to {105, 105}
+  set position of item "Applications" of w to {285, 105}
+  set position of item "License.txt" of w to {105, 265}
+  set position of item "README" of w to {285, 265}
 
   update d
   delay 1
