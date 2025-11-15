@@ -1222,13 +1222,6 @@ class MainWindow(QMainWindow):
         progress_info_layout.addStretch()
         progress_info_layout.addWidget(self.speed_label)
 
-        # Version label (bottom right)
-        version_label = QLabel("v3.0.0")
-        version_label.setStyleSheet(
-            "font-size: 12px; color: #666; padding: 4px 8px; background-color: transparent;"
-        )
-        progress_info_layout.addWidget(version_label)
-
         progress_layout.addLayout(progress_info_layout)
 
         main_layout.addWidget(progress_group)
@@ -1295,6 +1288,11 @@ class MainWindow(QMainWindow):
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
         self.status_bar.showMessage("Ready")
+
+        # Add version label to bottom right of status bar
+        version_label = QLabel("v3.0.0")
+        version_label.setStyleSheet("font-size: 11px; color: #666; padding: 0 8px;")
+        self.status_bar.addPermanentWidget(version_label)
 
     def setup_connections(self):
         """Connect signals and slots."""
