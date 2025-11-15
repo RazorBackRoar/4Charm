@@ -135,7 +135,7 @@ See [BUILD.md](BUILD.md) for detailed instructions on building 4Charm from sourc
 
 ## License
 
-See [LICENSE.rtf](LICENSE.rtf) for license terms and conditions.
+MIT License - See [LICENSE](LICENSE) for full details.
 
 ## Support
 
