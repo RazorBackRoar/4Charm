@@ -23,7 +23,6 @@ cleanup() {
   if [[ -n "$MOUNT_DIR" ]]; then
     hdiutil detach "$MOUNT_DIR" -force >/dev/null 2>&1 || true
   fi
-  rm -f "$DMG_TEMP" >/dev/null 2>&1 || true
 }
 
 trap cleanup EXIT
