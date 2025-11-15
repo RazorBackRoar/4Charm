@@ -208,7 +208,7 @@ class FourChanScraper:
 
     def __init__(self):
         # Don't set a default folder - let user choose on first download
-        self.download_dir = None
+        self.download_dir: Optional[Path] = None
         self.session = requests.Session()
         adapter = HTTPAdapter(
             pool_connections=Config.MAX_WORKERS * 2,
