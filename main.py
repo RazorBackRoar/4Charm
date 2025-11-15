@@ -556,6 +556,11 @@ class FourChanScraper:
         progress_callback=None,
     ) -> bool:
         """Enhanced download with progress tracking, duplicate detection, and resume capability."""
+        # Ensure download directory is set
+        if self.download_dir is None:
+            logger.error("Download directory not set")
+            return False
+
         # Track download in queue
         self.download_queue.start_download(media_file.url)
 
