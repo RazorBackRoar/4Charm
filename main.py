@@ -1169,8 +1169,9 @@ class MainWindow(QMainWindow):
         min_lines = 12
         padding = 24
         min_height = (line_height * min_lines) + padding
+        max_height = (line_height * (min_lines + 4)) + padding
         self.url_input.setMinimumHeight(min_height)
-        # Remove maximum height constraint to allow proper scrolling
+        self.url_input.setMaximumHeight(max_height)
         self.url_input.setStyleSheet(
             "background-color: #2d2d2d; color: #ffffff; border: none; padding: 12px 16px; font-size: 16px; selection-background-color: #4a9eff; line-height: 1.4;"
         )
@@ -1689,6 +1690,11 @@ class MainWindow(QMainWindow):
 
     def _scroll_url_input_to_end(self):
         """Scroll URL input to the newest entry so users can see recent additions."""
+        # Use QTimer to ensure scrollbar maximum is calculated after text layout
+        QTimer.singleShot(0, self._do_scroll_to_end)
+
+    def _do_scroll_to_end(self):
+        """Actually perform the scroll to end operation."""
         cursor = self.url_input.textCursor()
         cursor.movePosition(QTextCursor.MoveOperation.End)
         self.url_input.setTextCursor(cursor)
