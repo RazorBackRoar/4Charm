@@ -12,7 +12,7 @@ NC='\033[0m'
 
 # App configuration
 APP_NAME="4Charm"
-APP_VERSION="3.0.1109"
+APP_VERSION="3.0.1110"
 PYTHON_EXE="$HOME/.venvs/razor/bin/python"
 DIST_DIR="dist"
 APP_PATH="$DIST_DIR/${APP_NAME}.app"
@@ -35,13 +35,16 @@ log "${BLUE}🚀 Building ${APP_NAME} v${APP_VERSION}${NC}"
 
 # --- Auto-increment version ---
 log "${YELLOW}0. Auto-incrementing version...${NC}"
-"$PYTHON_EXE" increment_version.py >/dev/null 2>&1 || log "${YELLOW}⚠️  Version increment failed, continuing with current version${NC}"
-# Reload version after increment
-APP_VERSION=$(grep 'APP_VERSION=' build.sh | cut -d'"' -f2)
-log "${GREEN}✔ Version: v${APP_VERSION}${NC}"
+if "$PYTHON_EXE" increment_version.py >/dev/null 2>&1; then
+  # Get updated version from Python script for accuracy
+  APP_VERSION=$("$PYTHON_EXE" -c "import increment_version; print(increment_version.get_current_version())")
+  log "${GREEN}✔ Version incremented to: v${APP_VERSION}${NC}"
+else
+  log "${YELLOW}⚠️  Version increment failed, continuing with current version${NC}"
+fi
 
 # --- Pre-Build: Eject any mounted 4Charm volumes ---
-log "${YELLOW}0. Checking for mounted 4Charm volumes...${NC}"
+log "${YELLOW}1. Checking for mounted 4Charm volumes...${NC}"
 # Eject all 4Charm volumes that might be mounted
 for vol in /Volumes/4Charm*; do
   if [ -d "$vol" ]; then
@@ -50,14 +53,14 @@ for vol in /Volumes/4Charm*; do
   fi
 done
 # Also check Desktop for DMG files
-if [ -f "/Users/home/Desktop/4Charm.dmg" ]; then
+if [ -f "$HOME/Desktop/4Charm.dmg" ]; then
   log "${YELLOW}   Removing old DMG from Desktop${NC}"
-  rm -f "/Users/home/Desktop/4Charm.dmg" 2>/dev/null || true
+  rm -f "$HOME/Desktop/4Charm.dmg" 2>/dev/null || true
 fi
 log "${GREEN}✔ Volumes checked and ejected${NC}"
 
 # --- Remove previously installed copies ---
-log "${YELLOW}0.5 Removing old application installs...${NC}"
+log "${YELLOW}2. Removing old application installs...${NC}"
 if [[ -d "/Applications/${APP_NAME}.app" ]]; then
   log "${YELLOW}   Deleting /Applications/${APP_NAME}.app${NC}"
   rm -rf -- "/Applications/${APP_NAME}.app"
@@ -69,7 +72,7 @@ fi
 log "${GREEN}✔ Old installs removed${NC}"
 
 # --- Build Process ---
-log "${YELLOW}1. Cleaning previous builds...${NC}"
+log "${YELLOW}3. Cleaning previous builds...${NC}"
 # Remove all build artifacts
 rm -rf build/ 2>/dev/null || true
 rm -rf dist/ 2>/dev/null || true
@@ -91,21 +94,38 @@ find . -name ".DS_Store" -delete 2>/dev/null || true
 mkdir -p "$DIST_DIR"
 log "${GREEN}✔ Clean slate ready${NC}"
 
-log "${YELLOW}2. Verifying dependencies...${NC}"
+log "${YELLOW}4. Verifying dependencies...${NC}"
 "$PYTHON_EXE" -c "import PySide6, requests, bs4" >/dev/null
 log "${GREEN}✔ Dependencies available${NC}"
 
-log "${YELLOW}3. Building app bundle with py2app...${NC}"
-"$PYTHON_EXE" setup.py py2app > build.log 2>&1
-log "${GREEN}✔ Application bundle created${NC}"
+log "${YELLOW}5. Building app bundle with py2app...${NC}"
+if ! "$PYTHON_EXE" setup.py py2app > build.log 2>&1; then
+  log "${RED}❌ py2app build failed. Check build.log for details.${NC}"
+  exit 1
+fi
 
-[[ -d "$APP_PATH" ]] || { log "${RED}❌ Missing ${APP_PATH}${NC}"; exit 1; }
+# Validate app bundle was created
+if [[ ! -d "$APP_PATH" ]]; then
+  log "${RED}❌ Application bundle not found at $APP_PATH${NC}"
+  exit 1
+fi
 
-log "${YELLOW}4. Code signing (ad-hoc)...${NC}"
-codesign --force --deep --sign - "$APP_PATH"
+# Validate app bundle contains main executable
+if [[ ! -f "$APP_PATH/Contents/MacOS/4Charm" ]]; then
+  log "${RED}❌ Main executable not found in app bundle${NC}"
+  exit 1
+fi
+
+log "${GREEN}✔ Application bundle created and validated${NC}"
+
+log "${YELLOW}6. Code signing (ad-hoc)...${NC}"
+if ! codesign --force --deep --sign - "$APP_PATH"; then
+  log "${RED}❌ Code signing failed${NC}"
+  exit 1
+fi
 log "${GREEN}✔ App signed${NC}"
 
-log "${YELLOW}5. Preparing DMG contents...${NC}"
+log "${YELLOW}7. Preparing DMG contents...${NC}"
 rm -rf "$DMG_STAGING"
 mkdir -p "$DMG_STAGING"
 cp -R "$APP_PATH" "$DMG_STAGING/"
@@ -115,11 +135,11 @@ ln -s /Applications "$DMG_STAGING/Applications"
 rm -f "$DMG_STAGING/.DS_Store"
 log "${GREEN}✔ DMG staging ready${NC}"
 
-log "${YELLOW}6. Creating temporary DMG...${NC}"
+log "${YELLOW}8. Creating temporary DMG...${NC}"
 hdiutil create -volname "$APP_NAME" -srcfolder "$DMG_STAGING" -ov -format UDRW "$DMG_TEMP" >/dev/null 2>&1
 MOUNT_DIR=$(hdiutil attach "$DMG_TEMP" -nobrowse | awk '/Volumes/{print $3; exit}')
 
-log "${YELLOW}7. Configuring Finder window layout (2x2 grid, no scrollbars)...${NC}"
+log "${YELLOW}9. Configuring Finder window layout (2x2 grid, no scrollbars)...${NC}"
 osascript <<OSA
 tell application "Finder"
   set d to disk "${APP_NAME}"
@@ -150,13 +170,13 @@ OSA
 cleanup
 sleep 1
 
-log "${YELLOW}8. Compressing DMG...${NC}"
+log "${YELLOW}10. Compressing DMG...${NC}"
 hdiutil convert "$DMG_TEMP" -format UDZO -o "$DMG_FINAL" >/dev/null
 rm -f "$DMG_TEMP"
 rm -rf "$DMG_STAGING"
 log "${GREEN}✔ DMG ready at $DMG_FINAL${NC}"
 
-log "${YELLOW}9. Opening DMG in Finder...${NC}"
+log "${YELLOW}11. Opening DMG in Finder...${NC}"
 open "$DMG_FINAL" || log "${YELLOW}⚠️  Unable to auto-open DMG. Path: $DMG_FINAL${NC}"
 
 # --- Summary ---
