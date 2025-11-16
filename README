@@ -1,0 +1,157 @@
+# 4Charm - 4chan Media Downloader
+
+A high-performance GUI application for bulk downloading media from 4chan threads and boards.
+
+## Features
+
+- **Bulk Downloads**: Download all media from threads, catalogs, or entire boards
+- **Smart Organization**: Automatically organizes downloads by thread with WEBM subfolder support
+- **Resume Capability**: Automatically resumes interrupted downloads
+- **Duplicate Detection**: Prevents downloading the same file twice using hash verification
+- **Concurrent Downloads**: Multi-threaded downloading for maximum speed
+- **Adaptive Rate Limiting**: Intelligent throttling to respect 4chan's API limits
+- **Custom Download Locations**: Choose any folder for storing sessions
+- **Real-Time Progress**: Monitor transfers with log output and stats
+- **Dark Mode Support**: Respects macOS system appearance settings
+- **Retina Display Ready**: Optimized for high-resolution displays
+
+## Supported Media Types
+
+- **Images**: JPG, PNG, GIF, WEBP, BMP
+- **Videos**: WEBM, MP4, MOV, AVI, MKV
+- **Other**: PDF, TXT, ZIP, RAR
+
+## macOS Installation
+
+### Download
+
+Download the latest `4Charm_X.X.X.dmg` file from the [Releases](https://github.com/RazorBackRoar/4Charm/releases) page.
+
+### Installation Steps
+
+1. **Open the DMG**: Double-click the downloaded `4Charm_X.X.X.dmg` file
+2. **Drag to Applications**: Drag the 4Charm app icon to the Applications folder
+3. **Eject the DMG**: Right-click the 4Charm volume on your desktop and select "Eject"
+
+### First Launch - Security Override Required
+
+**Why does macOS show a security warning?**
+
+4Charm is signed with a free ad-hoc signature instead of a paid Apple Developer ID certificate ($99/year). This means macOS Gatekeeper will block the app from opening normally on first launch. This is a standard security feature for apps not distributed through the Mac App Store.
+
+**The app is safe to use** - the source code is open and available for review. The security warning appears because the developer chose not to pay for Apple's annual certificate program.
+
+### Method 1: Right-Click to Open (Recommended)
+
+1. Open **Finder** and navigate to your **Applications** folder
+2. **Right-click** (or Control-click) on **4Charm.app**
+3. Select **Open** from the context menu
+4. Click **Open** in the security dialog that appears
+5. The app will now launch and remember this choice for future launches
+
+### Method 2: Terminal Command (Advanced)
+
+If the right-click method doesn't work, you can remove the quarantine attribute using Terminal:
+
+```bash
+sudo xattr -cr /Applications/4Charm.app
+```
+
+After running this command, you can launch 4Charm normally from your Applications folder.
+
+## Usage
+
+1. **Launch 4Charm** from your Applications folder
+2. **Enter a 4chan URL** in the input field:
+   - Thread: `https://boards.4chan.org/g/thread/12345678`
+   - Catalog: `https://boards.4chan.org/g/catalog`
+   - Board: `https://boards.4chan.org/g/`
+3. **Choose Download Location** (on first download, you'll be prompted to select where to save files)
+4. **Click Download** or press Enter
+5. **Monitor Progress** in the log window
+6. **Find Downloads** in your chosen folder
+
+### Quick Start (TL;DR)
+
+1. Install 4Charm from the DMG and drag it into Applications.
+2. Choose or confirm your download directory.
+3. Paste up to 10 thread/catalog URLs (one per line) and click **Start Download**.
+4. Let the real-time log show progress; WEBM files go into a dedicated subfolder.
+
+## Download Organization
+
+Files are automatically organized in your chosen download folder:
+
+```text
+Your Download Folder/
+├── board-threadid/
+│   ├── image1.jpg
+│   ├── image2.png
+│   └── WEBM/
+│       ├── video1.webm
+│       └── video2.webm
+└── board-catalog/
+    └── ...
+```
+
+- **Thread downloads**: Organized by board and thread ID
+- **WEBM files**: Automatically placed in a WEBM subfolder
+- **Other media**: Kept in the main thread folder
+
+## System Requirements
+
+- **macOS**: 10.13 (High Sierra) or later
+- **Disk Space**: 200+ MB for application, plus space for downloads
+- **Internet**: Active connection required
+- **Python**: Not required (bundled in app)
+
+## Troubleshooting
+
+### "4Charm.app is damaged and can't be opened"
+
+This message appears when macOS blocks the app due to the ad-hoc signature. Use one of the security override methods above.
+
+### "4Charm.app can't be opened because Apple cannot check it for malicious software"
+
+This is the standard Gatekeeper warning. Right-click the app and select "Open" to bypass this check.
+
+### App won't launch after security override
+
+Try removing the quarantine attribute:
+
+```bash
+sudo xattr -cr /Applications/4Charm.app
+```
+
+### Downloads fail or are very slow
+
+- Check your internet connection
+- 4chan may be rate-limiting requests - the app will automatically slow down
+- Try downloading fewer threads at once
+
+### "No media files found"
+
+- Verify the URL is correct and the thread still exists
+- Some threads may not contain any media files
+- The thread may have been archived or deleted
+
+## Building from Source
+
+See [BUILD.md](BUILD.md) for detailed instructions on building 4Charm from source code.
+
+## License
+
+MIT License - See [LICENSE](LICENSE) for full details.
+
+## Support
+
+- **Issues**: Report bugs on [GitHub Issues](https://github.com/RazorBackRoar/4Charm/issues)
+- **Source Code**: Available on [GitHub](https://github.com/RazorBackRoar/4Charm)
+
+## Privacy
+
+4Charm does not collect, store, or transmit any personal information. All downloads are saved locally to your computer. The app only communicates with 4chan's public API to fetch thread data and download media files.
+
+---
+
+**Note**: 4Charm is not affiliated with or endorsed by 4chan. Use responsibly and respect 4chan's terms of service.

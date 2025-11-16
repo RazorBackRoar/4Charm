@@ -1,0 +1,160 @@
+BUILD SCRIPT IMPROVEMENTS CHECKLIST
+==================================
+For applying to Nexus.app or any other Python macOS app
+
+1. PRE-BUILD CLEANUP
+   ==================
+   Before building, check for and eject any mounted DMG volumes:
+   ```bash
+   # Eject all mounted volumes with app name
+   for vol in /Volumes/AppName*; do
+     if [ -d "$vol" ]; then
+       hdiutil detach "$vol" -force 2>/dev/null || true
+     fi
+   done
+
+   # Remove old DMG from Desktop
+   if [ -f "/Users/home/Desktop/AppName.dmg" ]; then
+     rm -f "/Users/home/Desktop/AppName.dmg" 2>/dev/null || true
+   fi
+   ```
+
+2. COMPREHENSIVE BUILD CLEANUP
+   ===========================
+   Clean ALL build artifacts for a fresh build:
+   ```bash
+   # Remove build directories
+   rm -rf build/ 2>/dev/null || true
+   rm -rf dist/ 2>/dev/null || true
+   rm -rf dist_mac/ 2>/dev/null || true
+
+   # Remove DMG files
+   rm -f AppName*.dmg 2>/dev/null || true
+   rm -f "$DMG_TEMP" 2>/dev/null || true
+   rm -rf "$DMG_STAGING" 2>/dev/null || true
+
+   # Remove log files
+   rm -f build.log *.log 2>/dev/null || true
+
+   # Clean Python cache files
+   find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+   find . -type f -name "*.pyc" -delete 2>/dev/null || true
+   find . -type f -name "*.pyo" -delete 2>/dev/null || true
+   rm -rf *.egg-info/ 2>/dev/null || true
+
+   # Clean macOS files
+   find . -name ".DS_Store" -delete 2>/dev/null || true
+   ```
+
+3. DMG WINDOW CONFIGURATION (2x2 GRID, NO SCROLLBARS)
+   ==================================================
+   Window size: 420x420 (just slightly bigger than 400x400)
+   Icon size: 72
+   Layout: 2x2 grid
+
+   ```applescript
+   tell application "Finder"
+     set d to disk "AppName"
+     open d
+     delay 1
+     set w to container window of d
+
+     set current view of w to icon view
+     set toolbar visible of w to false
+     set statusbar visible of w to false
+     set bounds of w to {100, 100, 520, 520}
+     set icon size of icon view options of w to 72
+     set arrangement of icon view options of w to not arranged
+
+     -- 2x2 grid positions (adjust based on your items)
+     set position of item "AppName.app" of w to {105, 105}
+     set position of item "Applications" of w to {285, 105}
+     set position of item "License.txt" of w to {105, 265}
+     set position of item "README" of w to {285, 265}
+
+     update d
+     delay 1
+     close w
+   end tell
+   ```
+
+4. CLEANUP TRAP HANDLER
+   =====================
+   Add trap to ensure DMG is detached even if script fails:
+   ```bash
+   MOUNT_DIR=""
+
+   cleanup() {
+     [[ -n "${MOUNT_DIR:-}" ]] && hdiutil detach "$MOUNT_DIR" -force >/dev/null 2>&1 || true
+   }
+   trap cleanup EXIT
+   ```
+
+5. KEY VARIABLES TO SET
+   =====================
+   ```bash
+   APP_NAME="YourAppName"
+   APP_VERSION="1.0.0"
+   PYTHON_EXE="$HOME/.venvs/your_venv/bin/python"
+   DIST_DIR="dist"
+   APP_PATH="$DIST_DIR/${APP_NAME}.app"
+   DMG_FINAL="$DIST_DIR/${APP_NAME}.dmg"
+   DMG_STAGING="$DIST_DIR/${APP_NAME}_dmg"
+   DMG_TEMP="$DIST_DIR/${APP_NAME}_temp.dmg"
+   ```
+
+6. BUILD PROCESS ORDER
+   ====================
+   1. Check and eject mounted volumes
+   2. Clean all build artifacts
+   3. Verify dependencies
+   4. Build app bundle with py2app
+   5. Code sign (ad-hoc)
+   6. Prepare DMG staging folder
+   7. Create temporary DMG
+   8. Configure Finder window layout
+   9. Compress final DMG
+   10. Clean up temp files
+   11. Open DMG
+
+7. IMPORTANT NOTES
+   ===============
+   - Window bounds: {x1, y1, x2, y2} where x2-x1 and y2-y1 = window size
+   - For 420x420 window: {100, 100, 520, 520}
+   - Icon positions are from top-left corner of window
+   - Add 10-20px padding from edges to avoid scrollbars
+   - Test DMG on clean system to verify no scrollbars appear
+
+8. TESTING CHECKLIST
+   =================
+   [ ] DMG mounts without errors
+   [ ] Window opens at correct size (420x420)
+   [ ] No scrollbars visible
+   [ ] All 4 items visible in 2x2 grid
+   [ ] Icons properly spaced
+   [ ] App drags to Applications folder
+   [ ] No duplicate apps created
+   [ ] Clean build removes all artifacts
+
+9. COMMON ISSUES & FIXES
+   ======================
+   Issue: "Resource temporarily unavailable" during DMG conversion
+   Fix: Ensure all volumes are detached before building
+
+   Issue: Scrollbars appear in DMG window
+   Fix: Increase window bounds by 20px (e.g., 400→420)
+
+   Issue: Icons overlap or misaligned
+   Fix: Adjust position coordinates, ensure 180px spacing between items
+
+   Issue: Multiple app copies in DMG
+   Fix: Clean dist/ folder completely before building
+
+10. APPLY TO NEXUS.APP
+    ===================
+    1. Copy build.sh structure
+    2. Update APP_NAME="Nexus"
+    3. Update PYTHON_EXE path
+    4. Adjust icon positions if different items
+    5. Test build process
+    6. Verify DMG layout

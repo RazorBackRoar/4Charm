@@ -1,0 +1,3 @@
+cd /Users/home/Zshrc/Windsurf/4Charm
+./build.sh
+ls dist
