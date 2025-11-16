@@ -133,7 +133,7 @@ tell application "Finder"
   set position of item "README" of w to {285, 265}
 
   -- Set bounds AFTER positioning items to prevent Finder auto-resize
-  set bounds of w to {100, 80, 510, 520}
+  set bounds of w to {100, 80, 420, 430}
   update d
   delay 2
   close w
