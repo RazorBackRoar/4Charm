@@ -1,157 +1,143 @@
-# 4Charm - 4chan Media Downloader
+██╗  ██╗ ██████╗██╗  ██╗ █████╗ ██████╗ ███╗   ███╗
+██║  ██║██╔════╝██║  ██║██╔══██╗██╔══██╗████╗ ████║
+███████║██║     ███████║███████║██████╔╝██╔████╔██║
+╚════██║██║     ██╔══██║██╔══██║██╔══██╗██║╚██╔╝██║
+     ██║╚██████╗██║  ██║██║  ██║██║  ██║██║ ╚═╝ ██║
+     ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝
 
-A high-performance GUI application for bulk downloading media from 4chan threads and boards.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-## Features
+⚡ About
 
-- **Bulk Downloads**: Download all media from threads, catalogs, or entire boards
-- **Smart Organization**: Automatically organizes downloads by thread with WEBM subfolder support
-- **Resume Capability**: Automatically resumes interrupted downloads
-- **Duplicate Detection**: Prevents downloading the same file twice using hash verification
-- **Concurrent Downloads**: Multi-threaded downloading for maximum speed
-- **Adaptive Rate Limiting**: Intelligent throttling to respect 4chan's API limits
-- **Custom Download Locations**: Choose any folder for storing sessions
-- **Real-Time Progress**: Monitor transfers with log output and stats
-- **Dark Mode Support**: Respects macOS system appearance settings
-- **Retina Display Ready**: Optimized for high-resolution displays
+4Charm is a powerful, lightning-fast 4chan media downloader built for macOS. Download threads, catalogs, and entire boards with intelligent organization and failsafe resume capabilities.
 
-## Supported Media Types
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-- **Images**: JPG, PNG, GIF, WEBP, BMP
-- **Videos**: WEBM, MP4, MOV, AVI, MKV
-- **Other**: PDF, TXT, ZIP, RAR
+✨ Features
 
-## macOS Installation
+🚀 Hyper Bulk Downloads — Threads, catalogs, entire boards  
+🗂️ Auto-Organized Storage — Thread folders with separate WEBM directories  
+🔁 Fail-Safe Resume — Interrupted sessions resume instantly  
+🧬 Duplicate Protection — Hash-based deduplication prevents redundant downloads  
+⚙️ Multithread Engine — Parallel downloading for maximum speed  
+🚦 Adaptive Rate Limiting — Automatically adjusts to avoid throttling  
+📁 Custom Save Locations — Choose any directory  
+📡 Real-Time Logging — Live activity monitoring  
+🌙 Native Dark Mode — Seamless macOS integration  
+🖥️ Retina Display Ready — Crisp interface on high-resolution screens  
 
-### Download
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Download the latest `4Charm_X.X.X.dmg` file from the [Releases](https://github.com/RazorBackRoar/4Charm/releases) page.
+🎯 Supported Media
 
-### Installation Steps
+Images: JPG, PNG, GIF, WEBP, BMP
+Videos: WEBM, MP4, MOV, AVI, MKV
+Documents: PDF, TXT, ZIP, RAR
 
-1. **Open the DMG**: Double-click the downloaded `4Charm_X.X.X.dmg` file
-2. **Drag to Applications**: Drag the 4Charm app icon to the Applications folder
-3. **Eject the DMG**: Right-click the 4Charm volume on your desktop and select "Eject"
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-### First Launch - Security Override Required
+📦 Installation
 
-**Why does macOS show a security warning?**
+Download
 
-4Charm is signed with a free ad-hoc signature instead of a paid Apple Developer ID certificate ($99/year). This means macOS Gatekeeper will block the app from opening normally on first launch. This is a standard security feature for apps not distributed through the Mac App Store.
+Get the latest 4Charm_X.X.X.dmg from the Releases page: https://github.com/RazorBackRoar/4Charm/releases
 
-**The app is safe to use** - the source code is open and available for review. The security warning appears because the developer chose not to pay for Apple's annual certificate program.
+Install
 
-### Method 1: Right-Click to Open (Recommended)
+1. Mount the DMG file
+2. Drag 4Charm.app to Applications
+3. Eject the DMG
 
-1. Open **Finder** and navigate to your **Applications** folder
-2. **Right-click** (or Control-click) on **4Charm.app**
-3. Select **Open** from the context menu
-4. Click **Open** in the security dialog that appears
-5. The app will now launch and remember this choice for future launches
+First Launch (Gatekeeper Override)
 
-### Method 2: Terminal Command (Advanced)
+Since 4Charm uses ad-hoc signing, macOS will show a security warning on first launch.
 
-If the right-click method doesn't work, you can remove the quarantine attribute using Terminal:
+Method A — Right-Click:
+1. Open Applications folder
+2. Right-click 4Charm.app → Open
+3. Click "Open" to approve
 
+Method B — Terminal:
 ```bash
 sudo xattr -cr /Applications/4Charm.app
 ```
 
-After running this command, you can launch 4Charm normally from your Applications folder.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-## Usage
+🚀 Usage
 
-1. **Launch 4Charm** from your Applications folder
-2. **Enter a 4chan URL** in the input field:
-   - Thread: `https://boards.4chan.org/g/thread/12345678`
-   - Catalog: `https://boards.4chan.org/g/catalog`
-   - Board: `https://boards.4chan.org/g/`
-3. **Choose Download Location** (on first download, you'll be prompted to select where to save files)
-4. **Click Download** or press Enter
-5. **Monitor Progress** in the log window
-6. **Find Downloads** in your chosen folder
+1. Launch 4Charm
+2. Paste a URL:
+   Thread: https://boards.4chan.org/g/thread/12345678
+   Catalog: https://boards.4chan.org/g/catalog
+   Board: https://boards.4chan.org/g/
+3. Choose your download location
+4. Click "Start Download"
+5. Monitor progress in real-time
 
-### Quick Start (TL;DR)
+Batch Mode: Paste up to 10 URLs and download them all simultaneously.
 
-1. Install 4Charm from the DMG and drag it into Applications.
-2. Choose or confirm your download directory.
-3. Paste up to 10 thread/catalog URLs (one per line) and click **Start Download**.
-4. Let the real-time log show progress; WEBM files go into a dedicated subfolder.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-## Download Organization
+📁 Download Structure
 
-Files are automatically organized in your chosen download folder:
-
-```text
-Your Download Folder/
-├── board-threadid/
-│   ├── image1.jpg
-│   ├── image2.png
+```
+Downloads/
+├── g-12345678/
+│   ├── img001.jpg
+│   ├── img002.png
 │   └── WEBM/
-│       ├── video1.webm
-│       └── video2.webm
-└── board-catalog/
+│       ├── vid001.webm
+│       └── vid002.webm
+└── g-catalog/
     └── ...
 ```
 
-- **Thread downloads**: Organized by board and thread ID
-- **WEBM files**: Automatically placed in a WEBM subfolder
-- **Other media**: Kept in the main thread folder
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-## System Requirements
+💻 Requirements
 
-- **macOS**: 10.13 (High Sierra) or later
-- **Disk Space**: 200+ MB for application, plus space for downloads
-- **Internet**: Active connection required
-- **Python**: Not required (bundled in app)
+macOS 10.13 or later
+~200MB free disk space
+Internet connection
+No Python installation required
 
-## Troubleshooting
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-### "4Charm.app is damaged and can't be opened"
+🔧 Troubleshooting
 
-This message appears when macOS blocks the app due to the ad-hoc signature. Use one of the security override methods above.
+"App is damaged" or "Cannot be opened"  
+This is a Gatekeeper security warning. Use the right-click method or terminal command above.
 
-### "4Charm.app can't be opened because Apple cannot check it for malicious software"
+Slow downloads  
+4chan implements rate limiting. The app automatically adapts to avoid throttling.
 
-This is the standard Gatekeeper warning. Right-click the app and select "Open" to bypass this check.
+No media found  
+The URL may be invalid, the thread may have been deleted, or no media may be present.
 
-### App won't launch after security override
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Try removing the quarantine attribute:
+🛠️ Building from Source
 
-```bash
-sudo xattr -cr /Applications/4Charm.app
-```
+See BUILD.md for complete build instructions.
 
-### Downloads fail or are very slow
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-- Check your internet connection
-- 4chan may be rate-limiting requests - the app will automatically slow down
-- Try downloading fewer threads at once
+📜 License
 
-### "No media files found"
+MIT License - See LICENSE for details.
 
-- Verify the URL is correct and the thread still exists
-- Some threads may not contain any media files
-- The thread may have been archived or deleted
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-## Building from Source
+🐞 Support
 
-See [BUILD.md](BUILD.md) for detailed instructions on building 4Charm from source code.
+Issues: https://github.com/RazorBackRoar/4Charm/issues
+Source: https://github.com/RazorBackRoar/4Charm
 
-## License
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-MIT License - See [LICENSE](LICENSE) for full details.
+🔐 Privacy
 
-## Support
+4Charm operates 100% locally. No tracking, no analytics, no data collection. The app only communicates with 4chan's public API.
 
-- **Issues**: Report bugs on [GitHub Issues](https://github.com/RazorBackRoar/4Charm/issues)
-- **Source Code**: Available on [GitHub](https://github.com/RazorBackRoar/4Charm)
-
-## Privacy
-
-4Charm does not collect, store, or transmit any personal information. All downloads are saved locally to your computer. The app only communicates with 4chan's public API to fetch thread data and download media files.
-
----
-
-**Note**: 4Charm is not affiliated with or endorsed by 4chan. Use responsibly and respect 4chan's terms of service.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
