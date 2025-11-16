@@ -12,7 +12,7 @@ NC='\033[0m'
 
 # App configuration
 APP_NAME="4Charm"
-APP_VERSION="3.0.0"
+APP_VERSION="3.0.1"
 PYTHON_EXE="$HOME/.venvs/razor/bin/python"
 DIST_DIR="dist"
 APP_PATH="$DIST_DIR/${APP_NAME}.app"
@@ -123,7 +123,6 @@ tell application "Finder"
   set current view of w to icon view
   set toolbar visible of w to false
   set statusbar visible of w to false
-  set bounds of w to {100, 80, 510, 520}
   set icon size of icon view options of w to 72
   set arrangement of icon view options of w to not arranged
 
@@ -133,8 +132,10 @@ tell application "Finder"
   set position of item "License.txt" of w to {105, 265}
   set position of item "README" of w to {285, 265}
 
+  -- Set bounds AFTER positioning items to prevent Finder auto-resize
+  set bounds of w to {100, 80, 510, 520}
   update d
-  delay 1
+  delay 2
   close w
 end tell
 OSA
