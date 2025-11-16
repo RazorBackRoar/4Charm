@@ -1169,9 +1169,8 @@ class MainWindow(QMainWindow):
         min_lines = 12
         padding = 24
         min_height = (line_height * min_lines) + padding
-        max_height = (line_height * (min_lines + 4)) + padding
         self.url_input.setMinimumHeight(min_height)
-        self.url_input.setMaximumHeight(max_height)
+        # Remove maximum height constraint to allow proper scrolling
         self.url_input.setStyleSheet(
             "background-color: #2d2d2d; color: #ffffff; border: none; padding: 12px 16px; font-size: 16px; selection-background-color: #4a9eff; line-height: 1.4;"
         )
