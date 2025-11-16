@@ -84,8 +84,9 @@ def main():
         print(f'✅ Updated main.py: version_label = QLabel("v{new_version}")')
 
         # Auto-commit if git repo
-        if Path(".git").exists():
-            git_commit_version_change(old_version, new_version)
+        # Note: Removed to avoid conflicts with pre-commit hook
+        # if Path(".git").exists():
+        #     git_commit_version_change(old_version, new_version)
 
         return new_version
 
