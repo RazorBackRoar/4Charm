@@ -12,7 +12,7 @@ NC='\033[0m'
 
 # App configuration
 APP_NAME="4Charm"
-APP_VERSION="3.0.117"
+APP_VERSION="3.0.712"
 PYTHON_EXE="$HOME/.venvs/razor/bin/python"
 DIST_DIR="dist"
 APP_PATH="$DIST_DIR/${APP_NAME}.app"
@@ -133,7 +133,7 @@ tell application "Finder"
   set position of item "README" of w to {285, 265}
 
   -- Set bounds AFTER positioning items to prevent Finder auto-resize
-  set bounds of w to {100, 80, 420, 430}
+  set bounds of w to {100, 80, 510, 520}
   update d
   delay 2
   close w
