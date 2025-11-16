@@ -12,7 +12,7 @@ NC='\033[0m'
 
 # App configuration
 APP_NAME="4Charm"
-APP_VERSION="3.0.727"
+APP_VERSION="3.0.1108"
 PYTHON_EXE="$HOME/.venvs/razor/bin/python"
 DIST_DIR="dist"
 APP_PATH="$DIST_DIR/${APP_NAME}.app"
@@ -32,6 +32,13 @@ log() {
 }
 
 log "${BLUE}🚀 Building ${APP_NAME} v${APP_VERSION}${NC}"
+
+# --- Auto-increment version ---
+log "${YELLOW}0. Auto-incrementing version...${NC}"
+"$PYTHON_EXE" increment_version.py >/dev/null 2>&1 || log "${YELLOW}⚠️  Version increment failed, continuing with current version${NC}"
+# Reload version after increment
+APP_VERSION=$(grep 'APP_VERSION=' build.sh | cut -d'"' -f2)
+log "${GREEN}✔ Version: v${APP_VERSION}${NC}"
 
 # --- Pre-Build: Eject any mounted 4Charm volumes ---
 log "${YELLOW}0. Checking for mounted 4Charm volumes...${NC}"
