@@ -24,26 +24,27 @@ def get_current_version():
 
 
 def increment_version(version):
-    """Increment version with rollover logic (v3.1 -> v3.2 -> ... -> v3.9 -> v4.0)."""
+    """Increment version with rollover logic (v3.3.0 -> v3.4.0 -> ... -> v3.9.0 -> v4.0.0)."""
     # Remove 'v' prefix if present
     version = version.lstrip("v")
 
     parts = version.split(".")
-    if len(parts) != 2:
-        raise ValueError(f"Invalid version format: {version}. Expected format: v3.1")
+    if len(parts) != 3:
+        raise ValueError(f"Invalid version format: {version}. Expected format: v3.3.0")
 
     major = int(parts[0])
-    minor = int(parts[1])
+    middle = int(parts[1])
+    # Last part is always 0, ignore it
 
-    # Increment minor version
-    minor += 1
+    # Increment middle version
+    middle += 1
 
-    # Rollover: if minor reaches 10, reset to 0 and increment major
-    if minor >= 10:
-        minor = 0
+    # Rollover: if middle reaches 10, reset to 0 and increment major
+    if middle >= 10:
+        middle = 0
         major += 1
 
-    return f"{major}.{minor}"
+    return f"{major}.{middle}.0"
 
 
 def update_build_sh(new_version):
