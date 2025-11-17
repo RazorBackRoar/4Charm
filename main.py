@@ -1163,15 +1163,17 @@ class MainWindow(QMainWindow):
             Qt.ScrollBarPolicy.ScrollBarAsNeeded
         )
         self.url_input.setPlaceholderText(
-            "1. https://boards.4chan.org/g/thread/123456789\n2. https://boards.4chan.org/pol/thread/987654321\n3. https://boards.4chan.org/b/thread/555666777\n4. https://boards.4chan.org/v/thread/888999000\n5. https://boards.4chan.org/gif/thread/111222333"
+            "Enter 4chan thread URLs here, one per line...\n\n"
+            "Examples:\n"
+            "https://boards.4chan.org/g/thread/123456789\n"
+            "https://boards.4channel.org/vg/thread/987654321"
         )
-        line_height = self.url_input.fontMetrics().lineSpacing()
-        min_lines = 12
-        padding = 24
-        min_height = (line_height * min_lines) + padding
-        max_height = (line_height * (min_lines + 4)) + padding
-        self.url_input.setMinimumHeight(min_height)
-        self.url_input.setMaximumHeight(max_height)
+
+        # ✅ FIX: Set minimum height and size policy
+        self.url_input.setMinimumHeight(120)  # Ensure enough rows are visible
+        self.url_input.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+        )
         self.url_input.setStyleSheet(
             "background-color: #2d2d2d; color: #ffffff; border: none; padding: 12px 16px; font-size: 16px; selection-background-color: #4a9eff; line-height: 1.4;"
         )
@@ -1310,7 +1312,7 @@ class MainWindow(QMainWindow):
         self.status_bar.showMessage("Ready")
 
         # Add version label to bottom right of status bar
-        version_label = QLabel("v3.5.0")
+        version_label = QLabel("v3.6.0")
         version_label.setStyleSheet("font-size: 11px; color: #666; padding: 0 8px;")
         self.status_bar.addPermanentWidget(version_label)
 
@@ -1357,7 +1359,11 @@ class MainWindow(QMainWindow):
             self.status_bar.showMessage(f"Download folder: {folder}")
 
     def validate_urls(self):
-        """Validate the entered URLs, auto-number them, and update UI accordingly."""
+        """Validate and auto-number URLs in real-time"""
+        # ✅ FIX: Save current scroll position
+        scrollbar = self.url_input.verticalScrollBar()
+        scroll_pos = scrollbar.value()
+
         if getattr(self, "_renumbering", False):
             return  # avoid recursion while renumbering
 
@@ -1385,6 +1391,13 @@ class MainWindow(QMainWindow):
 
         # Update the URL counter label
         self.url_count_label.setText(f"URLs: {len(cleaned_urls)}")
+
+        # ✅ FIX: Restore scroll position after validation
+        scrollbar.setValue(scroll_pos)
+
+        # ✅ FIX: If only one URL, ensure it's visible
+        if len(raw_lines) == 1 and raw_lines[0].strip():
+            self.url_input.ensureCursorVisible()
 
         if not urls:
             self.start_cancel_btn.setEnabled(False)
@@ -1646,25 +1659,23 @@ class MainWindow(QMainWindow):
             logger.warning(f"Could not update download stats: {e}")
 
     def paste_from_clipboard(self):
-        text = QApplication.clipboard().text().strip()
-        if text and ("4chan.org" in text or "boards.4chan.org" in text):
-            urls = re.findall(r"https?://[^\s]+", text)
-            valid_urls = [
-                url for url in urls if "boards.4chan.org" in url or "4chan.org" in url
-            ]
-            if valid_urls:
-                # Always number the URLs starting from 1
-                numbered_urls = [f"{i+1}. {url}" for i, url in enumerate(valid_urls)]
-                self.url_input.setPlainText("\n".join(numbered_urls))
+        """Paste URLs from clipboard with auto-formatting"""
+        clipboard = QApplication.clipboard()
+        text = clipboard.text()
 
-                # Move cursor to the end and add a new line
-                cursor = self.url_input.textCursor()
-                cursor.movePosition(QTextCursor.MoveOperation.End)
-                cursor.insertText("\n")
-                self.url_input.setTextCursor(cursor)
-                self._scroll_url_input_to_end()
+        if text:
+            # Insert at current cursor position
+            cursor = self.url_input.textCursor()
+            cursor.insertText(text)
 
-                self.validate_urls()  # Trigger validation after paste
+            # ✅ FIX: Ensure cursor is visible after paste
+            self.url_input.setTextCursor(cursor)
+            self.url_input.ensureCursorVisible()  # Scroll to cursor
+
+            # ✅ FIX: Force validation and scroll to end of pasted content
+            self.validate_urls()
+            scrollbar = self.url_input.verticalScrollBar()
+            scrollbar.setValue(scrollbar.maximum())
 
     def cancel_or_close(self):
         if self.download_thread and self.download_thread.isRunning():
