@@ -1237,6 +1237,9 @@ class MainWindow(QMainWindow):
 """
         )
         url_frame_layout.addWidget(self.url_input)
+        url_frame_layout.setAlignment(
+            self.url_input, Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft
+        )
 
         url_layout.addWidget(url_frame)
 
@@ -1371,7 +1374,7 @@ class MainWindow(QMainWindow):
         self.status_bar.showMessage("Ready")
 
         # Add version label to bottom right of status bar
-        version_label = QLabel("v4.8.0")
+        version_label = QLabel("v5.0.0")
         version_label.setStyleSheet("font-size: 11px; color: #666; padding: 0 8px;")
         self.status_bar.addPermanentWidget(version_label)
 
