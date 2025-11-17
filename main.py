@@ -1156,6 +1156,8 @@ class MainWindow(QMainWindow):
 
         # URL input area
         self.url_input = QTextEdit()
+        self.url_input.setAcceptRichText(False)
+        self.url_input.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
         self.url_input.setPlaceholderText(
             "Enter 4chan thread URLs here, one per line...\n\n"
             "Examples:\n"
@@ -1166,11 +1168,14 @@ class MainWindow(QMainWindow):
         # ✅ FIX: Set minimum height to show more URLs
         self.url_input.setMinimumHeight(150)
         self.url_input.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
         )
 
         # ✅ FIX: Ensure scrollbar is always visible when needed
         self.url_input.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+
+        # ✅ FIX: Remove document margins to prevent vertical centering
+        self.url_input.document().setDocumentMargin(0)
 
         # ✅ FIX: Updated stylesheet with explicit scrollbar arrows
         self.url_input.setStyleSheet(
@@ -1366,7 +1371,7 @@ class MainWindow(QMainWindow):
         self.status_bar.showMessage("Ready")
 
         # Add version label to bottom right of status bar
-        version_label = QLabel("v4.6.0")
+        version_label = QLabel("v4.8.0")
         version_label.setStyleSheet("font-size: 11px; color: #666; padding: 0 8px;")
         self.status_bar.addPermanentWidget(version_label)
 
