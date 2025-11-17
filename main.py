@@ -1157,8 +1157,8 @@ class MainWindow(QMainWindow):
         # URL input area
         self.url_input = QTextEdit()
         self.url_input.setAcceptRichText(False)
-        self.url_input.setLineWrapMode(QTextEdit.LineWrapMode.NoWrap)
-        self.url_input.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        self.url_input.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
+        self.url_input.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.url_input.setHorizontalScrollBarPolicy(
             Qt.ScrollBarPolicy.ScrollBarAsNeeded
         )
@@ -1170,7 +1170,7 @@ class MainWindow(QMainWindow):
         )
 
         # ✅ FIX: Set minimum height and size policy
-        self.url_input.setMinimumHeight(120)  # Ensure enough rows are visible
+        self.url_input.setMinimumHeight(200)  # Ensure enough rows are visible
         self.url_input.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
@@ -1312,7 +1312,7 @@ class MainWindow(QMainWindow):
         self.status_bar.showMessage("Ready")
 
         # Add version label to bottom right of status bar
-        version_label = QLabel("v3.6.0")
+        version_label = QLabel("v3.8.0")
         version_label.setStyleSheet("font-size: 11px; color: #666; padding: 0 8px;")
         self.status_bar.addPermanentWidget(version_label)
 
