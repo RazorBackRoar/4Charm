@@ -1156,12 +1156,6 @@ class MainWindow(QMainWindow):
 
         # URL input area
         self.url_input = QTextEdit()
-        self.url_input.setAcceptRichText(False)
-        self.url_input.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
-        self.url_input.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.url_input.setHorizontalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAsNeeded
-        )
         self.url_input.setPlaceholderText(
             "Enter 4chan thread URLs here, one per line...\n\n"
             "Examples:\n"
@@ -1169,15 +1163,73 @@ class MainWindow(QMainWindow):
             "https://boards.4channel.org/vg/thread/987654321"
         )
 
-        # ✅ FIX: Set minimum height and size policy
-        self.url_input.setMinimumHeight(150)  # Ensure enough rows are visible
+        # ✅ FIX: Set minimum height to show more URLs
+        self.url_input.setMinimumHeight(150)
         self.url_input.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
-        # ✅ FIX: Remove document margins to prevent vertical centering
-        self.url_input.document().setDocumentMargin(0)
+
+        # ✅ FIX: Ensure scrollbar is always visible when needed
+        self.url_input.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+
+        # ✅ FIX: Updated stylesheet with explicit scrollbar arrows
         self.url_input.setStyleSheet(
-            "background-color: #2d2d2d; color: #ffffff; border: none; padding: 8px 12px; font-size: 16px; selection-background-color: #4a9eff;"
+            """
+    QTextEdit {
+        background-color: #2b2b2b;
+        color: #ffffff;
+        border: 1px solid #3a3a3a;
+        border-radius: 4px;
+        padding: 8px;
+        font-family: 'Consolas', 'Monaco', monospace;
+        font-size: 10pt;
+        selection-background-color: #4a4a4a;
+    }
+
+    /* Scrollbar track */
+    QScrollBar:vertical {
+        background: #2b2b2b;
+        width: 16px;
+        margin: 0;
+    }
+
+    /* Scrollbar handle */
+    QScrollBar::handle:vertical {
+        background: #4a4a4a;
+        min-height: 20px;
+        border-radius: 3px;
+    }
+
+    /* ✅ FIX: UP arrow button */
+    QScrollBar::sub-line:vertical {
+        height: 16px;
+        subcontrol-position: top;
+        subcontrol-origin: margin;
+        image: url(none);
+        background: #3a3a3a;
+        border-top: 1px solid #3a3a3a;
+    }
+
+    /* ✅ FIX: DOWN arrow button */
+    QScrollBar::add-line:vertical {
+        height: 16px;
+        subcontrol-position: bottom;
+        subcontrol-origin: margin;
+        image: url(none);
+        background: #3a3a3a;
+        border-bottom: 1px solid #3a3a3a;
+    }
+
+    /* Arrow button hover states */
+    QScrollBar::sub-line:vertical:hover, QScrollBar::add-line:vertical:hover {
+        background: #5a5a5a;
+    }
+
+    /* Scrollbar space above/below handle */
+    QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+        background: none;
+    }
+"""
         )
         url_frame_layout.addWidget(self.url_input)
 
@@ -1314,7 +1366,7 @@ class MainWindow(QMainWindow):
         self.status_bar.showMessage("Ready")
 
         # Add version label to bottom right of status bar
-        version_label = QLabel("v4.2.0")
+        version_label = QLabel("v4.4.0")
         version_label.setStyleSheet("font-size: 11px; color: #666; padding: 0 8px;")
         self.status_bar.addPermanentWidget(version_label)
 
