@@ -1170,9 +1170,9 @@ class MainWindow(QMainWindow):
         )
 
         # ✅ FIX: Set minimum height and size policy
-        self.url_input.setMinimumHeight(200)  # Ensure enough rows are visible
+        self.url_input.setMinimumHeight(150)  # Ensure enough rows are visible
         self.url_input.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
         )
         self.url_input.setStyleSheet(
             "background-color: #2d2d2d; color: #ffffff; border: none; padding: 12px 16px; font-size: 16px; selection-background-color: #4a9eff; line-height: 1.4;"
@@ -1312,7 +1312,7 @@ class MainWindow(QMainWindow):
         self.status_bar.showMessage("Ready")
 
         # Add version label to bottom right of status bar
-        version_label = QLabel("v3.8.0")
+        version_label = QLabel("v4.0.0")
         version_label.setStyleSheet("font-size: 11px; color: #666; padding: 0 8px;")
         self.status_bar.addPermanentWidget(version_label)
 
