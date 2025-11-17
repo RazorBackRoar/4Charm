@@ -1174,8 +1174,10 @@ class MainWindow(QMainWindow):
         self.url_input.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
         )
+        # ✅ FIX: Remove document margins to prevent vertical centering
+        self.url_input.document().setDocumentMargin(0)
         self.url_input.setStyleSheet(
-            "background-color: #2d2d2d; color: #ffffff; border: none; padding: 12px 16px; font-size: 16px; selection-background-color: #4a9eff; line-height: 1.4;"
+            "background-color: #2d2d2d; color: #ffffff; border: none; padding: 8px 12px; font-size: 16px; selection-background-color: #4a9eff;"
         )
         url_frame_layout.addWidget(self.url_input)
 
@@ -1312,7 +1314,7 @@ class MainWindow(QMainWindow):
         self.status_bar.showMessage("Ready")
 
         # Add version label to bottom right of status bar
-        version_label = QLabel("v4.0.0")
+        version_label = QLabel("v4.2.0")
         version_label.setStyleSheet("font-size: 11px; color: #666; padding: 0 8px;")
         self.status_bar.addPermanentWidget(version_label)
 
