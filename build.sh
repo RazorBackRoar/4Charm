@@ -12,7 +12,7 @@ NC='\033[0m'
 
 # App configuration
 APP_NAME="4Charm"
-APP_VERSION="6.4.0"
+APP_VERSION="6.6.0"
 VENV_DIR="build/venv"
 PYTHON_EXE="$VENV_DIR/bin/python"
 DIST_DIR="dist"
