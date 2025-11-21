@@ -1,0 +1,6 @@
+PySide6
+requests
+urllib3
+certifi
+beautifulsoup4
+lxml
