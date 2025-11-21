@@ -102,6 +102,12 @@ def git_commit_version_change(old_version, new_version):
         print(f"⚠️  Git commit failed: {e}")
 
 
+def update_version_file(new_version):
+    """Update version in VERSION file."""
+    version_file = Path("VERSION")
+    version_file.write_text(new_version)
+
+
 def main():
     """Main function to increment version."""
     try:
@@ -113,15 +119,12 @@ def main():
         update_build_sh(new_version)
         update_main_py(new_version)
         update_setup_py(new_version)
+        update_version_file(new_version)
 
+        print(f'✅ Updated VERSION file: {new_version}')
         print(f'✅ Updated build.sh: APP_VERSION="{new_version}"')
         print(f'✅ Updated main.py: version_label = QLabel("v{new_version}")')
         print(f'✅ Updated setup.py: CFBundleVersion="{new_version}"')
-
-        # Auto-commit if git repo
-        # Note: Removed to avoid conflicts with pre-commit hook
-        # if Path(".git").exists():
-        #     git_commit_version_change(old_version, new_version)
 
         return new_version
 
