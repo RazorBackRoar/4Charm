@@ -12,7 +12,7 @@ NC='\033[0m'
 
 # App configuration
 APP_NAME="4Charm"
-APP_VERSION="7.1.0"
+APP_VERSION="7.2.0"
 VENV_DIR="build/venv"
 PYTHON_EXE="$VENV_DIR/bin/python"
 DIST_DIR="dist"
@@ -57,22 +57,8 @@ log "${YELLOW}   Installing dependencies...${NC}"
 
 log "${GREEN}✔ Build environment ready${NC}"
 
-# --- Auto-increment version ---
-log "${YELLOW}1. Checking version...${NC}"
-
-# Check if version files already have uncommitted changes
-if git diff --quiet build.sh main.py setup.py 2>/dev/null; then
-  # No uncommitted changes to version files, safe to increment
-  if "$PYTHON_EXE" increment_version.py >/dev/null 2>&1; then
-    APP_VERSION=$("$PYTHON_EXE" -c "import increment_version; print(increment_version.get_current_version())")
-    log "${GREEN}✔ Version incremented to: v${APP_VERSION}${NC}"
-  else
-    log "${YELLOW}⚠️  Version increment failed, continuing with current version${NC}"
-  fi
-else
-  # Version files already modified, skip increment to avoid loop
-  log "${YELLOW}⚠️  Version files already modified, skipping auto-increment${NC}"
-fi
+log "${YELLOW}1. Using version: v${APP_VERSION}${NC}"
+# To increment version, run: python increment_version.py
 
 # --- Pre-Build: Eject any mounted 4Charm volumes ---
 log "${YELLOW}2. Checking for mounted 4Charm volumes...${NC}"
