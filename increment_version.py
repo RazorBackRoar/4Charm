@@ -67,11 +67,30 @@ def update_main_py(new_version):
     main_py.write_text(content)
 
 
+def update_setup_py(new_version):
+    """Update version in setup.py."""
+    setup_py = Path("setup.py")
+    content = setup_py.read_text()
+    # Update CFBundleVersion
+    content = re.sub(
+        r'"CFBundleVersion": "[^"]+"',
+        f'"CFBundleVersion": "{new_version}"',
+        content,
+    )
+    # Update CFBundleShortVersionString
+    content = re.sub(
+        r'"CFBundleShortVersionString": "[^"]+"',
+        f'"CFBundleShortVersionString": "{new_version}"',
+        content,
+    )
+    setup_py.write_text(content)
+
+
 def git_commit_version_change(old_version, new_version):
     """Commit version changes to git."""
     try:
         subprocess.run(
-            ["git", "add", "build.sh", "main.py"], check=True, capture_output=True
+            ["git", "add", "build.sh", "main.py", "setup.py"], check=True, capture_output=True
         )
         subprocess.run(
             ["git", "commit", "-m", f"Version bump: v{old_version} -> v{new_version}"],
@@ -93,9 +112,11 @@ def main():
 
         update_build_sh(new_version)
         update_main_py(new_version)
+        update_setup_py(new_version)
 
         print(f'✅ Updated build.sh: APP_VERSION="{new_version}"')
         print(f'✅ Updated main.py: version_label = QLabel("v{new_version}")')
+        print(f'✅ Updated setup.py: CFBundleVersion="{new_version}"')
 
         # Auto-commit if git repo
         # Note: Removed to avoid conflicts with pre-commit hook
