@@ -2,9 +2,9 @@
 """
 Automatic version increment script for 4Charm.
 Updates version in build.sh, main.py, and setup.py automatically.
-Usage: 
+Usage:
   ./increment_version.py           # Auto-increment version
-  ./increment_version.py --set 8.0.0  # Set specific version
+  ./increment_version.py --set 4.0.0  # Set specific version
 """
 
 import re
@@ -119,14 +119,14 @@ def main():
     parser.add_argument(
         "--set",
         type=str,
-        help="Set a specific version (e.g., --set 8.0.0)",
+        help="Set a specific version (e.g., --set 4.0.0)",
         metavar="VERSION"
     )
     args = parser.parse_args()
 
     try:
         old_version = get_current_version()
-        
+
         if args.set:
             # User specified a version manually
             new_version = args.set.lstrip("v")
@@ -134,7 +134,7 @@ def main():
             parts = new_version.split(".")
             if len(parts) != 3 or not all(p.isdigit() for p in parts):
                 print(f"❌ Invalid version format: {new_version}")
-                print("   Expected format: X.Y.Z (e.g., 8.0.0)")
+                print("   Expected format: X.Y.Z (e.g., 4.0.0)")
                 sys.exit(1)
             print(f"🔄 Setting version: v{old_version} -> v{new_version}")
         else:
