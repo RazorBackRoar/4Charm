@@ -2,7 +2,7 @@
 """
 4Charm - Advanced 4chan Media Downloader
 A high-performance GUI application for bulk downloading media from 4chan threads and boards.
-Version: 3.0.1
+Version: 4.0.0
 """
 
 import os
@@ -1371,7 +1371,7 @@ class MainWindow(QMainWindow):
         self.status_bar.showMessage("Ready")
 
         # Add version label to bottom right of status bar
-        version_label = QLabel("v7.8.0")
+        version_label = QLabel("v4.1.0")
         version_label.setStyleSheet("font-size: 11px; color: #666; padding: 0 8px;")
         self.status_bar.addPermanentWidget(version_label)
 
@@ -1735,12 +1735,12 @@ class MainWindow(QMainWindow):
             # If we found valid URLs, paste them nicely formatted
             # Join with newlines
             paste_text = "\n".join(valid_urls) + "\n"
-            
+
             cursor = self.url_input.textCursor()
             # If we're not at the start of a line, add a newline first
             if cursor.positionInBlock() > 0:
                 paste_text = "\n" + paste_text
-                
+
             cursor.insertText(paste_text)
             self.url_input.setTextCursor(cursor)
         else:
@@ -1750,7 +1750,7 @@ class MainWindow(QMainWindow):
         # Ensure everything is visible and validated
         self.url_input.ensureCursorVisible()
         self.validate_urls()
-        
+
         # Scroll to bottom to show new entries
         scrollbar = self.url_input.verticalScrollBar()
         if scrollbar:
