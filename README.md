@@ -69,13 +69,17 @@
 
 ```text
 Downloads/
-├── g-12345678/
+├── g-12345678/          # https://boards.4chan.org/g/thread/12345678
 │   ├── img001.jpg
 │   ├── img002.png
 │   └── WEBM/
 │       ├── vid001.webm
 │       └── vid002.webm
-└── g-catalog/
+├── wg-99887766/         # https://boards.4chan.org/wg/thread/99887766
+│   ├── panel01.png
+│   └── WEBM/
+│       └── clip01.webm
+└── tv-44556677/         # https://boards.4chan.org/tv/thread/44556677
     └── ...
 ```
 
