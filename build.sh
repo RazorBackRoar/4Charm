@@ -12,7 +12,7 @@ NC='\033[0m'
 
 # App configuration
 APP_NAME="4Charm"
-APP_VERSION="6.0.0"
+APP_VERSION="6.3.0"
 PYTHON_EXE="/opt/homebrew/bin/python3.13"
 DIST_DIR="dist"
 APP_PATH="$DIST_DIR/${APP_NAME}.app"

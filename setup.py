@@ -25,7 +25,7 @@ OPTIONS = {
     },
     "packages": ["PySide6", "requests", "urllib3", "certifi", "bs4"],
     # Explicitly excluding PyQt6 is good practice
-    "excludes": ["PyQt6", "PyQt5", "tkinter", "test", "unittest"],
+    "excludes": ["PyQt6", "PyQt5", "tkinter", "test", "unittest", "PyInstaller"],
     "includes": ["PySide6.QtCore", "PySide6.QtWidgets", "PySide6.QtGui"],
     "optimize": 2,
     "compressed": True,
