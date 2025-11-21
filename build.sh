@@ -12,7 +12,7 @@ NC='\033[0m'
 
 # App configuration
 APP_NAME="4Charm"
-APP_VERSION="7.4.0"
+APP_VERSION="7.7.0"
 VENV_DIR="build/venv"
 PYTHON_EXE="$VENV_DIR/bin/python"
 DIST_DIR="dist"
@@ -169,14 +169,14 @@ tell application "Finder"
   set icon size of icon view options of w to 72
   set arrangement of icon view options of w to not arranged
 
-  -- 2x2 grid layout - compact size with no scrollbars
-  set position of item "${APP_NAME}.app" of w to {90, 90}
-  set position of item "Applications" of w to {250, 90}
-  set position of item "License.txt" of w to {90, 220}
-  set position of item "README" of w to {250, 220}
+  -- 2x2 grid layout - 400x430 window (extra height for labels)
+  set position of item "${APP_NAME}.app" of w to {100, 100}
+  set position of item "Applications" of w to {260, 100}
+  set position of item "License.txt" of w to {100, 230}
+  set position of item "README" of w to {260, 230}
 
-  -- Set bounds AFTER positioning items to prevent Finder auto-resize
-  set bounds of w to {100, 100, 490, 480}
+  -- Set bounds AFTER positioning items - 400 wide x 430 tall to avoid scrollbars
+  set bounds of w to {100, 100, 500, 530}
   update d
   delay 2
   close w
