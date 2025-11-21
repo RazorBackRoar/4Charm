@@ -1371,7 +1371,7 @@ class MainWindow(QMainWindow):
         self.status_bar.showMessage("Ready")
 
         # Add version label to bottom right of status bar
-        version_label = QLabel("v6.6.0")
+        version_label = QLabel("v6.8.0")
         version_label.setStyleSheet("font-size: 11px; color: #666; padding: 0 8px;")
         self.status_bar.addPermanentWidget(version_label)
 
