@@ -1,9 +1,9 @@
-██╗  ██╗ ██████╗██╗  ██╗ █████╗ ██████╗ ███╗   ███╗
-██║  ██║██╔════╝██║  ██║██╔══██╗██╔══██╗████╗ ████║
-███████║██║     ███████║███████║██████╔╝██╔████╔██║
-╚════██║██║     ██╔══██║██╔══██║██╔══██╗██║╚██╔╝██║
-     ██║╚██████╗██║  ██║██║  ██║██║  ██║██║ ╚═╝ ██║
-     ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝
+██╗ ██╗ ██████╗██╗ ██╗ █████╗ ██████╗ ███╗ ███╗
+██║ ██║██╔════╝██║ ██║██╔══██╗██╔══██╗████╗ ████║
+███████║██║ ███████║███████║██████╔╝██╔████╔██║
+╚════██║██║ ██╔══██║██╔══██║██╔══██╗██║╚██╔╝██║
+██║╚██████╗██║ ██║██║ ██║██║ ██║██║ ╚═╝ ██║
+╚═╝ ╚═════╝╚═╝ ╚═╝╚═╝ ╚═╝╚═╝ ╚═╝╚═╝ ╚═╝
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -15,16 +15,16 @@
 
 ✨ Features
 
-🚀 Hyper Bulk Downloads — Threads, catalogs, entire boards  
-🗂️ Auto-Organized Storage — Thread folders with separate WEBM directories  
-🔁 Fail-Safe Resume — Interrupted sessions resume instantly  
-🧬 Duplicate Protection — Hash-based deduplication prevents redundant downloads  
-⚙️ Multithread Engine — Parallel downloading for maximum speed  
-🚦 Adaptive Rate Limiting — Automatically adjusts to avoid throttling  
-📁 Custom Save Locations — Choose any directory  
-📡 Real-Time Logging — Live activity monitoring  
-🌙 Native Dark Mode — Seamless macOS integration  
-🖥️ Retina Display Ready — Crisp interface on high-resolution screens  
+🎨 Redesigned UI/UX — Modern, smooth interface with improved dark mode
+🚀 Hyper Bulk Downloads — Batch download threads, catalogs, and boards simultaneously
+🗂️ Auto-Organized Storage — Smart folder sorting with separate WEBM directories
+🔁 Fail-Safe Resume — Interrupted sessions resume instantly where they left off
+🧬 Zero Duplicates — SHA-256 hash-based deduplication saves disk space
+⚙️ Multithread Engine — Parallel downloading for maximum throughput
+🚦 Adaptive Rate Limiting — Smart throttling prevents IP bans/timeouts
+📁 Custom Save Locations — Choose any directory on your system
+📡 Real-Time Logging — Live status updates and scrollable logs
+🖥️ Apple Silicon Native — Optimized for M1/M2/M3 chips
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -53,11 +53,13 @@ First Launch (Gatekeeper Override)
 Since 4Charm uses ad-hoc signing, macOS will show a security warning on first launch.
 
 Method A — Right-Click:
+
 1. Open Applications folder
 2. Right-click 4Charm.app → Open
 3. Click "Open" to approve
 
 Method B — Terminal:
+
 ```bash
 sudo xattr -cr /Applications/4Charm.app
 ```
@@ -106,13 +108,13 @@ No Python installation required
 
 🔧 Troubleshooting
 
-"App is damaged" or "Cannot be opened"  
+"App is damaged" or "Cannot be opened"
 This is a Gatekeeper security warning. Use the right-click method or terminal command above.
 
-Slow downloads  
+Slow downloads
 4chan implements rate limiting. The app automatically adapts to avoid throttling.
 
-No media found  
+No media found
 The URL may be invalid, the thread may have been deleted, or no media may be present.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
