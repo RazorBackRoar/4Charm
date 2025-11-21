@@ -1371,7 +1371,7 @@ class MainWindow(QMainWindow):
         self.status_bar.showMessage("Ready")
 
         # Add version label to bottom right of status bar
-        version_label = QLabel("v5.4.0")
+        version_label = QLabel("v5.5.0")
         version_label.setStyleSheet("font-size: 11px; color: #666; padding: 0 8px;")
         self.status_bar.addPermanentWidget(version_label)
 
@@ -1722,18 +1722,38 @@ class MainWindow(QMainWindow):
         clipboard = QApplication.clipboard()
         text = clipboard.text()
 
-        if text:
-            # Insert at current cursor position
+        if not text:
+            return
+
+        # Extract URLs using regex
+        urls = re.findall(r"https?://[^\s]+", text)
+        valid_urls = [
+            url for url in urls if "boards.4chan.org" in url or "4chan.org" in url
+        ]
+
+        if valid_urls:
+            # If we found valid URLs, paste them nicely formatted
+            # Join with newlines
+            paste_text = "\n".join(valid_urls) + "\n"
+            
             cursor = self.url_input.textCursor()
-            cursor.insertText(text)
-
-            # ✅ FIX: Ensure cursor is visible after paste
+            # If we're not at the start of a line, add a newline first
+            if cursor.positionInBlock() > 0:
+                paste_text = "\n" + paste_text
+                
+            cursor.insertText(paste_text)
             self.url_input.setTextCursor(cursor)
-            self.url_input.ensureCursorVisible()  # Scroll to cursor
+        else:
+            # Fallback: Normal paste if no valid URLs found
+            self.url_input.paste()
 
-            # ✅ FIX: Force validation and scroll to end of pasted content
-            self.validate_urls()
-            scrollbar = self.url_input.verticalScrollBar()
+        # Ensure everything is visible and validated
+        self.url_input.ensureCursorVisible()
+        self.validate_urls()
+        
+        # Scroll to bottom to show new entries
+        scrollbar = self.url_input.verticalScrollBar()
+        if scrollbar:
             scrollbar.setValue(scrollbar.maximum())
 
     def cancel_or_close(self):
