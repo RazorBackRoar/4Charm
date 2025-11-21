@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
 """
 Automatic version increment script for 4Charm.
-Updates version in build.sh and main.py automatically.
+Updates version in build.sh, main.py, and setup.py automatically.
+Usage: 
+  ./increment_version.py           # Auto-increment version
+  ./increment_version.py --set 8.0.0  # Set specific version
 """
 
 import re
 import subprocess
+import argparse
+import sys
 from pathlib import Path
 
 
@@ -109,12 +114,33 @@ def update_version_file(new_version):
 
 
 def main():
-    """Main function to increment version."""
+    """Main function to increment or set version."""
+    parser = argparse.ArgumentParser(description="Manage 4Charm version")
+    parser.add_argument(
+        "--set",
+        type=str,
+        help="Set a specific version (e.g., --set 8.0.0)",
+        metavar="VERSION"
+    )
+    args = parser.parse_args()
+
     try:
         old_version = get_current_version()
-        new_version = increment_version(old_version)
-
-        print(f"🔄 Incrementing version: v{old_version} -> v{new_version}")
+        
+        if args.set:
+            # User specified a version manually
+            new_version = args.set.lstrip("v")
+            # Validate format
+            parts = new_version.split(".")
+            if len(parts) != 3 or not all(p.isdigit() for p in parts):
+                print(f"❌ Invalid version format: {new_version}")
+                print("   Expected format: X.Y.Z (e.g., 8.0.0)")
+                sys.exit(1)
+            print(f"🔄 Setting version: v{old_version} -> v{new_version}")
+        else:
+            # Auto-increment
+            new_version = increment_version(old_version)
+            print(f"🔄 Auto-incrementing version: v{old_version} -> v{new_version}")
 
         update_build_sh(new_version)
         update_main_py(new_version)
@@ -129,8 +155,8 @@ def main():
         return new_version
 
     except Exception as e:
-        print(f"❌ Error incrementing version: {e}")
-        return None
+        print(f"❌ Error managing version: {e}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
