@@ -207,8 +207,16 @@ def main():
         set bounds of w to {{200, 200, 740, 750}}
         
         update d
-        delay 2
+        delay 1
         close w
+        delay 1
+    end tell
+    
+    -- Ensure Finder doesn't reopen the window
+    tell application "System Events"
+        if process "Finder" exists then
+            set visible of process "Finder" to false
+        end if
     end tell
     '''
     
