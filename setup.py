@@ -1,15 +1,15 @@
 from setuptools import setup
 import py2app
 
-APP = ["main.py"]
+APP = ["src/main.py"]
 
 DATA_FILES = [
-    ("resources", ["resources/4Charm.icns"]),
+    ("assets", ["assets/4Charm.icns"]),
 ]
 
 OPTIONS = {
     "argv_emulation": False,
-    "iconfile": "resources/4Charm.icns",
+    "iconfile": "assets/4Charm.icns",
     "arch": "arm64",
     "plist": {
         "CFBundleIconFile": "4Charm",

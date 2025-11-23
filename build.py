@@ -99,7 +99,7 @@ def main():
     os.makedirs(DIST_DIR, exist_ok=True)
     log("✔ Clean slate ready", GREEN)
 
-    # 3. Build with py2app
+    # 3. Build
     log("3. Building app bundle with py2app...", YELLOW)
     # We assume we are running in the venv already or using the system python that has dependencies
     # But build.sh sets up venv. Let's assume this script is called BY build.sh or from the venv.

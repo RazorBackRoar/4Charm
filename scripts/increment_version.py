@@ -62,19 +62,35 @@ def increment_version(version):
 
 
 def update_main_py(new_version):
-    """Update version in main.py."""
-    main_py = Path("main.py")
-    if not main_py.exists():
-        return
-        
-    content = main_py.read_text()
-    # Look for version_label = QLabel("v...")
-    content = re.sub(
-        r'version_label = QLabel\("v[^"]+"\)',
-        f'version_label = QLabel("v{new_version}")',
-        content,
-    )
-    main_py.write_text(content)
+    """Update version in src/main.py and src/ui/main_window.py."""
+    # Update src/main.py
+    main_py = Path("src/main.py")
+    if main_py.exists():
+        content = main_py.read_text()
+        content = re.sub(
+            r'Version: [0-9.]+',
+            f'Version: {new_version}',
+            content,
+        )
+        content = re.sub(
+            r'app\.setApplicationVersion\("[^"]+"\)',
+            f'app.setApplicationVersion("{new_version}")',
+            content,
+        )
+        main_py.write_text(content)
+    
+    # Update src/ui/main_window.py
+    main_window_py = Path("src/ui/main_window.py")
+    if main_window_py.exists():
+        content = main_window_py.read_text()
+        # Look for version_label = QLabel("v...")
+        content = re.sub(
+            r'version_label = QLabel\("v[^"]+"\)',
+            f'version_label = QLabel("v{new_version}")',
+            content,
+        )
+        main_window_py.write_text(content)
+
 
 
 def update_setup_py(new_version):
@@ -139,7 +155,7 @@ def main():
         update_version_file(new_version)
 
         print(f'✅ Updated VERSION file: {new_version}')
-        print(f'✅ Updated main.py: version_label = QLabel("v{new_version}")')
+        print(f'✅ Updated src/main.py and src/ui/main_window.py')
         print(f'✅ Updated setup.py: CFBundleVersion="{new_version}"')
 
         return new_version
