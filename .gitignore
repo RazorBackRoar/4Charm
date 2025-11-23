@@ -4,9 +4,10 @@ __pycache__/
 *$py.class
 *.so
 .Python
-build/
+build/*
 develop-eggs/
-dist/
+dist/*
+!dist/*.dmg
 downloads/
 eggs/
 .eggs/
@@ -34,6 +35,7 @@ Icon?
 
 # Build artifacts
 *.dmg
+!dist/*.dmg
 release-token.txt
 *.log
 *_dmg/
