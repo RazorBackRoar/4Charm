@@ -12,7 +12,7 @@ NC='\033[0m'
 
 # App configuration
 APP_NAME="4Charm"
-APP_VERSION="4.1.0"
+APP_VERSION="4.2.0"
 VENV_DIR="build/venv"
 PYTHON_EXE="$VENV_DIR/bin/python"
 DIST_DIR="dist"
@@ -149,7 +149,7 @@ rm -rf "$DMG_STAGING"
 mkdir -p "$DMG_STAGING"
 cp -R "$APP_PATH" "$DMG_STAGING/"
 cp LICENSE "$DMG_STAGING/License.txt"
-cp README "$DMG_STAGING/README"
+cp README.md "$DMG_STAGING/README.md"
 ln -s /Applications "$DMG_STAGING/Applications"
 rm -f "$DMG_STAGING/.DS_Store"
 log "${GREEN}✔ DMG staging ready${NC}"
@@ -176,7 +176,7 @@ tell application "Finder"
   set position of item "${APP_NAME}.app" of w to {100, 100}
   set position of item "Applications" of w to {260, 100}
   set position of item "License.txt" of w to {100, 230}
-  set position of item "README" of w to {260, 230}
+  set position of item "README.md" of w to {260, 230}
 
   -- Set bounds AFTER positioning items - 400 wide x 430 tall to avoid scrollbars
   set bounds of w to {100, 100, 500, 530}
