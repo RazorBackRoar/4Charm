@@ -36,6 +36,7 @@ from src.ui.workers import MultiUrlDownloadWorker
 
 logger = logging.getLogger("4Charm")
 
+
 class MainWindow(QMainWindow):
     """Main application window."""
 
@@ -347,12 +348,6 @@ class MainWindow(QMainWindow):
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
         self.status_bar.showMessage("Ready")
-
-        # Add version label to bottom right of status bar
-        # TODO: Get version from a central place or VERSION file
-        version_label = QLabel("v4.3.0")
-        version_label.setStyleSheet("font-size: 11px; color: #666; padding: 0 8px;")
-        self.status_bar.addPermanentWidget(version_label)
 
     def setup_connections(self):
         """Connect signals and slots."""
