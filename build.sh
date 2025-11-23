@@ -195,11 +195,22 @@ rm -f "$DMG_TEMP"
 rm -rf "$DMG_STAGING"
 log "${GREEN}✔ DMG ready at $DMG_FINAL${NC}"
 
-log "${YELLOW}11. Opening DMG in Finder...${NC}"
-open "$DMG_FINAL" || log "${YELLOW}⚠️  Unable to auto-open DMG. Path: $DMG_FINAL${NC}"
+log "${YELLOW}11. Cleaning local app bundle copy...${NC}"
+if [[ -d "$APP_PATH" ]]; then
+  rm -rf -- "$APP_PATH"
+  log "${GREEN}✔ Removed build artifact at $APP_PATH${NC}"
+else
+  log "${YELLOW}⚠️  No leftover app bundle found to remove${NC}"
+fi
+
+log "${YELLOW}12. Manual install reminder...${NC}"
+log "${BLUE}📝 Open $DMG_FINAL manually and drag ${APP_NAME}.app into /Applications when you're ready.${NC}"
 
 # --- Summary ---
-APP_SIZE=$(du -sh "$APP_PATH" | cut -f1)
+APP_SIZE="N/A"
+if [[ -d "$APP_PATH" ]]; then
+  APP_SIZE=$(du -sh "$APP_PATH" | cut -f1)
+fi
 DMG_SIZE=$(du -sh "$DMG_FINAL" | cut -f1)
 log "${BLUE}📦 App size: $APP_SIZE${NC}"
 log "${BLUE}📀 DMG size: $DMG_SIZE${NC}"
