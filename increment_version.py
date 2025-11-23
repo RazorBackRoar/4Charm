@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Automatic version increment script for 4Charm.
-Updates version in build.sh, main.py, and setup.py automatically.
+Updates version in main.py and setup.py automatically.
 Usage:
   ./increment_version.py           # Auto-increment version
   ./increment_version.py --set 4.0.0  # Set specific version
@@ -15,17 +15,20 @@ from pathlib import Path
 
 
 def get_current_version():
-    """Get current version from build.sh."""
-    build_sh = Path("build.sh")
-    if not build_sh.exists():
-        raise FileNotFoundError("build.sh not found")
+    """Get current version from VERSION file or setup.py."""
+    version_file = Path("VERSION")
+    if version_file.exists():
+        return version_file.read_text().strip()
+    
+    # Fallback to setup.py
+    setup_py = Path("setup.py")
+    if setup_py.exists():
+        content = setup_py.read_text()
+        match = re.search(r'"CFBundleVersion": "([^"]+)"', content)
+        if match:
+            return match.group(1)
 
-    content = build_sh.read_text()
-    match = re.search(r'APP_VERSION="([^"]+)"', content)
-    if not match:
-        raise ValueError("APP_VERSION not found in build.sh")
-
-    return match.group(1)
+    return "0.0.0"
 
 
 def increment_version(version):
@@ -35,8 +38,14 @@ def increment_version(version):
 
     parts = version.split(".")
     if len(parts) != 3:
-        raise ValueError(f"Invalid version format: {version}. Expected format: v3.3.0")
-
+        # If invalid format, default to 0.0.0 logic or raise
+        # For robustness, let's try to parse what we can or reset
+        if not version:
+            return "0.0.1"
+        parts = [p for p in parts if p.isdigit()]
+        while len(parts) < 3:
+            parts.append("0")
+        
     major = int(parts[0])
     middle = int(parts[1])
     # Last part is always 0, ignore it
@@ -52,18 +61,14 @@ def increment_version(version):
     return f"{major}.{middle}.0"
 
 
-def update_build_sh(new_version):
-    """Update version in build.sh."""
-    build_sh = Path("build.sh")
-    content = build_sh.read_text()
-    content = re.sub(r'APP_VERSION="[^"]+"', f'APP_VERSION="{new_version}"', content)
-    build_sh.write_text(content)
-
-
 def update_main_py(new_version):
     """Update version in main.py."""
     main_py = Path("main.py")
+    if not main_py.exists():
+        return
+        
     content = main_py.read_text()
+    # Look for version_label = QLabel("v...")
     content = re.sub(
         r'version_label = QLabel\("v[^"]+"\)',
         f'version_label = QLabel("v{new_version}")',
@@ -75,6 +80,9 @@ def update_main_py(new_version):
 def update_setup_py(new_version):
     """Update version in setup.py."""
     setup_py = Path("setup.py")
+    if not setup_py.exists():
+        return
+
     content = setup_py.read_text()
     # Update CFBundleVersion
     content = re.sub(
@@ -89,22 +97,6 @@ def update_setup_py(new_version):
         content,
     )
     setup_py.write_text(content)
-
-
-def git_commit_version_change(old_version, new_version):
-    """Commit version changes to git."""
-    try:
-        subprocess.run(
-            ["git", "add", "build.sh", "main.py", "setup.py"], check=True, capture_output=True
-        )
-        subprocess.run(
-            ["git", "commit", "-m", f"Version bump: v{old_version} -> v{new_version}"],
-            check=True,
-            capture_output=True,
-        )
-        print(f"✅ Git commit created: v{old_version} -> v{new_version}")
-    except subprocess.CalledProcessError as e:
-        print(f"⚠️  Git commit failed: {e}")
 
 
 def update_version_file(new_version):
@@ -142,13 +134,11 @@ def main():
             new_version = increment_version(old_version)
             print(f"🔄 Auto-incrementing version: v{old_version} -> v{new_version}")
 
-        update_build_sh(new_version)
         update_main_py(new_version)
         update_setup_py(new_version)
         update_version_file(new_version)
 
         print(f'✅ Updated VERSION file: {new_version}')
-        print(f'✅ Updated build.sh: APP_VERSION="{new_version}"')
         print(f'✅ Updated main.py: version_label = QLabel("v{new_version}")')
         print(f'✅ Updated setup.py: CFBundleVersion="{new_version}"')
 
