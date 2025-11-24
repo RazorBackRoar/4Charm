@@ -1,0 +1,70 @@
+name: Auto Version Increment
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+      - '.gitignore'
+
+jobs:
+  increment-version:
+    # Skip if commit message contains [skip-version] or was made by github-actions bot
+    if: |
+      !contains(github.event.head_commit.message, '[skip-version]') &&
+      github.event.head_commit.author.name != 'github-actions[bot]'
+    
+    runs-on: macos-latest
+    
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      
+      - name: Get current version
+        id: current_version
+        run: |
+          CURRENT_VERSION=$(cat VERSION)
+          echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "📌 Current version: v$CURRENT_VERSION"
+      
+      - name: Increment patch version
+        id: increment
+        run: |
+          python scripts/increment_version.py --patch
+          NEW_VERSION=$(cat VERSION)
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "✅ New version: v$NEW_VERSION"
+      
+      - name: Commit version changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add VERSION src/main.py setup.py src/ui/main_window.py
+          git commit -m "chore: bump version to v${{ steps.increment.outputs.version }} [skip-version]" || echo "No changes to commit"
+          git push
+      
+      - name: Create version summary
+        run: |
+          echo "### 🎉 Version Updated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Previous**: v${{ steps.current_version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Current**: v${{ steps.increment.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Files Updated:**" >> $GITHUB_STEP_SUMMARY
+          echo "- \`VERSION\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`src/main.py\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`setup.py\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`src/ui/main_window.py\`" >> $GITHUB_STEP_SUMMARY

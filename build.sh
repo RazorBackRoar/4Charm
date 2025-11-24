@@ -14,18 +14,32 @@ PYTHON_EXE="$VENV_DIR/bin/python"
 echo -e "${BLUE}🚀 Starting 4Charm Build Process${NC}"
 
 # --- Version Configuration ---
-VERSION="5.0.0"
-echo -e "${YELLOW}Setting version to $VERSION...${NC}"
+# Read version from VERSION file (single source of truth)
+if [[ -f "VERSION" ]]; then
+    VERSION=$(cat VERSION)
+    echo -e "${YELLOW}📌 Using version from VERSION file: $VERSION${NC}"
+else
+    echo -e "${YELLOW}⚠️  VERSION file not found, using default: 1.0.0${NC}"
+    VERSION="1.0.0"
+    echo "$VERSION" > VERSION
+fi
 
-# Update version in src/main.py
-# Update docstring version
-sed -i '' "s/Version: [0-9]*\.[0-9]*\.[0-9]*/Version: $VERSION/" src/main.py
-# Update setApplicationVersion
-sed -i '' "s/app.setApplicationVersion(\"[0-9]*\.[0-9]*\.[0-9]*\")/app.setApplicationVersion(\"$VERSION\")/" src/main.py
+# Sync version across all files using increment_version.py
+echo -e "${YELLOW}Syncing version across files...${NC}"
+"$PYTHON_EXE" scripts/increment_version.py --set "$VERSION" 2>/dev/null || {
+    # Fallback to sed if script fails
+    echo -e "${YELLOW}⚠️  Using sed fallback for version sync${NC}"
+    
+    # Update version in src/main.py
+    sed -i '' "s/Version: [0-9]*\.[0-9]*\.[0-9]*/Version: $VERSION/" src/main.py 2>/dev/null || true
+    sed -i '' "s/app.setApplicationVersion(\"[0-9]*\.[0-9]*\.[0-9]*\")/app.setApplicationVersion(\"$VERSION\")/" src/main.py 2>/dev/null || true
+    
+    # Update version in setup.py
+    sed -i '' "s/\"CFBundleVersion\": \"[0-9]*\.[0-9]*\.[0-9]*\"/\"CFBundleVersion\": \"$VERSION\"/" setup.py 2>/dev/null || true
+    sed -i '' "s/\"CFBundleShortVersionString\": \"[0-9]*\.[0-9]*\.[0-9]*\"/\"CFBundleShortVersionString\": \"$VERSION\"/" setup.py 2>/dev/null || true
+}
 
-# Update version in setup.py
-sed -i '' "s/\"CFBundleVersion\": \"[0-9]*\.[0-9]*\.[0-9]*\"/\"CFBundleVersion\": \"$VERSION\"/" setup.py
-sed -i '' "s/\"CFBundleShortVersionString\": \"[0-9]*\.[0-9]*\.[0-9]*\"/\"CFBundleShortVersionString\": \"$VERSION\"/" setup.py
+echo -e "${GREEN}✔ Version synchronized: $VERSION${NC}"
 
 
 # --- Setup Build Environment ---

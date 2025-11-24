@@ -8,7 +8,6 @@ Usage:
 """
 
 import re
-import subprocess
 import argparse
 import sys
 from pathlib import Path
@@ -19,7 +18,7 @@ def get_current_version():
     version_file = Path("VERSION")
     if version_file.exists():
         return version_file.read_text().strip()
-    
+
     # Fallback to setup.py
     setup_py = Path("setup.py")
     if setup_py.exists():
@@ -31,8 +30,23 @@ def get_current_version():
     return "0.0.0"
 
 
-def increment_version(version):
-    """Increment version with rollover logic (v3.3.0 -> v3.4.0 -> ... -> v3.9.0 -> v4.0.0)."""
+def increment_version(version, increment_type="minor"):
+    """
+    Increment version with rollover logic.
+
+    Args:
+        version: Current version string (e.g., "5.1.0")
+        increment_type: Type of increment - 'minor' (default) or 'patch'
+
+    Returns:
+        New version string
+
+    Examples:
+        increment_version("5.1.0", "minor") -> "5.2.0"
+        increment_version("5.9.0", "minor") -> "6.0.0"  # rollover
+        increment_version("5.1.0", "patch") -> "5.1.1"
+        increment_version("5.1.9", "patch") -> "5.1.10"  # no rollover on patch
+    """
     # Remove 'v' prefix if present
     version = version.lstrip("v")
 
@@ -45,20 +59,27 @@ def increment_version(version):
         parts = [p for p in parts if p.isdigit()]
         while len(parts) < 3:
             parts.append("0")
-        
+
     major = int(parts[0])
     middle = int(parts[1])
-    # Last part is always 0, ignore it
+    patch = int(parts[2])
 
-    # Increment middle version
-    middle += 1
+    if increment_type == "patch":
+        # Simple patch increment, no rollover
+        patch += 1
+        return f"{major}.{middle}.{patch}"
+    else:
+        # Original rollover logic for minor version
+        # Increment middle version, reset patch to 0
+        middle += 1
+        patch = 0
 
-    # Rollover: if middle reaches 10, reset to 0 and increment major
-    if middle >= 10:
-        middle = 0
-        major += 1
+        # Rollover: if middle reaches 10, reset to 0 and increment major
+        if middle >= 10:
+            middle = 0
+            major += 1
 
-    return f"{major}.{middle}.0"
+        return f"{major}.{middle}.{patch}"
 
 
 def update_main_py(new_version):
@@ -68,8 +89,8 @@ def update_main_py(new_version):
     if main_py.exists():
         content = main_py.read_text()
         content = re.sub(
-            r'Version: [0-9.]+',
-            f'Version: {new_version}',
+            r"Version: [0-9.]+",
+            f"Version: {new_version}",
             content,
         )
         content = re.sub(
@@ -78,7 +99,7 @@ def update_main_py(new_version):
             content,
         )
         main_py.write_text(content)
-    
+
     # Update src/ui/main_window.py
     main_window_py = Path("src/ui/main_window.py")
     if main_window_py.exists():
@@ -90,7 +111,6 @@ def update_main_py(new_version):
             content,
         )
         main_window_py.write_text(content)
-
 
 
 def update_setup_py(new_version):
@@ -128,7 +148,12 @@ def main():
         "--set",
         type=str,
         help="Set a specific version (e.g., --set 4.0.0)",
-        metavar="VERSION"
+        metavar="VERSION",
+    )
+    parser.add_argument(
+        "--patch",
+        action="store_true",
+        help="Increment patch version (X.Y.Z -> X.Y.Z+1)",
     )
     args = parser.parse_args()
 
@@ -147,15 +172,19 @@ def main():
             print(f"🔄 Setting version: v{old_version} -> v{new_version}")
         else:
             # Auto-increment
-            new_version = increment_version(old_version)
-            print(f"🔄 Auto-incrementing version: v{old_version} -> v{new_version}")
+            increment_type = "patch" if args.patch else "minor"
+            new_version = increment_version(old_version, increment_type)
+            inc_label = "patch" if args.patch else "minor"
+            print(
+                f"🔄 Incrementing {inc_label} version: v{old_version} -> v{new_version}"
+            )
 
         update_main_py(new_version)
         update_setup_py(new_version)
         update_version_file(new_version)
 
-        print(f'✅ Updated VERSION file: {new_version}')
-        print(f'✅ Updated src/main.py and src/ui/main_window.py')
+        print(f"✅ Updated VERSION file: {new_version}")
+        print(f"✅ Updated src/main.py and src/ui/main_window.py")
         print(f'✅ Updated setup.py: CFBundleVersion="{new_version}"')
 
         return new_version
