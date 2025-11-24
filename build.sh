@@ -13,6 +13,21 @@ PYTHON_EXE="$VENV_DIR/bin/python"
 
 echo -e "${BLUE}🚀 Starting 4Charm Build Process${NC}"
 
+# --- Version Configuration ---
+VERSION="5.0.0"
+echo -e "${YELLOW}Setting version to $VERSION...${NC}"
+
+# Update version in src/main.py
+# Update docstring version
+sed -i '' "s/Version: [0-9]*\.[0-9]*\.[0-9]*/Version: $VERSION/" src/main.py
+# Update setApplicationVersion
+sed -i '' "s/app.setApplicationVersion(\"[0-9]*\.[0-9]*\.[0-9]*\")/app.setApplicationVersion(\"$VERSION\")/" src/main.py
+
+# Update version in setup.py
+sed -i '' "s/\"CFBundleVersion\": \"[0-9]*\.[0-9]*\.[0-9]*\"/\"CFBundleVersion\": \"$VERSION\"/" setup.py
+sed -i '' "s/\"CFBundleShortVersionString\": \"[0-9]*\.[0-9]*\.[0-9]*\"/\"CFBundleShortVersionString\": \"$VERSION\"/" setup.py
+
+
 # --- Setup Build Environment ---
 echo -e "${YELLOW}Setting up build environment...${NC}"
 
