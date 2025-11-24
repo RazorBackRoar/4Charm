@@ -1,3 +1,0 @@
-"""
-4Charm Source Package
-"""

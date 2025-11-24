@@ -22,7 +22,7 @@ from PySide6.QtWidgets import (
     QSizePolicy,
     QFileDialog,
 )
-from PySide6.QtCore import Qt, QThread, QTimer, QUrl
+from PySide6.QtCore import Qt, QThread, QTimer
 from PySide6.QtGui import (
     QDragEnterEvent,
     QDropEvent,
