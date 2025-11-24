@@ -2,7 +2,7 @@
 """
 4Charm - Advanced 4chan Media Downloader
 A high-performance GUI application for bulk downloading media from 4chan threads and boards.
-Version: 4.9.0
+Version: 5.0.0
 """
 
 import sys
@@ -19,7 +19,7 @@ def main():
     """Main application entry point."""
     app = QApplication(sys.argv)
     app.setApplicationName("4Charm")
-    app.setApplicationVersion("4.9.0")
+    app.setApplicationVersion("5.0.0")
     window = MainWindow()
     window.show()
     sys.exit(app.exec())

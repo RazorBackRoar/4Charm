@@ -176,11 +176,6 @@ def main():
     if os.path.exists(ds_store):
         os.remove(ds_store)
 
-    # Copy Volume Icon to Staging
-    icon_source = "assets/4Charm.icns"
-    if os.path.exists(icon_source):
-        shutil.copy(icon_source, os.path.join(DMG_STAGING, ".VolumeIcon.icns"))
-
     log("✔ DMG staging ready", GREEN)
 
     # 6. Create Temporary DMG
@@ -218,19 +213,22 @@ def main():
 
     # 7. Configure Volume Icon
     log("7. Configuring Volume Icon...", YELLOW)
-    # Icon should already be there from staging
-    volume_icon_dest = os.path.join(mount_point, ".VolumeIcon.icns")
-    if os.path.exists(volume_icon_dest):
+    icon_source = "assets/4Charm.icns"
+    if os.path.exists(icon_source):
+        volume_icon_dest = os.path.join(mount_point, ".VolumeIcon.icns")
         try:
+            # Use cp instead of shutil.copy to match successful experiment
+            run_command(["cp", icon_source, volume_icon_dest])
+
             # Set volume to have custom icon
             run_command(["SetFile", "-a", "C", mount_point])
             # Hide the icon file
             run_command(["SetFile", "-a", "V", volume_icon_dest])
-            log("✔ Volume icon attributes set", GREEN)
+            log("✔ Volume icon set", GREEN)
         except Exception as e:
-            log(f"⚠️  Failed to set volume icon attributes: {e}", YELLOW)
+            log(f"⚠️  Failed to set volume icon: {e}", YELLOW)
     else:
-        log(f"⚠️  .VolumeIcon.icns not found in mounted DMG", YELLOW)
+        log(f"⚠️  Icon file not found at {icon_source}", YELLOW)
 
     # 8. Configure Window Layout
     log("8. Configuring Finder window layout...", YELLOW)
