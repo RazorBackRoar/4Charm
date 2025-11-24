@@ -42,7 +42,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("4Charm")
+        self.setWindowTitle("")
         self.setMinimumSize(850, 730)
         self.resize(850, 730)
         self.setAcceptDrops(True)
@@ -50,6 +50,7 @@ class MainWindow(QMainWindow):
         self.setStyleSheet(
             """
             QMainWindow { background-color: #1a1a1a; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+            QWidget#centralWidget { border-top: 2px solid #76e648; }
             QGroupBox { border: 2px solid #76e648; margin-top: 12px; padding-top: 8px; padding-bottom: 8px; background-color: transparent; }
             QGroupBox::title { subcontrol-origin: padding; left: 12px; padding: 0 12px; color: #76e648; font-size: 26px; font-weight: 700; }
             QLineEdit { background-color: #2d2d2d; color: #ffffff; border: 1px solid #404040; border-radius: 10px; padding: 12px 16px; font-size: 16px; selection-background-color: #76e648; }
@@ -88,6 +89,7 @@ class MainWindow(QMainWindow):
     def setup_ui(self):
         """Setup the user interface."""
         central = QWidget()
+        central.setObjectName("centralWidget")
         self.setCentralWidget(central)
         main_layout = QVBoxLayout(central)
         main_layout.setContentsMargins(15, 15, 15, 15)
