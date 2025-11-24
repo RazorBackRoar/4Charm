@@ -42,7 +42,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Downloader")
+        self.setWindowTitle("4Charm")
         self.setMinimumSize(850, 730)
         self.resize(850, 730)
         self.setAcceptDrops(True)
@@ -50,25 +50,25 @@ class MainWindow(QMainWindow):
         self.setStyleSheet(
             """
             QMainWindow { background-color: #1a1a1a; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
-            QGroupBox { border: 2px solid #4a9eff; margin-top: 12px; padding-top: 8px; padding-bottom: 8px; background-color: transparent; }
-            QGroupBox::title { subcontrol-origin: padding; left: 12px; padding: 0 12px; color: #4a9eff; font-size: 26px; font-weight: 700; }
-            QLineEdit { background-color: #2d2d2d; color: #ffffff; border: 1px solid #404040; border-radius: 10px; padding: 12px 16px; font-size: 16px; selection-background-color: #4a9eff; }
-            QLineEdit:focus { border: 2px solid #4a9eff; background-color: #353535; }
-            QTextEdit { background-color: #2d2d2d; color: #ffffff; border: 2px solid #4a9eff; border-bottom: none; border-radius: 0px; padding: 8px 12px; font-size: 16px; selection-background-color: #4a9eff; line-height: 1.4; }
-            QTextEdit:focus { border: 2px solid #4a9eff; background-color: #353535; border-radius: 0px; }
+            QGroupBox { border: 2px solid #76e648; margin-top: 12px; padding-top: 8px; padding-bottom: 8px; background-color: transparent; }
+            QGroupBox::title { subcontrol-origin: padding; left: 12px; padding: 0 12px; color: #76e648; font-size: 26px; font-weight: 700; }
+            QLineEdit { background-color: #2d2d2d; color: #ffffff; border: 1px solid #404040; border-radius: 10px; padding: 12px 16px; font-size: 16px; selection-background-color: #76e648; }
+            QLineEdit:focus { border: 2px solid #76e648; background-color: #353535; }
+            QTextEdit { background-color: #2d2d2d; color: #ffffff; border: 2px solid #76e648; border-bottom: none; border-radius: 0px; padding: 8px 12px; font-size: 16px; selection-background-color: #76e648; line-height: 1.4; }
+            QTextEdit:focus { border: 2px solid #76e648; background-color: #353535; border-radius: 0px; }
             QLabel { color: #cccccc; font-size: 15px; }
             QPushButton { font-size: 15px; padding: 8px 16px; border-radius: 8px; border: none; min-height: 36px; font-weight: 600; }
             QPushButton:hover { background-color: #5a5a5a; }
             QPushButton:pressed { background-color: #4a4a4a; }
             QPushButton:disabled { background-color: #404040; color: #888888; }
-            QPushButton#startBtn { font-size: 15px; background-color: #4a9eff; color: #ffffff; font-weight: 700; border-radius: 8px; }
+            QPushButton#startBtn { font-size: 15px; background-color: #76e648; color: #1a1a1a; font-weight: 700; border-radius: 8px; }
             QPushButton#startBtn:disabled { background-color: #404040; color: #888888; }
             QPushButton#cancelBtn { font-size: 15px; background-color: #ff4757; color: white; border-radius: 8px; }
             QPushButton#cancelBtn:hover { background-color: #ff3838; }
             QPushButton#pauseBtn { background-color: #ffa502; color: #1a1a1a; font-weight: 700; border-radius: 8px; }
             QPushButton#pauseBtn:hover { background-color: #ff8c00; }
             QProgressBar { border: none; border-radius: 8px; text-align: center; background-color: #2d2d2d; min-height: 24px; font-size: 13px; font-weight: 600; color: #ffffff; }
-            QProgressBar::chunk { background-color: #4a9eff; border-radius: 0px; }
+            QProgressBar::chunk { background-color: #76e648; border-radius: 0px; }
             QFrame#sectionFrame { border: none; background-color: transparent; }
             QStatusBar { background-color: #242424; color: #888888; border-top: 1px solid #404040; padding: 8px; font-size: 13px; }
         """
@@ -93,12 +93,19 @@ class MainWindow(QMainWindow):
         main_layout.setContentsMargins(15, 15, 15, 15)
         main_layout.setSpacing(10)
 
-        header = QLabel("Downloader")
+        header = QLabel("4Charm")
         header.setAlignment(Qt.AlignmentFlag.AlignCenter)
         header.setStyleSheet(
-            "font-size: 34px; font-weight: 700; color: #4a9eff; margin: 15px 0;"
+            "font-size: 34px; font-weight: 700; color: #76e648; margin: 15px 0 5px 0;"
         )
         main_layout.addWidget(header)
+
+        slogan = QLabel("The Phenomenal 4chan Media Downloader for macOS")
+        slogan.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        slogan.setStyleSheet(
+            "font-size: 14px; font-weight: 500; color: #888888; margin-bottom: 15px; letter-spacing: 0.5px;"
+        )
+        main_layout.addWidget(slogan)
 
         instruction = QLabel(
             "Paste or drop multiple thread URLs (one per line) to download all media files concurrently\nPress Enter to validate & count URLs | Press Ctrl+Enter to start download"
@@ -236,7 +243,7 @@ class MainWindow(QMainWindow):
         self.folder_btn = QPushButton("📁 Choose Folder")
         self.folder_btn.setMinimumWidth(150)
         self.folder_btn.setStyleSheet(
-            "color: #ffffff; background-color: #5a5a5a; font-size: 15px; font-weight: 600; padding: 8px 16px; border-radius: 8px;"
+            "color: #76e648; background-color: transparent; border: 2px solid #76e648; font-size: 15px; font-weight: 600; padding: 8px 16px; border-radius: 8px;"
         )
         control_layout.addWidget(self.folder_btn)
 
@@ -244,13 +251,13 @@ class MainWindow(QMainWindow):
         self.start_cancel_btn.setObjectName("startBtn")
         self.start_cancel_btn.setMinimumWidth(180)
         self.start_cancel_btn.setStyleSheet(
-            "background-color: #4a9eff; color: #ffffff; font-size: 15px; font-weight: 700; padding: 8px 16px; border-radius: 8px;"
+            "background-color: #76e648; color: #1a1a1a; font-size: 15px; font-weight: 700; padding: 8px 16px; border-radius: 8px;"
         )
         control_layout.addWidget(self.start_cancel_btn)
         self.clear_btn = QPushButton("Clear")
         self.clear_btn.setMinimumWidth(100)
         self.clear_btn.setStyleSheet(
-            "color: #4a9eff; background-color: transparent; border: 2px solid #4a9eff; font-size: 15px; font-weight: 600; padding: 8px 16px; border-radius: 8px;"
+            "color: #76e648; background-color: transparent; border: 2px solid #76e648; font-size: 15px; font-weight: 600; padding: 8px 16px; border-radius: 8px;"
         )
         control_layout.addWidget(self.clear_btn)
         self.pause_resume_btn = QPushButton("⏸️ Pause")
@@ -272,7 +279,7 @@ class MainWindow(QMainWindow):
         )
         self.speed_label = QLabel("Speed: 0.0 MB/s")
         self.speed_label.setStyleSheet(
-            "font-size: 14px; font-weight: 600; color: #4a9eff; padding: 4px 0; background-color: transparent;"
+            "font-size: 14px; font-weight: 600; color: #76e648; padding: 4px 0; background-color: transparent;"
         )
 
         progress_layout.addWidget(self.progress_bar)
@@ -333,7 +340,7 @@ class MainWindow(QMainWindow):
         )
         self.size_label = QLabel("Size: 0 MB")
         self.size_label.setStyleSheet(
-            "color: #4a9eff; font-size: 14px; font-weight: 600; padding: 4px 0; background-color: transparent;"
+            "color: #76e648; font-size: 14px; font-weight: 600; padding: 4px 0; background-color: transparent;"
         )
 
         stats_layout.addWidget(self.folders_label)
@@ -595,7 +602,7 @@ class MainWindow(QMainWindow):
     def _update_url_status(self, text: str, state: str):
         """Update the URL status label with appropriate text and color."""
         colors = {
-            "valid": "#4a9eff",
+            "valid": "#76e648",
             "invalid": "#f44336",
             "partial": "#FF9800",
             "idle": "#888888",
