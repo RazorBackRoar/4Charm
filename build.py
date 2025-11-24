@@ -176,6 +176,11 @@ def main():
     if os.path.exists(ds_store):
         os.remove(ds_store)
 
+    # Copy Volume Icon to Staging
+    icon_source = "assets/4Charm.icns"
+    if os.path.exists(icon_source):
+        shutil.copy(icon_source, os.path.join(DMG_STAGING, ".VolumeIcon.icns"))
+
     log("✔ DMG staging ready", GREEN)
 
     # 6. Create Temporary DMG
@@ -211,8 +216,24 @@ def main():
         log("❌ Failed to mount DMG", RED)
         sys.exit(1)
 
-    # 7. Configure Window Layout
-    log("7. Configuring Finder window layout...", YELLOW)
+    # 7. Configure Volume Icon
+    log("7. Configuring Volume Icon...", YELLOW)
+    # Icon should already be there from staging
+    volume_icon_dest = os.path.join(mount_point, ".VolumeIcon.icns")
+    if os.path.exists(volume_icon_dest):
+        try:
+            # Set volume to have custom icon
+            run_command(["SetFile", "-a", "C", mount_point])
+            # Hide the icon file
+            run_command(["SetFile", "-a", "V", volume_icon_dest])
+            log("✔ Volume icon attributes set", GREEN)
+        except Exception as e:
+            log(f"⚠️  Failed to set volume icon attributes: {e}", YELLOW)
+    else:
+        log(f"⚠️  .VolumeIcon.icns not found in mounted DMG", YELLOW)
+
+    # 8. Configure Window Layout
+    log("8. Configuring Finder window layout...", YELLOW)
 
     applescript = f'''
     tell application "Finder"
@@ -262,8 +283,8 @@ def main():
     log("   Detaching DMG...", YELLOW)
     run_command(["hdiutil", "detach", mount_point, "-force"])
 
-    # 8. Compress DMG
-    log("8. Compressing DMG...", YELLOW)
+    # 9. Compress DMG
+    log("9. Compressing DMG...", YELLOW)
     if os.path.exists(DMG_FINAL):
         os.remove(DMG_FINAL)
     run_command(["hdiutil", "convert", DMG_TEMP, "-format", "UDZO", "-o", DMG_FINAL])
@@ -274,8 +295,8 @@ def main():
 
     log(f"✔ DMG ready at {DMG_FINAL}", GREEN)
 
-    # 9. Final Cleanup
-    log("9. Cleaning local app bundle copy...", YELLOW)
+    # 10. Final Cleanup
+    log("10. Cleaning local app bundle copy...", YELLOW)
     if os.path.exists(APP_PATH):
         shutil.rmtree(APP_PATH)
         log(f"✔ Removed build artifact at {APP_PATH}", GREEN)
