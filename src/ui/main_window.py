@@ -42,7 +42,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("4chan Downloader")
+        self.setWindowTitle("Downloader")
         self.setMinimumSize(850, 730)
         self.resize(850, 730)
         self.setAcceptDrops(True)
@@ -93,7 +93,7 @@ class MainWindow(QMainWindow):
         main_layout.setContentsMargins(15, 15, 15, 15)
         main_layout.setSpacing(10)
 
-        header = QLabel("4chan Downloader")
+        header = QLabel("Downloader")
         header.setAlignment(Qt.AlignmentFlag.AlignCenter)
         header.setStyleSheet(
             "font-size: 34px; font-weight: 700; color: #4a9eff; margin: 15px 0;"
@@ -101,7 +101,7 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(header)
 
         instruction = QLabel(
-            "Paste or drop multiple 4chan thread URLs (one per line) to download all media files concurrently\nPress Enter to validate & count URLs | Press Ctrl+Enter to start download"
+            "Paste or drop multiple thread URLs (one per line) to download all media files concurrently\nPress Enter to validate & count URLs | Press Ctrl+Enter to start download"
         )
         instruction.setAlignment(Qt.AlignmentFlag.AlignCenter)
         instruction.setStyleSheet(
@@ -138,7 +138,7 @@ class MainWindow(QMainWindow):
         self.url_input.setAcceptRichText(False)
         self.url_input.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
         self.url_input.setPlaceholderText(
-            "Enter 4chan thread URLs here, one per line...\n\n"
+            "Enter thread URLs here, one per line...\n\n"
             "Examples:\n"
             "https://boards.4chan.org/g/thread/123456789\n"
             "https://boards.4channel.org/vg/thread/987654321"
@@ -407,7 +407,7 @@ class MainWindow(QMainWindow):
         cleaned_urls: list[str] = [re.sub(r"^\d+\.\s*", "", ln) for ln in raw_lines]
 
         # Auto-number
-        numbered_lines = [f"{i+1}. {u}" for i, u in enumerate(cleaned_urls)]
+        numbered_lines = [f"{i + 1}. {u}" for i, u in enumerate(cleaned_urls)]
         numbered_text = "\n".join(numbered_lines)
 
         # Replace text only if different to prevent cursor flicker
@@ -747,7 +747,7 @@ class MainWindow(QMainWindow):
             url for url in urls if "boards.4chan.org" in url or "4chan.org" in url
         ]
         if valid_urls:
-            numbered_urls = [f"{i+1}. {url}" for i, url in enumerate(valid_urls)]
+            numbered_urls = [f"{i + 1}. {url}" for i, url in enumerate(valid_urls)]
             self.url_input.setPlainText("\n".join(numbered_urls))
             self._scroll_url_input_to_end()
             self.validate_urls()  # Trigger validation after drop
