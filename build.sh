@@ -8,7 +8,7 @@ YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-VENV_DIR="build/venv"
+VENV_DIR=".venv"
 PYTHON_EXE="$VENV_DIR/bin/python"
 
 echo -e "${BLUE}🚀 Starting 4Charm Build Process${NC}"

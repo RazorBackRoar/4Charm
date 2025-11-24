@@ -8,7 +8,7 @@ import sys
 APP_NAME = "4Charm"
 DIST_DIR = "dist"
 BUILD_DIR = "build"
-VENV_DIR = os.path.join(BUILD_DIR, "venv")
+VENV_DIR = ".venv"
 APP_PATH = os.path.join(DIST_DIR, f"{APP_NAME}.app")
 DMG_FINAL = os.path.join(DIST_DIR, f"{APP_NAME}.dmg")
 DMG_STAGING = os.path.join(DIST_DIR, f"{APP_NAME}_dmg")
@@ -35,6 +35,15 @@ def run_command(command, shell=False, check=True):
 
 
 def cleanup():
+    # Remove build artifacts
+    if os.path.exists(DIST_DIR):
+        log(f"   Removing {DIST_DIR}...", YELLOW)
+        shutil.rmtree(DIST_DIR)
+
+    if os.path.exists(BUILD_DIR):
+        log(f"   Removing {BUILD_DIR}...", YELLOW)
+        shutil.rmtree(BUILD_DIR)
+
     # Detach any mounted DMGs
     try:
         result = subprocess.run(["hdiutil", "info"], capture_output=True, text=True)
