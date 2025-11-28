@@ -1,6 +1,32 @@
+from pathlib import Path
 from setuptools import setup
 
-APP = ["src/main.py"]
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover
+    import tomli as tomllib  # type: ignore
+
+
+def get_project_version(default: str = "0.0.0") -> str:
+    pyproject = Path(__file__).resolve().parent / "pyproject.toml"
+    if not pyproject.exists():
+        return default
+    try:
+        with pyproject.open("rb") as fp:
+            data = tomllib.load(fp)
+        return data["project"]["version"]
+    except Exception:
+        return default
+
+
+# --- Application Configuration (Single Source of Truth) ---
+APP_NAME = "4Charm"
+APP_SCRIPT = "src/main.py"
+APP_VERSION = get_project_version()
+BUNDLE_ID = "com.RazorBackRoar.4Charm"
+AUTHOR_NAME = "RazorBackRoar"
+
+APP = [APP_SCRIPT]
 
 DATA_FILES = [
     ("assets", ["assets/4Charm.icns"]),
@@ -11,12 +37,14 @@ OPTIONS = {
     "iconfile": "assets/4Charm.icns",
     "arch": "arm64",
     "plist": {
-        "CFBundleIconFile": "4Charm",
-        "CFBundleName": "4Charm",
-        "CFBundleDisplayName": "4Charm",
-        "CFBundleIdentifier": "com.RazorBackRoar.4Charm",
-        "CFBundleVersion": "5.1.1",
-        "CFBundleShortVersionString": "5.1.1",
+        "CFBundleIconFile": APP_NAME,
+        "CFBundleName": APP_NAME,
+        "CFBundleDisplayName": APP_NAME,
+        "CFBundleIdentifier": BUNDLE_ID,
+        "CFBundleVersion": APP_VERSION,
+        "CFBundleShortVersionString": APP_VERSION,
+        "NSHumanReadableCopyright": f"Copyright {2025} {AUTHOR_NAME}. All rights reserved.",
+        "CFBundleShortVersionString": "5.2.0",
         "NSHumanReadableCopyright": "Copyright © 2025 RazorBackRoar. All rights reserved.",
         "NSHighResolutionCapable": True,
         "NSRequiresAquaSystemAppearance": False,

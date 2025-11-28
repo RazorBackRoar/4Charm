@@ -14,32 +14,21 @@ PYTHON_EXE="$VENV_DIR/bin/python"
 echo -e "${BLUE}🚀 Starting 4Charm Build Process${NC}"
 
 # --- Version Configuration ---
-# Read version from VERSION file (single source of truth)
-if [[ -f "VERSION" ]]; then
-    VERSION=$(cat VERSION)
-    echo -e "${YELLOW}📌 Using version from VERSION file: $VERSION${NC}"
-else
-    echo -e "${YELLOW}⚠️  VERSION file not found, using default: 1.0.0${NC}"
-    VERSION="1.0.0"
-    echo "$VERSION" > VERSION
-fi
-
-# Sync version across all files using increment_version.py
-echo -e "${YELLOW}Syncing version across files...${NC}"
-"$PYTHON_EXE" scripts/increment_version.py --set "$VERSION" 2>/dev/null || {
-    # Fallback to sed if script fails
-    echo -e "${YELLOW}⚠️  Using sed fallback for version sync${NC}"
-    
-    # Update version in src/main.py
-    sed -i '' "s/Version: [0-9]*\.[0-9]*\.[0-9]*/Version: $VERSION/" src/main.py 2>/dev/null || true
-    sed -i '' "s/app.setApplicationVersion(\"[0-9]*\.[0-9]*\.[0-9]*\")/app.setApplicationVersion(\"$VERSION\")/" src/main.py 2>/dev/null || true
-    
-    # Update version in setup.py
-    sed -i '' "s/\"CFBundleVersion\": \"[0-9]*\.[0-9]*\.[0-9]*\"/\"CFBundleVersion\": \"$VERSION\"/" setup.py 2>/dev/null || true
-    sed -i '' "s/\"CFBundleShortVersionString\": \"[0-9]*\.[0-9]*\.[0-9]*\"/\"CFBundleShortVersionString\": \"$VERSION\"/" setup.py 2>/dev/null || true
+get_pyproject_version() {
+    python3 - <<'PY'
+import pathlib, re, sys
+pyproject = pathlib.Path('pyproject.toml')
+if not pyproject.exists():
+    sys.exit('pyproject.toml not found')
+match = re.search(r'version\s*=\s*"([^"\n]+)"', pyproject.read_text(encoding='utf-8'))
+if not match:
+    sys.exit('Unable to locate version in pyproject.toml')
+print(match.group(1))
+PY
 }
 
-echo -e "${GREEN}✔ Version synchronized: $VERSION${NC}"
+VERSION=$(get_pyproject_version)
+echo -e "${YELLOW}📌 Using version from pyproject.toml: $VERSION${NC}"
 
 
 # --- Setup Build Environment ---

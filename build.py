@@ -3,9 +3,32 @@ import os
 import shutil
 import subprocess
 import sys
+from pathlib import Path
+
+try:  # Python 3.11+
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - fallback for older interpreters
+    import tomli as tomllib  # type: ignore
+
+
+def get_project_version(default: str = "0.0.0") -> str:
+    """Read the project version from pyproject.toml."""
+
+    pyproject = Path("pyproject.toml")
+    if not pyproject.exists():
+        return default
+
+    try:
+        with pyproject.open("rb") as fp:
+            data = tomllib.load(fp)
+        return data["project"]["version"]
+    except Exception:
+        return default
+
 
 # Configuration
 APP_NAME = "4Charm"
+APP_VERSION = get_project_version()
 DIST_DIR = "dist"
 BUILD_DIR = "build"
 VENV_DIR = ".venv"
@@ -60,27 +83,11 @@ def cleanup():
 
 
 def main():
-    log(f"🚀 Building {APP_NAME}", BLUE)
+    log(f"🚀 Building {APP_NAME} v{APP_VERSION}", BLUE)
 
-    # 1. Auto-increment version
-    # 1. Auto-increment version
-    log("1. Auto-incrementing version...", YELLOW)
-    if os.path.exists("scripts/increment_version.py"):
-        try:
-            subprocess.run([sys.executable, "scripts/increment_version.py"], check=True)
-            with open("VERSION", "r") as f:
-                version = f.read().strip()
-            log(f"✔ Version incremented to: v{version}", GREEN)
-        except Exception:
-            log("⚠️  Version increment failed", YELLOW)
-
-    # 2. Cleanup
-    log("2. Cleaning artifacts...", YELLOW)
-    cleanup()  # Eject volumes
-
-    # 2. Cleanup
-    log("2. Cleaning artifacts...", YELLOW)
-    cleanup()  # Eject volumes
+    # 1. Cleanup
+    log("1. Cleaning artifacts...", YELLOW)
+    cleanup()
 
     # Clean build dir but preserve venv
     if os.path.exists(BUILD_DIR):
@@ -116,7 +123,7 @@ def main():
     log("✔ Clean slate ready", GREEN)
 
     # 3. Build
-    log("3. Building app bundle with py2app...", YELLOW)
+    log("2. Building app bundle with py2app...", YELLOW)
     # We assume we are running in the venv already or using the system python that has dependencies
     # But build.sh sets up venv. Let's assume this script is called BY build.sh or from the venv.
 
@@ -146,7 +153,7 @@ def main():
     log("✔ Application bundle created", GREEN)
 
     # 4. Code Signing
-    log("4. Code signing (ad-hoc)...", YELLOW)
+    log("3. Code signing (ad-hoc)...", YELLOW)
     run_command(["codesign", "--force", "--deep", "--sign", "-", APP_PATH])
     log("✔ App signed", GREEN)
 
@@ -162,7 +169,7 @@ def main():
             log(f"   Warning: Failed to create site.pyo symlink: {e}", YELLOW)
 
     # 5. Prepare DMG contents
-    log("5. Preparing DMG contents...", YELLOW)
+    log("4. Preparing DMG contents...", YELLOW)
     os.makedirs(DMG_STAGING, exist_ok=True)
 
     # Copy App
@@ -188,7 +195,7 @@ def main():
     log("✔ DMG staging ready", GREEN)
 
     # 6. Create Temporary DMG
-    log("6. Creating temporary DMG...", YELLOW)
+    log("5. Creating temporary DMG...", YELLOW)
     run_command(
         [
             "hdiutil",
@@ -221,7 +228,7 @@ def main():
         sys.exit(1)
 
     # 7. Configure Volume Icon
-    log("7. Configuring Volume Icon...", YELLOW)
+    log("6. Configuring Volume Icon...", YELLOW)
     icon_source = "assets/4Charm.icns"
     if os.path.exists(icon_source):
         volume_icon_dest = os.path.join(mount_point, ".VolumeIcon.icns")
@@ -240,46 +247,46 @@ def main():
         log(f"⚠️  Icon file not found at {icon_source}", YELLOW)
 
     # 8. Configure Window Layout
-    log("8. Configuring Finder window layout...", YELLOW)
+    log("7. Configuring Finder window layout...", YELLOW)
 
-    applescript = f'''
+    applescript = f"""
     tell application "Finder"
         set d to disk "{APP_NAME}"
         open d
         delay 1
         set w to container window of d
-        
+
         set current view of w to icon view
         set toolbar visible of w to false
         set statusbar visible of w to false
-        
+
         set icon size of icon view options of w to 100
         set arrangement of icon view options of w to not arranged
-        
+
         -- Position items
         set position of item "{APP_NAME}.app" of w to {{140, 120}}
         set position of item "Applications" of w to {{400, 120}}
         set position of item "LICENSE.txt" of w to {{140, 340}}
         set position of item "README.md" of w to {{400, 340}}
-        
+
         -- Set window bounds (x, y, x+width, y+height)
         -- Width: 540, Height: 550
         -- Position: 200, 200
         set bounds of w to {{200, 200, 740, 750}}
-        
+
         update d
         delay 1
         close w
         delay 1
     end tell
-    
+
     -- Ensure Finder doesn't reopen the window
     tell application "System Events"
         if process "Finder" exists then
             set visible of process "Finder" to false
         end if
     end tell
-    '''
+    """
 
     try:
         subprocess.run(["osascript", "-e", applescript], check=True)
@@ -291,7 +298,7 @@ def main():
     run_command(["hdiutil", "detach", mount_point, "-force"])
 
     # 9. Compress DMG
-    log("9. Compressing DMG...", YELLOW)
+    log("8. Compressing DMG...", YELLOW)
     if os.path.exists(DMG_FINAL):
         os.remove(DMG_FINAL)
     run_command(["hdiutil", "convert", DMG_TEMP, "-format", "UDZO", "-o", DMG_FINAL])
@@ -303,7 +310,7 @@ def main():
     log(f"✔ DMG ready at {DMG_FINAL}", GREEN)
 
     # 10. Final Cleanup
-    log("10. Cleaning local app bundle copy...", YELLOW)
+    log("9. Cleaning local app bundle copy...", YELLOW)
     if os.path.exists(APP_PATH):
         shutil.rmtree(APP_PATH)
         log(f"✔ Removed build artifact at {APP_PATH}", GREEN)
