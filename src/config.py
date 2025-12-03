@@ -1,5 +1,6 @@
 import multiprocessing
 
+
 class Config:
     MAX_WORKERS = min(5, multiprocessing.cpu_count())
     DOWNLOAD_TIMEOUT = (10, 60)
@@ -10,6 +11,11 @@ class Config:
     MIN_FREE_SPACE_MB = 100
     PROGRESS_UPDATE_INTERVAL = 0.1
     MAX_FOLDER_NAME_LENGTH = 60
+
+    # Network timeouts and delays
+    API_TIMEOUT = 30  # API request timeout in seconds
+    RETRY_DELAY = 2.0  # Delay before retry in seconds
+    CATALOG_SCRAPE_DELAY = 0.5  # Delay between catalog thread scrapes
 
     # Smart rate limiting
     BASE_DELAY = 0.3

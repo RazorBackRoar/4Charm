@@ -1,10 +1,15 @@
 import time
-from typing import Dict, List, Optional
+import logging
+import traceback
+from typing import Dict, List
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from PySide6.QtCore import QObject, Signal
 
 from src.config import Config
 from src.core.scraper import FourChanScraper
+
+logger = logging.getLogger("4Charm")
+
 
 class DownloadWorker(QObject):
     """Enhanced worker thread for concurrent downloads."""
@@ -108,7 +113,9 @@ class DownloadWorker(QObject):
 
             self.finished.emit(stats)
         except Exception as e:
-            self.log_message.emit(f"💥 Error: {e}")
+            error_msg = f"💥 Error: {e}"
+            self.log_message.emit(error_msg)
+            logger.error(f"DownloadWorker error: {traceback.format_exc()}")
             self.finished.emit(self.scraper.stats)
 
     def _calculate_average_speed(self) -> float:
@@ -147,7 +154,6 @@ class MultiUrlDownloadWorker(QObject):
         super().__init__()
         self.scraper = scraper
         self.parsed_urls = parsed_urls
-        self.thread_pool = None
 
     def run(self):
         """Run concurrent downloads from multiple URLs."""
@@ -179,7 +185,7 @@ class MultiUrlDownloadWorker(QObject):
                     )
                     total_files += len(media_files)
                     self.log_message.emit(
-                        f"📁 [{i+1}/{len(self.parsed_urls)}] Found {len(media_files)} files in '{folder_name}'"
+                        f"📁 [{i + 1}/{len(self.parsed_urls)}] Found {len(media_files)} files in '{folder_name}'"
                     )
                 elif url_type == "catalog":
                     media_files = self.scraper.scrape_catalog(board, 10)
@@ -195,7 +201,7 @@ class MultiUrlDownloadWorker(QObject):
                     )
                     total_files += len(media_files)
                     self.log_message.emit(
-                        f"📁 [{i+1}/{len(self.parsed_urls)}] Found {len(media_files)} files in '{folder_name}'"
+                        f"📁 [{i + 1}/{len(self.parsed_urls)}] Found {len(media_files)} files in '{folder_name}'"
                     )
                 else:
                     media_files = self.scraper.scrape_catalog(board, 5)
@@ -211,7 +217,7 @@ class MultiUrlDownloadWorker(QObject):
                     )
                     total_files += len(media_files)
                     self.log_message.emit(
-                        f"📁 [{i+1}/{len(self.parsed_urls)}] Found {len(media_files)} files in '{folder_name}'"
+                        f"📁 [{i + 1}/{len(self.parsed_urls)}] Found {len(media_files)} files in '{folder_name}'"
                     )
 
             if total_files == 0:
@@ -257,15 +263,15 @@ class MultiUrlDownloadWorker(QObject):
                                 else ""
                             )
                             self.log_message.emit(
-                                f"✅ [{task['url_index']+1}] {media_file.filename}{speed_info}"
+                                f"✅ [{task['url_index'] + 1}] {media_file.filename}{speed_info}"
                             )
                         else:
                             self.log_message.emit(
-                                f"❌ [{task['url_index']+1}] Failed: {media_file.filename}"
+                                f"❌ [{task['url_index'] + 1}] Failed: {media_file.filename}"
                             )
                     except Exception as e:
                         self.log_message.emit(
-                            f"❌ [{task['url_index']+1}] Error downloading {media_file.filename}: {e}"
+                            f"❌ [{task['url_index'] + 1}] Error downloading {media_file.filename}: {e}"
                         )
 
                     avg_speed = self._calculate_average_speed()
@@ -296,7 +302,9 @@ class MultiUrlDownloadWorker(QObject):
             self.finished.emit(stats)
 
         except Exception as e:
-            self.log_message.emit(f"💥 Error: {e}")
+            error_msg = f"💥 Error: {e}"
+            self.log_message.emit(error_msg)
+            logger.error(f"MultiUrlDownloadWorker error: {traceback.format_exc()}")
             self.finished.emit(self.scraper.stats)
 
     def _calculate_average_speed(self) -> float:

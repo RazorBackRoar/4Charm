@@ -15,6 +15,7 @@ from src.core.models import DownloadQueue, MediaFile
 
 logger = logging.getLogger("4Charm")
 
+
 class FourChanScraper:
     """Enhanced scraper for 4chan media files with concurrent downloads."""
 
@@ -249,7 +250,7 @@ class FourChanScraper:
         self.adaptive_delay()  # Adaptive rate limiting
         api_url = f"https://a.4cdn.org/{board}/thread/{thread_id}.json"
         try:
-            response = self.session.get(api_url, timeout=30)
+            response = self.session.get(api_url, timeout=Config.API_TIMEOUT)
             response.raise_for_status()
             thread_data = response.json()
             # Extract thread title from the first post (OP)
@@ -265,8 +266,8 @@ class FourChanScraper:
             if error_info.get("category") == "rate_limited":
                 # Retry once after rate limit handling
                 try:
-                    time.sleep(2)
-                    response = self.session.get(api_url, timeout=30)
+                    time.sleep(Config.RETRY_DELAY)
+                    response = self.session.get(api_url, timeout=Config.API_TIMEOUT)
                     response.raise_for_status()
                     thread_data = response.json()
                     posts = thread_data.get("posts", [])
@@ -285,7 +286,7 @@ class FourChanScraper:
         self.adaptive_delay()  # Adaptive rate limiting
         api_url = f"https://a.4cdn.org/{board}/catalog.json"
         try:
-            response = self.session.get(api_url, timeout=30)
+            response = self.session.get(api_url, timeout=Config.API_TIMEOUT)
             response.raise_for_status()
             catalog_data = response.json()
             self.adaptive_delay(success=True)  # Success, reduce delay
@@ -295,8 +296,8 @@ class FourChanScraper:
             if error_info.get("category") == "rate_limited":
                 # Retry once after rate limit handling
                 try:
-                    time.sleep(2)
-                    response = self.session.get(api_url, timeout=30)
+                    time.sleep(Config.RETRY_DELAY)
+                    response = self.session.get(api_url, timeout=Config.API_TIMEOUT)
                     response.raise_for_status()
                     return response.json()
                 except Exception as e2:
@@ -358,7 +359,7 @@ class FourChanScraper:
                     thread_media, _thread_title = self.scrape_thread(board, thread_id)
                     media_files.extend(thread_media)
                     threads_processed += 1
-                    time.sleep(0.5)
+                    time.sleep(Config.CATALOG_SCRAPE_DELAY)
         return media_files
 
     def download_file(

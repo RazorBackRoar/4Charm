@@ -7,6 +7,7 @@ from src.config import Config
 
 logger = logging.getLogger("4Charm")
 
+
 class DownloadQueue:
     """Manage download queue without UI changes"""
 
@@ -17,26 +18,26 @@ class DownloadQueue:
         self.completed = []
         self.failed = []
 
-    def add_url(self, url):
+    def add_url(self, url: str) -> None:
         """Add URL to download queue"""
         if url not in self.queue and url not in self.active_downloads:
             self.queue.append(url)
             logger.info(f"Added URL to queue: {url}")
 
-    def remove_url(self, index):
+    def remove_url(self, index: int) -> None:
         """Remove URL from queue by index"""
         if 0 <= index < len(self.queue):
             removed_url = self.queue.pop(index)
             logger.info(f"Removed URL from queue: {removed_url}")
 
-    def start_download(self, url):
+    def start_download(self, url: str) -> None:
         """Move URL from queue to active downloads"""
         if url in self.queue:
             self.queue.remove(url)
         if url not in self.active_downloads:
             self.active_downloads.append(url)
 
-    def complete_download(self, url):
+    def complete_download(self, url: str) -> None:
         """Mark URL as completed"""
         if url in self.active_downloads:
             self.active_downloads.remove(url)
@@ -46,7 +47,7 @@ class DownloadQueue:
                 {"url": url, "completed_at": datetime.now(), "status": "completed"}
             )
 
-    def fail_download(self, url, error=None):
+    def fail_download(self, url: str, error: Optional[Exception] = None) -> None:
         """Mark URL as failed"""
         if url in self.active_downloads:
             self.active_downloads.remove(url)
@@ -61,7 +62,7 @@ class DownloadQueue:
                 }
             )
 
-    def get_stats(self):
+    def get_stats(self) -> dict[str, int]:
         """Get queue statistics"""
         return {
             "queued": len(self.queue),
@@ -74,12 +75,12 @@ class DownloadQueue:
             + len(self.failed),
         }
 
-    def clear_completed(self):
+    def clear_completed(self) -> None:
         """Clear completed and failed lists"""
         self.completed.clear()
         self.failed.clear()
 
-    def clear_all(self):
+    def clear_all(self) -> None:
         """Clear all queues"""
         self.queue.clear()
         self.active_downloads.clear()

@@ -435,6 +435,14 @@ class MainWindow(QMainWindow):
         # Update the URL counter label
         self.url_count_label.setText(f"URLs: {len(cleaned_urls)}")
 
+        # ✅ FIX: Validate URL count (maximum 10)
+        if len(cleaned_urls) > 10:
+            self._update_url_status(
+                "⚠️ Maximum 10 URLs allowed. Please remove some URLs.", "invalid"
+            )
+            self.start_cancel_btn.setEnabled(False)
+            return
+
         # ✅ FIX: Restore scroll position after validation
         scrollbar.setValue(scroll_pos)
 
