@@ -153,10 +153,11 @@ class MainWindow(QMainWindow):
             "https://boards.4channel.org/vg/thread/987654321"
         )
 
-        # ✅ FIX: Set minimum height to show more URLs
+        # ✅ FIX: Set minimum and maximum height for proper scrolling
         self.url_input.setMinimumHeight(150)
+        self.url_input.setMaximumHeight(200)
         self.url_input.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
 
         # ✅ FIX: Ensure scrollbar is always visible when needed
