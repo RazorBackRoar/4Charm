@@ -178,13 +178,7 @@ def main():
         APP_PATH, os.path.join(DMG_STAGING, f"{APP_NAME}.app"), symlinks=True
     )
 
-    # Copy License and Readme
-    if os.path.exists("LICENSE"):
-        shutil.copy("LICENSE", os.path.join(DMG_STAGING, "LICENSE.txt"))
-    if os.path.exists("README.md"):
-        shutil.copy("README.md", os.path.join(DMG_STAGING, "README.md"))
-
-    # Create Symlink
+    # Create Symlink to Applications folder
     os.symlink("/Applications", os.path.join(DMG_STAGING, "Applications"))
 
     # Remove .DS_Store
@@ -263,16 +257,14 @@ def main():
         set icon size of icon view options of w to 100
         set arrangement of icon view options of w to not arranged
 
-        -- Position items
+        -- Position items (clean 2-icon layout)
         set position of item "{APP_NAME}.app" of w to {{140, 120}}
         set position of item "Applications" of w to {{400, 120}}
-        set position of item "LICENSE.txt" of w to {{140, 340}}
-        set position of item "README.md" of w to {{400, 340}}
 
-        -- Set window bounds (x, y, x+width, y+height)
-        -- Width: 540, Height: 550
+        -- Set window bounds for clean layout (x, y, x+width, y+height)
+        -- Width: 540, Height: 320
         -- Position: 200, 200
-        set bounds of w to {{200, 200, 740, 750}}
+        set bounds of w to {{200, 200, 740, 520}}
 
         update d
         delay 1

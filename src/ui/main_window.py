@@ -55,7 +55,7 @@ class MainWindow(QMainWindow):
             QGroupBox::title { subcontrol-origin: padding; left: 12px; padding: 0 12px; color: #76e648; font-size: 26px; font-weight: 700; }
             QLineEdit { background-color: #2d2d2d; color: #ffffff; border: 1px solid #404040; border-radius: 10px; padding: 12px 16px; font-size: 16px; selection-background-color: #76e648; }
             QLineEdit:focus { border: 2px solid #76e648; background-color: #353535; }
-            QTextEdit { background-color: #2d2d2d; color: #ffffff; border: 2px solid #76e648; border-bottom: none; border-radius: 0px; padding: 8px 12px; font-size: 16px; selection-background-color: #76e648; line-height: 1.4; }
+            QTextEdit { background-color: #2d2d2d; color: #ffffff; border: 2px solid #76e648; border-radius: 0px; padding: 8px 12px; font-size: 16px; selection-background-color: #76e648; line-height: 1.4; }
             QTextEdit:focus { border: 2px solid #76e648; background-color: #353535; border-radius: 0px; }
             QLabel { color: #cccccc; font-size: 15px; }
             QPushButton { font-size: 15px; padding: 8px 16px; border-radius: 8px; border: none; min-height: 36px; font-weight: 600; }
