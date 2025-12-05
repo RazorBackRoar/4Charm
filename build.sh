@@ -9,13 +9,27 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 VENV_DIR=".venv"
+
+find_python() {
+    local candidates=("/opt/homebrew/bin/python3.13" "$(command -v python3 2>/dev/null)" "/usr/bin/python3")
+    for candidate in "${candidates[@]}"; do
+        if [[ -n "$candidate" && -x "$candidate" ]]; then
+            echo "$candidate"
+            return 0
+        fi
+    done
+    echo "❌ Python3 interpreter not found" >&2
+    exit 1
+}
+
+PYTHON_BIN="$(find_python)"
 PYTHON_EXE="$VENV_DIR/bin/python"
 
 echo -e "${BLUE}🚀 Starting 4Charm Build Process${NC}"
 
 # --- Version Configuration ---
 get_pyproject_version() {
-    python3 - <<'PY'
+    "$PYTHON_BIN" - <<'PY'
 import pathlib, re, sys
 pyproject = pathlib.Path('pyproject.toml')
 if not pyproject.exists():
@@ -37,7 +51,7 @@ echo -e "${YELLOW}Setting up build environment...${NC}"
 # Create venv if it doesn't exist
 if [[ ! -d "$VENV_DIR" ]]; then
     echo -e "${YELLOW}   Creating virtual environment...${NC}"
-    /opt/homebrew/bin/python3.13 -m venv "$VENV_DIR"
+    "$PYTHON_BIN" -m venv "$VENV_DIR"
 fi
 
 # Install dependencies
