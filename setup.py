@@ -56,7 +56,7 @@ PLIST = {
 # --- py2app Options ---
 OPTIONS = {
     "iconfile": "assets/icons/4Charm.icns",
-    "packages": ["PySide6", "requests", "urllib3", "certifi", "bs4"],
+    "packages": ["four_charm", "PySide6", "requests", "urllib3", "certifi", "bs4"],
     "plist": PLIST,
     "bdist_base": "build/temp",
     "dist_dir": "build/dist",
