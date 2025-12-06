@@ -118,7 +118,7 @@ OPTIONS = {
         "PySide6.Qt3DExtras",
         "PySide6.Qt3DAnimation",
     ],
-    "optimize": 2,
+    "optimize": 1,
     "compressed": True,
     "no_chdir": True,
 }
