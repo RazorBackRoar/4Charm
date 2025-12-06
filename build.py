@@ -254,16 +254,14 @@ def main():
         set toolbar visible of w to false
         set statusbar visible of w to false
 
-        set icon size of icon view options of w to 100
+        set icon size of icon view options of w to 128
         set arrangement of icon view options of w to not arranged
 
         -- Position items (clean 2-icon layout)
-        set position of item "{APP_NAME}.app" of w to {{140, 120}}
-        set position of item "Applications" of w to {{400, 120}}
+        set position of item "{APP_NAME}.app" of w to {{140, 130}}
+        set position of item "Applications" of w to {{400, 130}}
 
-        -- Set window bounds for clean layout (x, y, x+width, y+height)
-        -- Width: 540, Height: 320
-        -- Position: 200, 200
+        -- Set window bounds for clean layout
         set bounds of w to {{200, 200, 740, 520}}
 
         update d

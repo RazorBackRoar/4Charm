@@ -10,19 +10,19 @@
     "height": 320
   },
   "icon_settings": {
-    "size": 100,
+    "size": 128,
     "text_size": 12
   },
   "background_image": "",
-  "volume_icon": "",
+  "volume_icon": "./assets/4Charm.icns",
   "additional_files": [],
   "icon_positions": {
     "4Charm.app": {
-      "x": 125,
+      "x": 140,
       "y": 130
     },
     "Applications": {
-      "x": 375,
+      "x": 400,
       "y": 130
     }
   }

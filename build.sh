@@ -6,30 +6,23 @@ set -euo pipefail
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
+RED='\033[0;31m'
 NC='\033[0m'
 
-VENV_DIR=".venv"
+# Use system Python 3.13 directly - no virtual environment
+PYTHON_EXE="/opt/homebrew/bin/python3.13"
 
-find_python() {
-    local candidates=("/opt/homebrew/bin/python3.13" "$(command -v python3 2>/dev/null)" "/usr/bin/python3")
-    for candidate in "${candidates[@]}"; do
-        if [[ -n "$candidate" && -x "$candidate" ]]; then
-            echo "$candidate"
-            return 0
-        fi
-    done
-    echo "❌ Python3 interpreter not found" >&2
+if [[ ! -x "$PYTHON_EXE" ]]; then
+    echo -e "${RED}❌ Python 3.13 not found at $PYTHON_EXE${NC}"
     exit 1
-}
-
-PYTHON_BIN="$(find_python)"
-PYTHON_EXE="$VENV_DIR/bin/python"
+fi
 
 echo -e "${BLUE}🚀 Starting 4Charm Build Process${NC}"
+echo -e "${YELLOW}📌 Using Python: $($PYTHON_EXE --version)${NC}"
 
 # --- Version Configuration ---
 get_pyproject_version() {
-    "$PYTHON_BIN" - <<'PY'
+    "$PYTHON_EXE" - <<'PY'
 import pathlib, re, sys
 pyproject = pathlib.Path('pyproject.toml')
 if not pyproject.exists():
@@ -42,25 +35,7 @@ PY
 }
 
 VERSION=$(get_pyproject_version)
-echo -e "${YELLOW}📌 Using version from pyproject.toml: $VERSION${NC}"
-
-
-# --- Setup Build Environment ---
-echo -e "${YELLOW}Setting up build environment...${NC}"
-
-# Create venv if it doesn't exist
-if [[ ! -d "$VENV_DIR" ]]; then
-    echo -e "${YELLOW}   Creating virtual environment...${NC}"
-    "$PYTHON_BIN" -m venv "$VENV_DIR"
-fi
-
-# Install dependencies
-echo -e "${YELLOW}   Installing dependencies...${NC}"
-"$PYTHON_EXE" -m pip install --upgrade pip >/dev/null
-"$PYTHON_EXE" -m pip install -r requirements.txt >/dev/null
-"$PYTHON_EXE" -m pip install py2app >/dev/null
-
-echo -e "${GREEN}✔ Build environment ready${NC}"
+echo -e "${YELLOW}📌 Version from pyproject.toml: $VERSION${NC}"
 
 # --- Run Build Script ---
 echo -e "${BLUE}Running build.py...${NC}"
