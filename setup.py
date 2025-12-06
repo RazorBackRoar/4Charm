@@ -1,5 +1,9 @@
+import sys
 from pathlib import Path
-from setuptools import setup
+
+sys.path.insert(0, "src")
+
+from setuptools import setup, find_packages
 
 try:
     import tomllib
@@ -19,39 +23,51 @@ def get_project_version(default: str = "0.0.0") -> str:
         return default
 
 
+# --- Application Configuration (Single Source of Truth) ---
 APP_NAME = "4Charm"
 APP_SCRIPT = "src/four_charm/main.py"
 APP_VERSION = get_project_version()
 BUNDLE_ID = "com.RazorBackRoar.4Charm"
 AUTHOR_NAME = "RazorBackRoar"
 
-APP = [APP_SCRIPT]
-
+# --- Resource Files ---
 DATA_FILES = [
     ("assets/icons", ["assets/icons/4Charm.icns"]),
 ]
 
+# --- Info.plist Configuration ---
+PLIST = {
+    "CFBundleIconFile": APP_NAME,
+    "CFBundleName": APP_NAME,
+    "CFBundleDisplayName": APP_NAME,
+    "CFBundleIdentifier": BUNDLE_ID,
+    "CFBundleVersion": APP_VERSION,
+    "CFBundleShortVersionString": APP_VERSION,
+    "NSHumanReadableCopyright": f"Copyright © 2025 {AUTHOR_NAME}. All rights reserved.",
+    "NSHighResolutionCapable": True,
+    "NSRequiresAquaSystemAppearance": False,
+    "LSMinimumSystemVersion": "11.0",
+    "LSRequiresNativeExecution": True,
+    "LSApplicationCategoryType": "public.app-category.utilities",
+    "CFBundleSupportedPlatforms": ["MacOSX"],
+    "NSAppTransportSecurity": {"NSAllowsArbitraryLoads": True},
+}
+
+# --- py2app Options ---
 OPTIONS = {
-    "argv_emulation": False,
     "iconfile": "assets/icons/4Charm.icns",
-    "arch": "arm64",
-    "plist": {
-        "CFBundleIconFile": APP_NAME,
-        "CFBundleName": APP_NAME,
-        "CFBundleDisplayName": APP_NAME,
-        "CFBundleIdentifier": BUNDLE_ID,
-        "CFBundleVersion": APP_VERSION,
-        "CFBundleShortVersionString": APP_VERSION,
-        "NSHumanReadableCopyright": f"Copyright © 2025 {AUTHOR_NAME}. All rights reserved.",
-        "NSHighResolutionCapable": True,
-        "NSRequiresAquaSystemAppearance": False,
-        "LSMinimumSystemVersion": "11.0",
-        "LSRequiresNativeExecution": True,
-        "LSApplicationCategoryType": "public.app-category.utilities",
-        "CFBundleSupportedPlatforms": ["MacOSX"],
-        "NSAppTransportSecurity": {"NSAllowsArbitraryLoads": True},
-    },
     "packages": ["PySide6", "requests", "urllib3", "certifi", "bs4"],
+    "plist": PLIST,
+    "bdist_base": "build/temp",
+    "dist_dir": "build/dist",
+    "strip": True,
+    "argv_emulation": False,
+    "arch": "arm64",
+    "includes": [
+        "PySide6.QtCore",
+        "PySide6.QtWidgets",
+        "PySide6.QtGui",
+    ],
     "excludes": [
         "PyQt6",
         "PyQt5",
@@ -102,14 +118,19 @@ OPTIONS = {
         "PySide6.Qt3DExtras",
         "PySide6.Qt3DAnimation",
     ],
-    "includes": ["PySide6.QtCore", "PySide6.QtWidgets", "PySide6.QtGui"],
     "optimize": 2,
     "compressed": True,
     "no_chdir": True,
 }
 
+# --- Setup Definition ---
 setup(
-    app=APP,
+    app=[APP_SCRIPT],
+    name=APP_NAME,
+    author=AUTHOR_NAME,
     data_files=DATA_FILES,
     options={"py2app": OPTIONS},
+    setup_requires=["py2app"],
+    packages=find_packages(where="src"),
+    package_dir={"": "src"},
 )
