@@ -26,10 +26,6 @@ pip-wheel-metadata/
 *.spec
 temp-dmg-*
 
-# Dist folder - ignore everything except DMG
-dist/*
-!dist/*.dmg
-
 # Virtual envs
 .venv/
 venv/
