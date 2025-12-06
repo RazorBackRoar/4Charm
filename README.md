@@ -1,6 +1,6 @@
 # 4Charm
 
-```
+```text
 ██╗  ██╗ ██████╗██╗  ██╗ █████╗ ██████╗ ███╗   ███╗
 ██║  ██║██╔════╝██║  ██║██╔══██╗██╔══██╗████╗ ████║
 ███████║██║     ███████║███████║██████╔╝██╔████╔██║
@@ -88,7 +88,7 @@ Downloads/
 ### 💻 Requirements
 
 - macOS 10.13+
-- ~200 MB free disk space
+- ~2 GB free disk space
 - Internet connection
 - No Python install needed
 

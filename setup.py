@@ -46,6 +46,7 @@ OPTIONS = {
         "NSHighResolutionCapable": True,
         "NSRequiresAquaSystemAppearance": False,
         "LSMinimumSystemVersion": "11.0",
+        "LSRequiresNativeExecution": True,
         "LSApplicationCategoryType": "public.app-category.utilities",
         "CFBundleSupportedPlatforms": ["MacOSX"],
         "NSAppTransportSecurity": {"NSAllowsArbitraryLoads": True},
