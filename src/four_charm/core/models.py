@@ -3,7 +3,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 import logging
-from src.config import Config
+from ..config import Config
 
 logger = logging.getLogger("4Charm")
 

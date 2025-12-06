@@ -3,7 +3,7 @@ from setuptools import setup
 
 try:
     import tomllib
-except ModuleNotFoundError:  # pragma: no cover
+except ModuleNotFoundError:
     import tomli as tomllib  # type: ignore
 
 
@@ -19,9 +19,8 @@ def get_project_version(default: str = "0.0.0") -> str:
         return default
 
 
-# --- Application Configuration (Single Source of Truth) ---
 APP_NAME = "4Charm"
-APP_SCRIPT = "src/main.py"
+APP_SCRIPT = "src/four_charm/main.py"
 APP_VERSION = get_project_version()
 BUNDLE_ID = "com.RazorBackRoar.4Charm"
 AUTHOR_NAME = "RazorBackRoar"
@@ -29,12 +28,12 @@ AUTHOR_NAME = "RazorBackRoar"
 APP = [APP_SCRIPT]
 
 DATA_FILES = [
-    ("assets", ["assets/4Charm.icns"]),
+    ("assets/icons", ["assets/icons/4Charm.icns"]),
 ]
 
 OPTIONS = {
     "argv_emulation": False,
-    "iconfile": "assets/4Charm.icns",
+    "iconfile": "assets/icons/4Charm.icns",
     "arch": "arm64",
     "plist": {
         "CFBundleIconFile": APP_NAME,
@@ -51,7 +50,6 @@ OPTIONS = {
         "NSAppTransportSecurity": {"NSAllowsArbitraryLoads": True},
     },
     "packages": ["PySide6", "requests", "urllib3", "certifi", "bs4"],
-    # Explicitly excluding PyQt6 is good practice
     "excludes": [
         "PyQt6",
         "PyQt5",
