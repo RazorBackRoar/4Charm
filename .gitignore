@@ -19,6 +19,9 @@ __pycache__/
 
 # Packaging / build artifacts
 build/
+!build/scripts/
+!build/dmg-config.json
+!build/DMG_BUILD_README.md
 pip-wheel-metadata/
 *.spec
 temp-dmg-*
