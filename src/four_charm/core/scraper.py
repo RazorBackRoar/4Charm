@@ -10,8 +10,8 @@ from urllib.parse import urlparse
 from requests.adapters import HTTPAdapter
 from PySide6.QtCore import QMutex
 
-from src.config import Config
-from src.core.models import DownloadQueue, MediaFile
+from ..config import Config
+from .models import DownloadQueue, MediaFile
 
 logger = logging.getLogger("4Charm")
 

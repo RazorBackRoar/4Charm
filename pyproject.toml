@@ -1,13 +1,12 @@
 [project]
 name = "4Charm"
 version = "5.2.0"
-description = "4Charm Application"
+description = "4Charm - Advanced 4chan Media Downloader"
 authors = [
     {name = "RazorBackRoar"}
 ]
 requires-python = ">=3.9"
 
-# This maps the "4Charm" project to the "four_charm" package directory
 [tool.setuptools.packages.find]
-where = ["."]
+where = ["src"]
 include = ["four_charm*"]
