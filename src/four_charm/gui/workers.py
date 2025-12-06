@@ -5,8 +5,8 @@ from typing import Dict, List
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from PySide6.QtCore import QObject, Signal
 
-from ..config import Config
-from ..core.scraper import FourChanScraper
+from four_charm.config import Config
+from four_charm.core.scraper import FourChanScraper
 
 logger = logging.getLogger("4Charm")
 

@@ -31,8 +31,8 @@ from PySide6.QtGui import (
     QShortcut,
 )
 
-from ..core.scraper import FourChanScraper
-from .workers import MultiUrlDownloadWorker
+from four_charm.core.scraper import FourChanScraper
+from four_charm.gui.workers import MultiUrlDownloadWorker
 
 logger = logging.getLogger("4Charm")
 

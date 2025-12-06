@@ -9,8 +9,8 @@ from pathlib import Path
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon
 
-from .utils.logging_setup import setup_logging
-from .gui.main_window import MainWindow
+from four_charm.utils.logging_setup import setup_logging
+from four_charm.gui.main_window import MainWindow
 
 # Setup logging
 logger = setup_logging()
