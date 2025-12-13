@@ -6,6 +6,12 @@ authors = [
     {name = "RazorBackRoar"}
 ]
 requires-python = ">=3.9"
+keywords = [
+    "4chan", "4chan-downloader", "media-downloader", "imageboard", "macos",
+    "apple-silicon", "m1", "m2", "m3", "python", "pyside6", "scraper",
+    "web-scraping", "bulk-downloader", "automation", "webm", "qt",
+    "mac-apps", "open-source", "utility"
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]

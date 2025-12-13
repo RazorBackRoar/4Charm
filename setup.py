@@ -131,6 +131,13 @@ setup(
     data_files=DATA_FILES,
     options={"py2app": OPTIONS},
     setup_requires=["py2app"],
+
     packages=find_packages(where="src"),
     package_dir={"": "src"},
+    keywords=[
+        "4chan", "4chan-downloader", "media-downloader", "imageboard", "macos",
+        "apple-silicon", "m1", "m2", "m3", "python", "pyside6", "scraper",
+        "web-scraping", "bulk-downloader", "automation", "webm", "qt",
+        "mac-apps", "open-source", "utility",
+    ],
 )
