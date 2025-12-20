@@ -155,7 +155,7 @@ class MainWindow(QMainWindow):
         # Left side: Static line numbers (green)
         self.line_numbers = QTextEdit()
         self.line_numbers.setReadOnly(True)
-        self.line_numbers.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.line_numbers.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.line_numbers.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.line_numbers.setFixedWidth(35)
         self.line_numbers.setStyleSheet(
@@ -168,6 +168,10 @@ class MainWindow(QMainWindow):
                 padding: 8px 4px;
                 font-family: 'Monaco', 'Menlo', monospace;
                 font-size: 13px;
+                line-height: 1.5;
+            }
+            QTextEdit QScrollBar:vertical {
+                width: 0px;
             }
             """
         )
@@ -179,7 +183,7 @@ class MainWindow(QMainWindow):
         self.url_input.setAcceptRichText(False)
         self.url_input.setLineWrapMode(QTextEdit.LineWrapMode.NoWrap)
         self.url_input.setPlaceholderText("Enter thread URLs here, one per line...")
-        self.url_input.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.url_input.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.url_input.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.url_input.setStyleSheet(
             """
@@ -201,31 +205,25 @@ class MainWindow(QMainWindow):
         )
         container_layout.addWidget(self.url_input)
 
-        url_container.setMinimumHeight(120)
-        url_container.setMaximumHeight(150)
+        # Dynamic height - start at 5 lines (~130px), allow expansion
+        url_container.setMinimumHeight(130)
         url_layout.addWidget(url_container)
 
-        # Green separator line inside text box group - REMOVED
-        # url_separator = QFrame()
-        # url_separator.setFrameShape(QFrame.Shape.HLine)
-        # url_separator.setStyleSheet("border: none; background-color: #76e648; max-height: 1px;")
-        # url_layout.addWidget(url_separator)
+        main_layout.addWidget(url_group)
 
-        # Green separator line at bottom of URLs section
-        url_bottom_separator = QFrame()
-        url_bottom_separator.setFrameShape(QFrame.Shape.HLine)
-        url_bottom_separator.setStyleSheet("border: none; background-color: #76e648; max-height: 1px;")
-        url_layout.addWidget(url_bottom_separator)
+        # Green separator line between URL box and count label
+        url_separator = QFrame()
+        url_separator.setFrameShape(QFrame.Shape.HLine)
+        url_separator.setStyleSheet("border: none; background-color: #76e648; max-height: 2px;")
+        main_layout.addWidget(url_separator)
 
-        # URL counter label at bottom - aligned left
+        # URL counter label - white, bigger, OUTSIDE the GroupBox
         self.url_count_label = QLabel("URLs: 0")
         self.url_count_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.url_count_label.setStyleSheet(
-            "color: #cccccc; font-size: 13px; font-weight: 500; padding: 0 5px; background-color: transparent;"
+            "color: #ffffff; font-size: 14px; font-weight: 600; padding: 4px 15px; background-color: transparent;"
         )
-        url_layout.addWidget(self.url_count_label)
-
-        main_layout.addWidget(url_group)
+        main_layout.addWidget(self.url_count_label)
 
         control_layout = QHBoxLayout()
         control_layout.setSpacing(15)
@@ -366,6 +364,14 @@ class MainWindow(QMainWindow):
     def setup_connections(self):
         """Connect signals and slots."""
         self.url_input.textChanged.connect(self.validate_urls)
+
+        # Sync scrolling between line numbers and URL input (Two-way sync)
+        self.url_input.verticalScrollBar().valueChanged.connect(
+            self.line_numbers.verticalScrollBar().setValue
+        )
+        self.line_numbers.verticalScrollBar().valueChanged.connect(
+            self.url_input.verticalScrollBar().setValue
+        )
         self.start_cancel_btn.clicked.connect(self.handle_start_cancel_click)
         self.pause_resume_btn.clicked.connect(self.toggle_pause_resume)
         self.clear_btn.clicked.connect(self.clear_urls)
@@ -418,10 +424,21 @@ class MainWindow(QMainWindow):
         if self.line_numbers.toPlainText() != line_nums:
             self.line_numbers.setPlainText(line_nums)
 
-        # Sync scroll position between line numbers and text
-        self.line_numbers.verticalScrollBar().setValue(
-            self.url_input.verticalScrollBar().value()
-        )
+        # Dynamic height: 5 lines minimum, expand up to 10 lines, then scroll
+        # Increased line height estimate to prevent clipping
+        line_height = 25
+        min_lines = 5
+        max_lines = 10
+        visible_lines = max(min_lines, min(line_count, max_lines))
+        new_height = visible_lines * line_height + 20  # +20 for padding
+
+        # Find the url_container (parent of url_input)
+        url_container = self.url_input.parentWidget()
+        if url_container:
+            url_container.setMinimumHeight(new_height)
+            url_container.setMaximumHeight(new_height)
+
+        # Sync scroll position removed - handled by valueChanged connection
 
         # Count non-empty lines for URL validation
         raw_lines = [ln.strip() for ln in all_lines if ln.strip()]
