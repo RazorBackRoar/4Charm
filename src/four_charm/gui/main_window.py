@@ -128,7 +128,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central)
         main_layout = QVBoxLayout(central)
         main_layout.setContentsMargins(15, 15, 15, 15)
-        main_layout.setSpacing(10)
+        main_layout.setSpacing(15)
 
         header = QLabel("4Charm")
         header.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -153,19 +153,22 @@ class MainWindow(QMainWindow):
         )
         main_layout.addWidget(instruction)
 
-        # Native Qt Master Container Pattern
-        url_master = QWidget()
+        # Native Qt Master Container Pattern (Stable Fixed Height Version)
+        url_master = QFrame()
         url_master.setObjectName("urlMasterContainer")
+        url_master.setFixedHeight(240)
+        url_master.setStyleSheet("#urlMasterContainer { border: 2px solid #76e648; border-radius: 6px; background-color: #242424; }")
         url_master_layout = QVBoxLayout(url_master)
-        url_master_layout.setContentsMargins(8, 8, 8, 8)
-        url_master_layout.setSpacing(4)
+        url_master_layout.setContentsMargins(0, 0, 0, 0)
+        url_master_layout.setSpacing(0)
 
-        # 1. Section Title as QLabel
-        url_title = QLabel("URLs to Download")
+        # 1. Section Title (Inside Master)
+        url_title = QLabel("  URLs to Download")
         url_title.setObjectName("urlSectionTitle")
+        url_title.setStyleSheet("padding: 10px 12px; font-weight: 700;")
         url_master_layout.addWidget(url_title)
 
-        # 2. Content Row (Numbers | Separator | Input)
+        # 2. Content Row (Numbers | Vertical Separator | Input)
         content_container = QWidget()
         content_layout = QHBoxLayout(content_container)
         content_layout.setContentsMargins(0, 0, 0, 0)
@@ -183,6 +186,7 @@ class MainWindow(QMainWindow):
         self.line_numbers.setFixedWidth(40)
         self.line_numbers.setStyleSheet("color: #76e648; padding-top: 10px;")
         self.line_numbers.setPlainText("1")
+        self.line_numbers.document().setDocumentMargin(4)
 
         # Doc-wide centering for QPlainTextEdit
         fmt = QTextBlockFormat()
@@ -193,12 +197,12 @@ class MainWindow(QMainWindow):
 
         content_layout.addWidget(self.line_numbers)
 
-        # Dedicated vertical separator
-        v_separator = QFrame()
-        v_separator.setFrameShape(QFrame.Shape.VLine)
-        v_separator.setFixedWidth(2)
-        v_separator.setStyleSheet("background-color: #76e648; border: none; margin: 0px;")
-        content_layout.addWidget(v_separator)
+        # Vertical separator line
+        v_sep = QFrame()
+        v_sep.setFrameShape(QFrame.Shape.VLine)
+        v_sep.setFixedWidth(2)
+        v_sep.setStyleSheet("background-color: #76e648; border: none; margin: 0px;")
+        content_layout.addWidget(v_sep)
 
         # Right side: URL input (QPlainTextEdit)
         self.url_input = QPlainTextEdit()
@@ -209,6 +213,7 @@ class MainWindow(QMainWindow):
         self.url_input.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.url_input.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.url_input.setStyleSheet("color: #ffffff; padding: 10px 8px;")
+        self.url_input.document().setDocumentMargin(4)
 
         # Kill implicit scrollbar width
         self.url_input.verticalScrollBar().setStyleSheet("width: 0px;")
@@ -216,54 +221,69 @@ class MainWindow(QMainWindow):
         content_layout.addWidget(self.url_input)
         url_master_layout.addWidget(content_container)
 
-        # Minimum height and add to main layout
-        url_master.setMinimumHeight(160)
-        main_layout.addWidget(url_master)
+        # 3. Middle Horizontal Separator (Above Buttons)
+        mid_sep = QFrame()
+        mid_sep.setFrameShape(QFrame.Shape.HLine)
+        mid_sep.setFixedHeight(2)
+        mid_sep.setStyleSheet("background-color: #76e648; border: none;")
+        url_master_layout.addWidget(mid_sep)
 
-        # Green separator line between URL box and count label
-        url_separator = QFrame()
-        url_separator.setFrameShape(QFrame.Shape.HLine)
-        url_separator.setStyleSheet("border: none; background-color: #76e648; max-height: 2px;")
-        main_layout.addWidget(url_separator)
+        # 4. Control Buttons (Inside Master)
+        buttons_container = QWidget()
+        buttons_layout = QHBoxLayout(buttons_container)
+        buttons_layout.setContentsMargins(15, 12, 15, 12)
+        buttons_layout.setSpacing(15)
 
-        # URL counter label - white, bigger, OUTSIDE the GroupBox
-        self.url_count_label = QLabel("URLs: 0")
-        self.url_count_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        self.url_count_label.setStyleSheet(
-            "color: #ffffff; font-size: 14px; font-weight: 600; padding: 4px 15px; background-color: transparent;"
-        )
-        main_layout.addWidget(self.url_count_label)
-
-        control_layout = QHBoxLayout()
-        control_layout.setSpacing(15)
-        control_layout.addStretch()
-
-        # Folder chooser button
         self.folder_btn = QPushButton("📁 Choose Folder")
         self.folder_btn.setMinimumWidth(150)
         self.folder_btn.setStyleSheet(
-            "color: #76e648; background-color: transparent; border: 2px solid #76e648; font-size: 15px; font-weight: 600; padding: 8px 16px; border-radius: 8px;"
+            "QPushButton { color: #76e648; background-color: transparent; border: 2px solid #76e648; font-size: 15px; font-weight: 600; padding: 8px 16px; border-radius: 8px; } "
+            "QPushButton:hover { background-color: rgba(118, 230, 72, 0.1); }"
         )
-        control_layout.addWidget(self.folder_btn)
+        buttons_layout.addWidget(self.folder_btn)
 
         self.start_cancel_btn = QPushButton("🚀 Start Download")
         self.start_cancel_btn.setObjectName("startBtn")
         self.start_cancel_btn.setMinimumWidth(180)
         self.start_cancel_btn.setStyleSheet(
-            "color: #76e648; background-color: transparent; border: 2px solid #76e648; font-size: 15px; font-weight: 600; padding: 8px 16px; border-radius: 8px;"
+            "QPushButton { color: #76e648; background-color: transparent; border: 2px solid #76e648; font-size: 15px; font-weight: 600; padding: 8px 16px; border-radius: 8px; } "
+            "QPushButton:hover { background-color: rgba(118, 230, 72, 0.1); }"
         )
-        control_layout.addWidget(self.start_cancel_btn)
+        buttons_layout.addWidget(self.start_cancel_btn)
+
         self.clear_btn = QPushButton("Clear")
         self.clear_btn.setMinimumWidth(100)
         self.clear_btn.setStyleSheet(
-            "color: #76e648; background-color: transparent; border: 2px solid #76e648; font-size: 15px; font-weight: 600; padding: 8px 16px; border-radius: 8px;"
+            "QPushButton { color: #76e648; background-color: transparent; border: 2px solid #76e648; font-size: 15px; font-weight: 600; padding: 8px 16px; border-radius: 8px; } "
+            "QPushButton:hover { background-color: rgba(118, 230, 72, 0.1); }"
         )
-        control_layout.addWidget(self.clear_btn)
+        buttons_layout.addWidget(self.clear_btn)
+
         self.pause_resume_btn = QPushButton("⏸️ Pause")
         self.pause_resume_btn.setObjectName("pauseBtn")
-        control_layout.addWidget(self.pause_resume_btn)
-        control_layout.addStretch()
-        main_layout.addLayout(control_layout)
+        self.pause_resume_btn.setStyleSheet(
+            "QPushButton { color: #76e648; background-color: transparent; border: 2px solid #76e648; font-size: 15px; font-weight: 600; padding: 8px 16px; border-radius: 8px; } "
+            "QPushButton:hover { background-color: rgba(118, 230, 72, 0.1); }"
+        )
+        buttons_layout.addWidget(self.pause_resume_btn)
+
+        url_master_layout.addWidget(buttons_container)
+
+        # 5. Bottom Horizontal Separator (Above Counter)
+        bottom_sep = QFrame()
+        bottom_sep.setFrameShape(QFrame.Shape.HLine)
+        bottom_sep.setFixedHeight(2)
+        bottom_sep.setStyleSheet("background-color: #76e648; border: none;")
+        url_master_layout.addWidget(bottom_sep)
+
+        # 6. URL Counter (Inside Master)
+        self.url_count_label = QLabel("URLs: 0")
+        self.url_count_label.setStyleSheet("color: #76e648; font-weight: 600; padding: 8px 15px;")
+        url_master_layout.addWidget(self.url_count_label)
+
+        # Add master to main layout
+        main_layout.addWidget(url_master)
+        main_layout.addSpacing(10)
 
         progress_group = QGroupBox("Download Progress")
         progress_group.setStyleSheet("QGroupBox { border: 1px solid #404040; border-radius: 8px; margin-top: 15px; padding-top: 15px; }")
@@ -338,7 +358,7 @@ class MainWindow(QMainWindow):
         log_bottom_separator.setStyleSheet("border: none; background-color: #76e648; max-height: 1px; margin: 0px;")
         log_layout.addWidget(log_bottom_separator)
 
-        main_layout.addWidget(log_group)
+        # Removed premature log_group add to avoid duplicates
 
         # Green separator line above Status Bar
         bottom_separator = QFrame()
@@ -369,6 +389,9 @@ class MainWindow(QMainWindow):
         log_layout.addLayout(stats_layout)
 
         main_layout.addWidget(log_group)
+
+        # Final Layout Stabilization Stretch
+        main_layout.addStretch()
 
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
@@ -403,7 +426,7 @@ class MainWindow(QMainWindow):
 
     def clear_urls(self):
         """Clear all URLs from the input field."""
-        self.url_input.setPlainText("")
+        self.url_input.clear()
         self.validate_urls()
 
     def choose_download_folder(self):
@@ -444,21 +467,10 @@ class MainWindow(QMainWindow):
             fmt.setAlignment(Qt.AlignmentFlag.AlignCenter)
             cursor.setBlockFormat(fmt)
 
-        # 3. Dynamic height logic (Expands master box as you type)
-        line_height = 20 # Approximate height per line
-        min_lines = 5
-        max_lines = 10
-        visible_lines = max(min_lines, min(line_count, max_lines))
-        # Calculate pixel height (+ title and padding)
-        new_height = visible_lines * 22 + 65 # Extra space for title
-
-        # Target the Master Container Pattern (url_master)
-        url_master = self.url_input.window().findChild(QWidget, "urlMasterContainer")
-        if url_master:
-            # Only resize if significantly different to prevent jitter
-            if abs(url_master.height() - new_height) > 5:
-                url_master.setMinimumHeight(new_height)
-                url_master.setMaximumHeight(new_height)
+        # 3. Dynamic height logic (Ditch expansion, keep it stable)
+        # We no longer resize the master container here to prevent jitter and overlaps.
+        # The master container's height is now fixed in setup_ui.
+        pass
 
         # 4. CRITICAL FIX: Sync the scrollbars
         # Set line_numbers scroll to match the input box
