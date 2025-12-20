@@ -121,7 +121,7 @@ class MainWindow(QMainWindow):
             
             /* Card Containers */
             QFrame#urlMasterContainer, QGroupBox {
-                border: 1px solid rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(118, 230, 72, 0.2);
                 border-radius: 12px;
                 background-color: rgba(30, 30, 30, 0.4);
                 margin-top: 10px;
@@ -151,7 +151,7 @@ class MainWindow(QMainWindow):
                 background-color: transparent;
                 color: #ffffff;
                 border: none;
-                font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+                font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
                 font-size: 13px;
                 selection-background-color: rgba(118, 230, 72, 0.4);
             }
@@ -168,7 +168,8 @@ class MainWindow(QMainWindow):
                 text-align: center;
                 background-color: rgba(255, 255, 255, 0.05);
                 height: 8px;
-                font-size: 0px;
+                font-size: 1px;
+                color: transparent;
             }
             QProgressBar::chunk {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #76e648, stop:1 #5da13a);
