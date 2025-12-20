@@ -154,36 +154,39 @@ class MainWindow(QMainWindow):
         container_layout.setSpacing(0)
 
         # Left side: Static line numbers (green)
-        # Left side: Static line numbers (green)
         self.line_numbers = QTextEdit()
-        self.line_numbers.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.line_numbers.setReadOnly(True)
-        # Hide scrollbar on numbers so it relies purely on the input box's scroll
+        self.line_numbers.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.line_numbers.document().setDocumentMargin(0)
         self.line_numbers.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.line_numbers.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.line_numbers.setFixedWidth(45) # Slightly wider for 2-3 digits
-        self.line_numbers.setAlignment(Qt.AlignmentFlag.AlignRight) # Align numbers to the right near the line
+        self.line_numbers.setFixedWidth(45)
         self.line_numbers.setStyleSheet(
             """
             QTextEdit {
                 background-color: #252525;
                 color: #76e648;
                 border: none;
-                /* FIXED: Solid Green Line connecting vertically */
-                border-right: 2px solid #76e648;
-                padding: 8px 4px;
+                padding-top: 10px;
                 font-family: 'Monaco', 'Menlo', monospace;
                 font-size: 13px;
-                /* Removed line-height to ensure it matches url_input defaults */
             }
             """
         )
         self.line_numbers.setPlainText("1")
+        self.line_numbers.setAlignment(Qt.AlignmentFlag.AlignCenter)
         container_layout.addWidget(self.line_numbers)
+
+        # Dedicated vertical separator line
+        v_separator = QFrame()
+        v_separator.setFrameShape(QFrame.Shape.VLine)
+        v_separator.setFixedWidth(2)
+        v_separator.setStyleSheet("background-color: #76e648; border: none; margin: 0px;")
+        container_layout.addWidget(v_separator)
 
         # Right side: Editable URL input
         self.url_input = QTextEdit()
-        self.url_input.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.url_input.document().setDocumentMargin(0)
         self.url_input.setAcceptRichText(False)
         self.url_input.setLineWrapMode(QTextEdit.LineWrapMode.NoWrap)
         self.url_input.setPlaceholderText("Enter thread URLs here, one per line...")
@@ -195,7 +198,7 @@ class MainWindow(QMainWindow):
                 background-color: #2d2d2d;
                 color: #ffffff;
                 border: none;
-                padding: 8px;
+                padding: 10px 8px;
                 font-family: 'Monaco', 'Menlo', monospace;
                 font-size: 13px;
             }
@@ -423,12 +426,12 @@ class MainWindow(QMainWindow):
         line_count = max(1, len(all_lines))
 
         # 2. Update line numbers display
-        # We align right and ensure distinct lines
+        # We align center and ensure distinct lines
         line_nums = "\n".join(str(i) for i in range(1, line_count + 1))
 
         if self.line_numbers.toPlainText() != line_nums:
             self.line_numbers.setPlainText(line_nums)
-            self.line_numbers.setAlignment(Qt.AlignmentFlag.AlignRight)
+            self.line_numbers.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # 3. Dynamic height logic (Expands box as you type)
         line_height = 20 # Approximate height per line
