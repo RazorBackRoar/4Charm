@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QWidget,
     QVBoxLayout,
+    QSizePolicy,
     QHBoxLayout,
     QLabel,
     QTextEdit,
@@ -155,6 +156,7 @@ class MainWindow(QMainWindow):
         # Left side: Static line numbers (green)
         # Left side: Static line numbers (green)
         self.line_numbers = QTextEdit()
+        self.line_numbers.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.line_numbers.setReadOnly(True)
         # Hide scrollbar on numbers so it relies purely on the input box's scroll
         self.line_numbers.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -181,6 +183,7 @@ class MainWindow(QMainWindow):
 
         # Right side: Editable URL input
         self.url_input = QTextEdit()
+        self.url_input.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.url_input.setAcceptRichText(False)
         self.url_input.setLineWrapMode(QTextEdit.LineWrapMode.NoWrap)
         self.url_input.setPlaceholderText("Enter thread URLs here, one per line...")
