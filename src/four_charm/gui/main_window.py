@@ -156,21 +156,23 @@ class MainWindow(QMainWindow):
         # Left side: Static line numbers (green)
         self.line_numbers = QTextEdit()
         self.line_numbers.setReadOnly(True)
-        self.line_numbers.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff) # Changed to AlwaysOff to hide it completely visually
+        # Hide scrollbar on numbers so it relies purely on the input box's scroll
+        self.line_numbers.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.line_numbers.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.line_numbers.setFixedWidth(45) # Increased slightly for better spacing
-        self.line_numbers.setAlignment(Qt.AlignmentFlag.AlignRight) # Right align numbers
+        self.line_numbers.setFixedWidth(45) # Slightly wider for 2-3 digits
+        self.line_numbers.setAlignment(Qt.AlignmentFlag.AlignRight) # Align numbers to the right near the line
         self.line_numbers.setStyleSheet(
             """
             QTextEdit {
                 background-color: #252525;
                 color: #76e648;
                 border: none;
-                border-right: 2px solid #76e648;  /* FIXED: Changed to Green to connect the line */
+                /* FIXED: Solid Green Line connecting vertically */
+                border-right: 2px solid #76e648;
                 padding: 8px 4px;
                 font-family: 'Monaco', 'Menlo', monospace;
                 font-size: 13px;
-                line-height: 1.5;
+                /* Removed line-height to ensure it matches url_input defaults */
             }
             """
         )
@@ -364,11 +366,10 @@ class MainWindow(QMainWindow):
         """Connect signals and slots."""
         self.url_input.textChanged.connect(self.validate_urls)
 
-        # Sync scrolling (Master = url_input, Slave = line_numbers)
+        # Sync scrolling: Input Box -> controls -> Line Numbers
         self.url_input.verticalScrollBar().valueChanged.connect(
-            lambda v: self.line_numbers.verticalScrollBar().setValue(v)
+            self.line_numbers.verticalScrollBar().setValue
         )
-        # We remove the reverse connection to prevent loop fighting
         self.start_cancel_btn.clicked.connect(self.handle_start_cancel_click)
         self.pause_resume_btn.clicked.connect(self.toggle_pause_resume)
         self.clear_btn.clicked.connect(self.clear_urls)
@@ -426,12 +427,13 @@ class MainWindow(QMainWindow):
             self.line_numbers.setPlainText(line_nums)
             self.line_numbers.setAlignment(Qt.AlignmentFlag.AlignRight)
 
-        # 3. Dynamic height logic
-        line_height = 25
+        # 3. Dynamic height logic (Expands box as you type)
+        line_height = 20 # Approximate height per line
         min_lines = 5
         max_lines = 10
         visible_lines = max(min_lines, min(line_count, max_lines))
-        new_height = visible_lines * line_height + 20
+        # Calculate pixel height (+ padding)
+        new_height = visible_lines * 22 + 25
 
         url_container = self.url_input.parentWidget()
         if url_container:
@@ -440,10 +442,9 @@ class MainWindow(QMainWindow):
                 url_container.setMinimumHeight(new_height)
                 url_container.setMaximumHeight(new_height)
 
-        # 4. CRITICAL FIX: Restore the scrollbar position
-        # We enforce the line_numbers scrollbar to match the url_input scrollbar
+        # 4. CRITICAL FIX: Sync the scrollbars
+        # Set line_numbers scroll to match the input box
         self.line_numbers.verticalScrollBar().setValue(current_scroll)
-        self.url_input.verticalScrollBar().setValue(current_scroll)
 
         # Count non-empty lines for URL validation
         raw_lines = [ln.strip() for ln in all_lines if ln.strip()]
@@ -468,7 +469,8 @@ class MainWindow(QMainWindow):
         invalid_count = 0
 
         for url in raw_lines:
-            if "boards.4chan.org" in url or "4channel.org" in url:
+            # Basic check for 4chan domains
+            if "boards.4chan.org" in url or "4channel.org" in url or "4chan.org" in url:
                 valid_count += 1
             else:
                 invalid_count += 1
@@ -476,7 +478,7 @@ class MainWindow(QMainWindow):
         if valid_count > 0 and invalid_count == 0:
             self.start_cancel_btn.setEnabled(True)
             self._update_url_status(f"Ready to download {valid_count} threads", "valid")
-        else:
+        elif invalid_count > 0:
             self.start_cancel_btn.setEnabled(False)
             self._update_url_status("⚠️ Invalid 4chan URLs detected", "invalid")
 
