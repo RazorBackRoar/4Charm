@@ -36,6 +36,7 @@ from PySide6.QtGui import (
     QDragEnterEvent,
     QDropEvent,
     QTextCursor,
+    QTextBlockFormat,
     QKeySequence,
     QShortcut,
 )
@@ -174,7 +175,14 @@ class MainWindow(QMainWindow):
             """
         )
         self.line_numbers.setPlainText("1")
-        self.line_numbers.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        # Robust centering for all blocks
+        cursor = self.line_numbers.textCursor()
+        cursor.select(QTextCursor.SelectionType.Document)
+        fmt = QTextBlockFormat()
+        fmt.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        cursor.setBlockFormat(fmt)
+
         container_layout.addWidget(self.line_numbers)
 
         # Dedicated vertical separator line
@@ -431,7 +439,12 @@ class MainWindow(QMainWindow):
 
         if self.line_numbers.toPlainText() != line_nums:
             self.line_numbers.setPlainText(line_nums)
-            self.line_numbers.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            # Robust centering for all line blocks
+            cursor = self.line_numbers.textCursor()
+            cursor.select(QTextCursor.SelectionType.Document)
+            fmt = QTextBlockFormat()
+            fmt.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            cursor.setBlockFormat(fmt)
 
         # 3. Dynamic height logic (Expands box as you type)
         line_height = 20 # Approximate height per line
