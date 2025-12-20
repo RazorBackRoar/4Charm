@@ -61,7 +61,7 @@ class MainWindow(QMainWindow):
             """
             QMainWindow { background-color: #1a1a1a; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
             QWidget#centralWidget { border-top: 2px solid #76e648; }
-            QGroupBox { border: 2px solid #76e648; margin-top: 12px; padding-top: 8px; padding-bottom: 0px; background-color: transparent; }
+            QGroupBox { border: none; margin-top: 25px; padding-top: 8px; padding-bottom: 0px; background-color: transparent; }
             QGroupBox::title { subcontrol-origin: padding; left: 12px; padding: 0 12px; color: #76e648; font-size: 26px; font-weight: 700; }
             QLineEdit { background-color: #2d2d2d; color: #ffffff; border: 1px solid #404040; border-radius: 10px; padding: 12px 16px; font-size: 16px; selection-background-color: #76e648; }
             QLineEdit:focus { border: 2px solid #76e648; background-color: #353535; }
@@ -136,8 +136,8 @@ class MainWindow(QMainWindow):
 
         url_group = QGroupBox("URLs to Download")
         url_layout = QVBoxLayout(url_group)
-        url_layout.setContentsMargins(10, 10, 10, 0)
-        url_layout.setSpacing(8)
+        url_layout.setContentsMargins(0, 0, 0, 0)
+        url_layout.setSpacing(0)
 
         # Container frame - Transparent background, no border (seamless look)
         url_container = QFrame()
@@ -145,8 +145,8 @@ class MainWindow(QMainWindow):
             """
             QFrame {
                 background-color: #2d2d2d;
-                border: none;
-                border-radius: 4px;
+                border: 2px solid #76e648;
+                border-radius: 8px;
             }
             """
         )
