@@ -4,10 +4,10 @@
 #
 # ## The Magic Behind Real-Time Updates
 #
-# The dynamic line numbering happens in the validate_urls method, which is connected 
-# to the URL input's textChanged signal. Every time you press Enter, the code 
+# The dynamic line numbering happens in the validate_urls method, which is connected
+# to the URL input's textChanged signal. Every time you press Enter, the code
 # immediately recalculates the number of lines and updates the display on the left side.
-# 
+#
 # ## Synchronization Flow
 #
 # ```mermaid
@@ -26,7 +26,7 @@
 # ## The Three-Step Process
 #
 # ### 1. Counting the Lines
-# When you press Enter, it creates a newline character (\n). The code splits the 
+# When you press Enter, it creates a newline character (\n). The code splits the
 # text by this character to determine how many lines currently exist:
 #
 # raw_text = self.url_input.toPlainText()
@@ -40,7 +40,7 @@
 # self.line_numbers.setPlainText(line_nums)
 #
 # ### 3. Keeping Everything Synchronized
-# To ensure the line numbers stay perfectly aligned (especially when scrolling), 
+# To ensure the line numbers stay perfectly aligned (especially when scrolling),
 # we synchronize the scrollbars:
 #
 # current_scroll = self.url_input.verticalScrollBar().value()
@@ -110,15 +110,15 @@ class MainWindow(QMainWindow):
 
         self.setStyleSheet(
             """
-            QMainWindow { 
-                background-color: #0f0f0f; 
-                color: #e0e0e0; 
-                font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif; 
+            QMainWindow {
+                background-color: #0f0f0f;
+                color: #e0e0e0;
+                font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
             }
-            QWidget#centralWidget { 
-                border-top: 1px solid rgba(118, 230, 72, 0.2); 
+            QWidget#centralWidget {
+                border-top: 1px solid rgba(118, 230, 72, 0.2);
             }
-            
+
             /* Card Containers */
             QFrame#urlMasterContainer, QGroupBox {
                 border: 1px solid rgba(118, 230, 72, 0.2);
@@ -126,7 +126,7 @@ class MainWindow(QMainWindow):
                 background-color: rgba(30, 30, 30, 0.4);
                 margin-top: 10px;
             }
-            
+
             QGroupBox::title {
                 subcontrol-origin: margin;
                 left: 15px;
@@ -155,7 +155,7 @@ class MainWindow(QMainWindow):
                 font-size: 13px;
                 selection-background-color: rgba(118, 230, 72, 0.4);
             }
-            
+
             QTextEdit#logView {
                 background-color: rgba(0, 0, 0, 0.2);
                 border-radius: 6px;
@@ -190,7 +190,7 @@ class MainWindow(QMainWindow):
                 background-color: rgba(255, 255, 255, 0.08);
                 border: 1px solid rgba(255, 255, 255, 0.2);
             }
-            
+
             QPushButton#startBtn {
                 background-color: rgba(118, 230, 72, 0.1);
                 border: 1px solid rgba(118, 230, 72, 0.3);
@@ -199,13 +199,13 @@ class MainWindow(QMainWindow):
             QPushButton#startBtn:hover {
                 background-color: rgba(118, 230, 72, 0.2);
             }
-            
+
             QPushButton#cancelBtn {
                 background-color: rgba(255, 71, 87, 0.1);
                 border: 1px solid rgba(255, 71, 87, 0.3);
                 color: #ff4757;
             }
-            
+
             QPushButton#pauseBtn {
                 background-color: rgba(255, 165, 2, 0.1);
                 border: 1px solid rgba(255, 165, 2, 0.3);
@@ -247,7 +247,7 @@ class MainWindow(QMainWindow):
         # Header Section
         header_container = QVBoxLayout()
         header_container.setSpacing(4)
-        
+
         header = QLabel("4Charm")
         header.setAlignment(Qt.AlignmentFlag.AlignCenter)
         header.setStyleSheet(
@@ -287,8 +287,9 @@ class MainWindow(QMainWindow):
         self.line_numbers.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.line_numbers.setFrameStyle(QFrame.Shape.NoFrame)
         self.line_numbers.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.line_numbers.setFixedWidth(35)
-        self.line_numbers.setStyleSheet("color: rgba(118, 230, 72, 0.5); padding: 4px 0px;")
+        self.line_numbers.setFixedWidth(40)
+        self.line_numbers.document().setDocumentMargin(0)
+        self.line_numbers.setStyleSheet("color: rgba(118, 230, 72, 0.5); padding: 12px 0px;")
         self.line_numbers.setPlainText("1")
 
         fmt = QTextBlockFormat()
@@ -305,9 +306,10 @@ class MainWindow(QMainWindow):
         self.url_input.setFrameStyle(QFrame.Shape.NoFrame)
         self.url_input.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
         self.url_input.setPlaceholderText("Paste thread URLs here...")
-        self.url_input.setFixedHeight(105)
-        self.url_input.setStyleSheet("padding: 4px 0px;")
-        
+        self.url_input.setFixedHeight(120)
+        self.url_input.document().setDocumentMargin(0)
+        self.url_input.setStyleSheet("padding: 12px 0px;")
+
         # Match line height with line_numbers
         cursor = self.url_input.textCursor()
         cursor.select(QTextCursor.SelectionType.Document)
@@ -370,7 +372,7 @@ class MainWindow(QMainWindow):
         log_group = QGroupBox("ACTIVITY LOG")
         log_layout = QVBoxLayout(log_group)
         log_layout.setContentsMargins(15, 20, 15, 15)
-        
+
         self.log_text = QTextEdit()
         self.log_text.setObjectName("logView")
         self.log_text.setReadOnly(True)
@@ -475,11 +477,12 @@ class MainWindow(QMainWindow):
             fmt.setAlignment(Qt.AlignmentFlag.AlignCenter)
             fmt.setLineHeight(140.0, QTextBlockFormat.LineHeightTypes.ProportionalHeight.value)
             cursor.setBlockFormat(fmt)
+            self.line_numbers.setTextCursor(cursor)
 
         # 3. Keeping Everything Synchronized
         # Ensure the cursor is always visible (especially when adding lines)
         self.url_input.ensureCursorVisible()
-        
+
         # We use a 0ms timer to defer scroll sync until the widget has processed the text update.
         # This prevents the scrollbar from being 'capped' at the old maximum range when adding lines.
         QTimer.singleShot(0, self._sync_scroll_bars)
