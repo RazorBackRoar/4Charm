@@ -1,24 +1,11 @@
 # 4Charm
+### High-Performance 4chan Media Downloader for macOS
 
-```text
-██╗  ██╗ ██████╗██╗  ██╗ █████╗ ██████╗ ███╗   ███╗
-██║  ██║██╔════╝██║  ██║██╔══██╗██╔══██╗████╗ ████║
-███████║██║     ███████║███████║██████╔╝██╔████╔██║
-╚════██║██║     ██╔══██║██╔══██║██╔══██╗██║╚██╔╝██║
-     ██║╚██████╗██║  ██║██║  ██║██║  ██║██║ ╚═╝ ██║
-     ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝
-```
-
-## 4Charm — High-Performance 4chan Media Downloader for macOS
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+---
 
 ### ⚡ About
 
 4Charm is a native macOS app built to rip through threads, catalogs, and whole boards with precision. Smart organization, failsafe resume, and aggressive optimization keep every session stable and fast.
-
-> [!NOTE]
-> For a technical breakdown of how the UI handles real-time line synchronization, see [How Line Numbers Stay Synchronized](file:///Users/home/GitHub/4Charm/docs/SYNC_LOGIC.md).
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 

@@ -1,3 +1,53 @@
+# ##############################################################################
+# #                   HOW LINE NUMBERS STAY SYNCHRONIZED                         #
+# ##############################################################################
+#
+# ## The Magic Behind Real-Time Updates
+#
+# The dynamic line numbering happens in the validate_urls method, which is connected 
+# to the URL input's textChanged signal. Every time you press Enter, the code 
+# immediately recalculates the number of lines and updates the display on the left side.
+# 
+# ## Synchronization Flow
+#
+# ```mermaid
+# graph TD
+#     A[User types URL / Enter] -->|textChanged signal| B[validate_urls Method]
+#     B --> C[1. Count Newlines (\n)]
+#     C --> D[2. Generate Number Sequence]
+#     D --> E[Update line_numbers Display]
+#     E --> F[3. Synchronize Vertical Scrollbars]
+#     F --> G[Pixel Perfect UI Alignment]
+# end
+# ```
+#
+# ---
+#
+# ## The Three-Step Process
+#
+# ### 1. Counting the Lines
+# When you press Enter, it creates a newline character (\n). The code splits the 
+# text by this character to determine how many lines currently exist:
+#
+# raw_text = self.url_input.toPlainText()
+# all_lines = raw_text.split("\n")
+# line_count = max(1, len(all_lines))
+#
+# ### 2. Generating the Number Sequence
+# Once we have the count, we build a string of numbers from 1 through N:
+#
+# line_nums = "\n".join(str(i) for i in range(1, line_count + 1))
+# self.line_numbers.setPlainText(line_nums)
+#
+# ### 3. Keeping Everything Synchronized
+# To ensure the line numbers stay perfectly aligned (especially when scrolling), 
+# we synchronize the scrollbars:
+#
+# current_scroll = self.url_input.verticalScrollBar().value()
+# self.line_numbers.verticalScrollBar().setValue(current_scroll)
+#
+# ---
+
 import re
 import subprocess
 import logging
@@ -60,48 +110,112 @@ class MainWindow(QMainWindow):
 
         self.setStyleSheet(
             """
-            QMainWindow { background-color: #1a1a1a; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
-            QWidget#centralWidget { border-top: 2px solid #76e648; }
-            QWidget#urlMasterContainer {
-                border: 2px solid #76e648;
-                border-radius: 6px;
-                background-color: #1e1e1e;
-                margin-top: 12px;
+            QMainWindow { 
+                background-color: #0f0f0f; 
+                color: #e0e0e0; 
+                font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif; 
             }
+            QWidget#centralWidget { 
+                border-top: 1px solid rgba(118, 230, 72, 0.2); 
+            }
+            
+            /* Card Containers */
+            QFrame#urlMasterContainer, QGroupBox {
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 12px;
+                background-color: rgba(30, 30, 30, 0.4);
+                margin-top: 10px;
+            }
+            
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 15px;
+                padding: 0 8px;
+                color: #76e648;
+                font-size: 11px;
+                font-weight: 800;
+                background-color: transparent;
+                letter-spacing: 1px;
+            }
+
             QLabel#urlSectionTitle {
                 color: #76e648;
-                font-size: 14px;
-                font-weight: 600;
-                padding: 4px 8px;
-                background-color: transparent;
+                font-size: 11px;
+                font-weight: 800;
+                padding: 12px 15px;
+                letter-spacing: 1px;
             }
-            QPlainTextEdit {
+
+            /* Input Fields */
+            QPlainTextEdit, QTextEdit {
                 background-color: transparent;
                 color: #ffffff;
                 border: none;
-                font-family: 'Monaco', 'Menlo', monospace;
+                font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
                 font-size: 13px;
+                selection-background-color: rgba(118, 230, 72, 0.4);
             }
-            QLineEdit { background-color: #2d2d2d; color: #ffffff; border: 1px solid #404040; border-radius: 10px; padding: 12px 16px; font-size: 16px; selection-background-color: #76e648; }
-            QLineEdit:focus { border: 2px solid #76e648; background-color: #353535; }
-            QTextEdit { background-color: #2d2d2d; color: #ffffff; border: 2px solid #76e648; border-radius: 0px; padding: 8px 12px; font-size: 16px; selection-background-color: #76e648; line-height: 1.4; }
-            QTextEdit:focus { border: 2px solid #76e648; background-color: #353535; border-radius: 0px; }
-            QLabel { color: #cccccc; font-size: 15px; }
-            QPushButton { font-size: 15px; padding: 8px 16px; border-radius: 8px; border: none; min-height: 36px; font-weight: 600; }
-            QPushButton:hover { background-color: #5a5a5a; }
-            QPushButton:pressed { background-color: #4a4a4a; }
-            QPushButton:disabled { background-color: #404040; color: #888888; }
-            QPushButton#startBtn { font-size: 15px; color: #76e648; background-color: transparent; border: 2px solid #76e648; font-weight: 600; border-radius: 8px; }
-            QPushButton#startBtn:hover { background-color: #1a3a0a; }
-            QPushButton#startBtn:disabled { background-color: #404040; color: #888888; border: 2px solid #404040; }
-            QPushButton#cancelBtn { font-size: 15px; background-color: #ff4757; color: white; border-radius: 8px; }
-            QPushButton#cancelBtn:hover { background-color: #ff3838; }
-            QPushButton#pauseBtn { background-color: #ffa502; color: #1a1a1a; font-weight: 700; border-radius: 8px; }
-            QPushButton#pauseBtn:hover { background-color: #ff8c00; }
-            QProgressBar { border: none; border-radius: 8px; text-align: center; background-color: #2d2d2d; min-height: 24px; font-size: 13px; font-weight: 600; color: #ffffff; }
-            QProgressBar::chunk { background-color: #76e648; border-radius: 0px; }
-            QFrame#sectionFrame { border: none; background-color: transparent; }
-            QStatusBar { background-color: #242424; color: #888888; border-top: 1px solid #404040; padding: 8px; font-size: 13px; }
+            
+            QTextEdit#logView {
+                background-color: rgba(0, 0, 0, 0.2);
+                border-radius: 6px;
+            }
+
+            /* Progress Bar */
+            QProgressBar {
+                border: none;
+                border-radius: 6px;
+                text-align: center;
+                background-color: rgba(255, 255, 255, 0.05);
+                height: 8px;
+                font-size: 0px;
+            }
+            QProgressBar::chunk {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #76e648, stop:1 #5da13a);
+                border-radius: 6px;
+            }
+
+            /* Buttons */
+            QPushButton {
+                font-size: 13px;
+                padding: 8px 16px;
+                border-radius: 8px;
+                background-color: rgba(255, 255, 255, 0.05);
+                color: #ffffff;
+                font-weight: 600;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            QPushButton:hover {
+                background-color: rgba(255, 255, 255, 0.08);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+            }
+            
+            QPushButton#startBtn {
+                background-color: rgba(118, 230, 72, 0.1);
+                border: 1px solid rgba(118, 230, 72, 0.3);
+                color: #76e648;
+            }
+            QPushButton#startBtn:hover {
+                background-color: rgba(118, 230, 72, 0.2);
+            }
+            
+            QPushButton#cancelBtn {
+                background-color: rgba(255, 71, 87, 0.1);
+                border: 1px solid rgba(255, 71, 87, 0.3);
+                color: #ff4757;
+            }
+            
+            QPushButton#pauseBtn {
+                background-color: rgba(255, 165, 2, 0.1);
+                border: 1px solid rgba(255, 165, 2, 0.3);
+                color: #ffa502;
+            }
+
+            QStatusBar {
+                background-color: transparent;
+                color: #666666;
+                font-size: 11px;
+            }
         """
         )
 
@@ -127,275 +241,161 @@ class MainWindow(QMainWindow):
         central.setObjectName("centralWidget")
         self.setCentralWidget(central)
         main_layout = QVBoxLayout(central)
-        main_layout.setContentsMargins(15, 15, 15, 15)
+        main_layout.setContentsMargins(25, 20, 25, 20)
         main_layout.setSpacing(15)
 
+        # Header Section
+        header_container = QVBoxLayout()
+        header_container.setSpacing(4)
+        
         header = QLabel("4Charm")
         header.setAlignment(Qt.AlignmentFlag.AlignCenter)
         header.setStyleSheet(
-            "font-size: 34px; font-weight: 700; color: #76e648; margin: 15px 0 5px 0;"
+            "font-size: 42px; font-weight: 800; color: #76e648; letter-spacing: -1px; margin-top: 10px;"
         )
-        main_layout.addWidget(header)
+        header_container.addWidget(header)
 
-        slogan = QLabel("The Phenomenal 4chan Media Downloader for macOS")
+        slogan = QLabel("HIGH PERFORMANCE 4CHAN MEDIA DOWNLOADER")
         slogan.setAlignment(Qt.AlignmentFlag.AlignCenter)
         slogan.setStyleSheet(
-            "font-size: 14px; font-weight: 500; color: #888888; margin-bottom: 15px; letter-spacing: 0.5px;"
+            "font-size: 11px; font-weight: 700; color: #666666; letter-spacing: 2px; margin-bottom: 20px;"
         )
-        main_layout.addWidget(slogan)
+        header_container.addWidget(slogan)
+        main_layout.addLayout(header_container)
 
-        instruction = QLabel(
-            "Paste or drop multiple thread URLs (one per line) to download all media files concurrently\nURLs are validated automatically | Press Ctrl+Enter to start download"
-        )
-        instruction.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        instruction.setStyleSheet(
-            "color: #888888; font-size: 15px; margin: 15px 0; line-height: 1.5;"
-        )
-        main_layout.addWidget(instruction)
-
-        # Native Qt Master Container Pattern (Stable Fixed Height Version)
+        # URL Input Card
         url_master = QFrame()
         url_master.setObjectName("urlMasterContainer")
-        url_master.setFixedHeight(240)
-        url_master.setStyleSheet("#urlMasterContainer { border: 2px solid #76e648; border-radius: 6px; background-color: #242424; }")
+        # Removed fixed height to prevent overlap!
         url_master_layout = QVBoxLayout(url_master)
         url_master_layout.setContentsMargins(0, 0, 0, 0)
         url_master_layout.setSpacing(0)
 
-        # 1. Section Title (Inside Master)
-        url_title = QLabel("  URLs to Download")
+        url_title = QLabel("  URLs TO DOWNLOAD")
         url_title.setObjectName("urlSectionTitle")
-        url_title.setStyleSheet("padding: 10px 12px; font-weight: 700;")
         url_master_layout.addWidget(url_title)
 
-        # 2. Content Row (Numbers | Vertical Separator | Input)
-        content_container = QWidget()
-        content_layout = QHBoxLayout(content_container)
-        content_layout.setContentsMargins(0, 0, 0, 0)
-        content_layout.setSpacing(0)
+        # Editor Area
+        editor_container = QWidget()
+        editor_layout = QHBoxLayout(editor_container)
+        editor_layout.setContentsMargins(15, 0, 15, 10)
+        editor_layout.setSpacing(10)
 
-        # Left side: Line numbers (QPlainTextEdit)
+        # Line numbers
         self.line_numbers = QPlainTextEdit()
         self.line_numbers.setReadOnly(True)
         self.line_numbers.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.line_numbers.setFrameStyle(QFrame.Shape.NoFrame)
-        self.line_numbers.setViewportMargins(0, 0, 0, 0)
-        self.line_numbers.setBackgroundVisible(False)
         self.line_numbers.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.line_numbers.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.line_numbers.setFixedWidth(40)
-        self.line_numbers.setStyleSheet("color: #76e648; padding-top: 10px;")
+        self.line_numbers.setFixedWidth(35)
+        self.line_numbers.setStyleSheet("color: rgba(118, 230, 72, 0.5); padding: 8px 0px;")
         self.line_numbers.setPlainText("1")
-        self.line_numbers.document().setDocumentMargin(4)
 
-        # Doc-wide centering for QPlainTextEdit
         fmt = QTextBlockFormat()
         fmt.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        fmt.setLineHeight(140.0, QTextBlockFormat.LineHeightTypes.ProportionalHeight.value)
         cursor = self.line_numbers.textCursor()
         cursor.select(QTextCursor.SelectionType.Document)
         cursor.setBlockFormat(fmt)
 
-        content_layout.addWidget(self.line_numbers)
+        editor_layout.addWidget(self.line_numbers)
 
-        # Vertical separator line
-        v_sep = QFrame()
-        v_sep.setFrameShape(QFrame.Shape.VLine)
-        v_sep.setFixedWidth(2)
-        v_sep.setStyleSheet("background-color: #76e648; border: none; margin: 0px;")
-        content_layout.addWidget(v_sep)
-
-        # Right side: URL input (QPlainTextEdit)
+        # URL input
         self.url_input = QPlainTextEdit()
         self.url_input.setFrameStyle(QFrame.Shape.NoFrame)
-        self.url_input.setViewportMargins(0, 0, 0, 0)
         self.url_input.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
-        self.url_input.setPlaceholderText("Enter thread URLs here, one per line...")
-        self.url_input.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.url_input.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.url_input.setStyleSheet("color: #ffffff; padding: 10px 8px;")
-        self.url_input.document().setDocumentMargin(4)
+        self.url_input.setPlaceholderText("Paste thread URLs here...")
+        self.url_input.setFixedHeight(140)
+        self.url_input.setStyleSheet("padding: 8px 0px;")
+        
+        # Match line height with line_numbers
+        cursor = self.url_input.textCursor()
+        cursor.select(QTextCursor.SelectionType.Document)
+        cursor.setBlockFormat(fmt)
 
-        # Kill implicit scrollbar width
-        self.url_input.verticalScrollBar().setStyleSheet("width: 0px;")
+        editor_layout.addWidget(self.url_input)
+        url_master_layout.addWidget(editor_container)
 
-        content_layout.addWidget(self.url_input)
-        url_master_layout.addWidget(content_container)
-
-        # 3. Middle Horizontal Separator (Above Buttons)
-        mid_sep = QFrame()
-        mid_sep.setFrameShape(QFrame.Shape.HLine)
-        mid_sep.setFixedHeight(2)
-        mid_sep.setStyleSheet("background-color: #76e648; border: none;")
-        url_master_layout.addWidget(mid_sep)
-
-        # 4. Control Buttons (Inside Master)
+        # Action Buttons
         buttons_container = QWidget()
         buttons_layout = QHBoxLayout(buttons_container)
-        buttons_layout.setContentsMargins(15, 12, 15, 12)
-        buttons_layout.setSpacing(15)
+        buttons_layout.setContentsMargins(15, 0, 15, 15)
+        buttons_layout.setSpacing(12)
 
-        self.folder_btn = QPushButton("📁 Choose Folder")
-        self.folder_btn.setMinimumWidth(150)
-        self.folder_btn.setStyleSheet(
-            "QPushButton { color: #76e648; background-color: transparent; border: 2px solid #76e648; font-size: 15px; font-weight: 600; padding: 8px 16px; border-radius: 8px; } "
-            "QPushButton:hover { background-color: rgba(118, 230, 72, 0.1); }"
-        )
-        buttons_layout.addWidget(self.folder_btn)
-
-        self.start_cancel_btn = QPushButton("🚀 Start Download")
+        self.folder_btn = QPushButton("📁 Folder")
+        self.start_cancel_btn = QPushButton("🚀 Start")
         self.start_cancel_btn.setObjectName("startBtn")
-        self.start_cancel_btn.setMinimumWidth(180)
-        self.start_cancel_btn.setStyleSheet(
-            "QPushButton { color: #76e648; background-color: transparent; border: 2px solid #76e648; font-size: 15px; font-weight: 600; padding: 8px 16px; border-radius: 8px; } "
-            "QPushButton:hover { background-color: rgba(118, 230, 72, 0.1); }"
-        )
-        buttons_layout.addWidget(self.start_cancel_btn)
-
         self.clear_btn = QPushButton("Clear")
-        self.clear_btn.setMinimumWidth(100)
-        self.clear_btn.setStyleSheet(
-            "QPushButton { color: #76e648; background-color: transparent; border: 2px solid #76e648; font-size: 15px; font-weight: 600; padding: 8px 16px; border-radius: 8px; } "
-            "QPushButton:hover { background-color: rgba(118, 230, 72, 0.1); }"
-        )
-        buttons_layout.addWidget(self.clear_btn)
-
         self.pause_resume_btn = QPushButton("⏸️ Pause")
         self.pause_resume_btn.setObjectName("pauseBtn")
-        self.pause_resume_btn.setStyleSheet(
-            "QPushButton { color: #76e648; background-color: transparent; border: 2px solid #76e648; font-size: 15px; font-weight: 600; padding: 8px 16px; border-radius: 8px; } "
-            "QPushButton:hover { background-color: rgba(118, 230, 72, 0.1); }"
-        )
-        buttons_layout.addWidget(self.pause_resume_btn)
 
+        buttons_layout.addWidget(self.folder_btn)
+        buttons_layout.addWidget(self.start_cancel_btn)
+        buttons_layout.addWidget(self.clear_btn)
+        buttons_layout.addWidget(self.pause_resume_btn)
         url_master_layout.addWidget(buttons_container)
 
-        # 5. Bottom Horizontal Separator (Above Counter)
-        bottom_sep = QFrame()
-        bottom_sep.setFrameShape(QFrame.Shape.HLine)
-        bottom_sep.setFixedHeight(2)
-        bottom_sep.setStyleSheet("background-color: #76e648; border: none;")
-        url_master_layout.addWidget(bottom_sep)
+        # Meta Info
+        meta_layout = QHBoxLayout()
+        meta_layout.setContentsMargins(15, 0, 15, 12)
+        self.url_count_label = QLabel("QUEUE: 0")
+        self.url_count_label.setStyleSheet("color: #666666; font-size: 10px; font-weight: 800;")
+        meta_layout.addWidget(self.url_count_label)
+        meta_layout.addStretch()
+        url_master_layout.addLayout(meta_layout)
 
-        # 6. URL Counter (Inside Master)
-        self.url_count_label = QLabel("URLs: 0")
-        self.url_count_label.setStyleSheet("color: #76e648; font-weight: 600; padding: 8px 15px;")
-        url_master_layout.addWidget(self.url_count_label)
-
-        # Add master to main layout
         main_layout.addWidget(url_master)
-        main_layout.addSpacing(10)
 
-        progress_group = QGroupBox("Download Progress")
-        progress_group.setStyleSheet("QGroupBox { border: 1px solid #404040; border-radius: 8px; margin-top: 15px; padding-top: 15px; }")
-        progress_group.setStyleSheet(progress_group.styleSheet() + " QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 5px; color: #888888; font-size: 13px; font-weight: 600; }")
-        progress_group.setMinimumHeight(150)
+        # Progress Section
+        progress_group = QGroupBox("DOWNLOAD PROGRESS")
         progress_layout = QVBoxLayout(progress_group)
-        progress_layout.setContentsMargins(10, 10, 10, 10)
-        progress_layout.setSpacing(8)
+        progress_layout.setContentsMargins(15, 20, 15, 15)
+        progress_layout.setSpacing(10)
 
         self.progress_bar = QProgressBar()
-        self.progress_label = QLabel("Ready to download...")
-        self.progress_label.setStyleSheet(
-            "font-size: 14px; font-weight: 500; color: #cccccc; padding: 4px 0; background-color: transparent;"
-        )
-        self.speed_label = QLabel("Speed: 0.0 MB/s")
-        self.speed_label.setStyleSheet(
-            "font-size: 14px; font-weight: 600; color: #76e648; padding: 4px 0; background-color: transparent;"
-        )
-
         progress_layout.addWidget(self.progress_bar)
 
-        progress_info_layout = QHBoxLayout()
-        progress_info_layout.addWidget(self.progress_label)
-        progress_info_layout.addStretch()
-        progress_info_layout.addWidget(self.speed_label)
-
-        progress_layout.addLayout(progress_info_layout)
-
+        progress_info = QHBoxLayout()
+        self.progress_label = QLabel("Ready to download...")
+        self.progress_label.setStyleSheet("font-size: 12px; color: #888888;")
+        self.speed_label = QLabel("0.0 MB/s")
+        self.speed_label.setStyleSheet("font-size: 13px; font-weight: 700; color: #76e648;")
+        progress_info.addWidget(self.progress_label)
+        progress_info.addStretch()
+        progress_info.addWidget(self.speed_label)
+        progress_layout.addLayout(progress_info)
         main_layout.addWidget(progress_group)
 
-        # Activity Log Section
-        log_group = QGroupBox("Activity Log")
-        log_group.setStyleSheet("QGroupBox { border: 1px solid #404040; border-radius: 8px; margin-top: 15px; padding-top: 15px; }")
-        log_group.setStyleSheet(log_group.styleSheet() + " QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 5px; color: #888888; font-size: 13px; font-weight: 600; }")
-        log_group.setMinimumHeight(200)
+        # Activity Log
+        log_group = QGroupBox("ACTIVITY LOG")
         log_layout = QVBoxLayout(log_group)
-        log_layout.setContentsMargins(10, 10, 10, 10)
-        log_layout.setSpacing(8)
-
-        # Frame for the log area - NOW WITH GREEN BORDER
-        log_frame = QFrame()
-        log_frame.setFrameShape(QFrame.Shape.Box)
-        log_frame.setFrameShadow(QFrame.Shadow.Raised)
-        log_frame.setLineWidth(2)
-        log_frame.setStyleSheet(
-            """
-            QFrame {
-                border: 2px solid #76e648;
-                background-color: #242424;
-                border-radius: 4px;
-            }
-        """
-        )
-
-        log_frame_layout = QVBoxLayout(log_frame)
-        log_frame_layout.setContentsMargins(5, 5, 5, 5)
-        log_frame_layout.setSpacing(0)
-
+        log_layout.setContentsMargins(15, 20, 15, 15)
+        
         self.log_text = QTextEdit()
+        self.log_text.setObjectName("logView")
         self.log_text.setReadOnly(True)
-        self.log_text.setMinimumHeight(150)
-        self.log_text.setStyleSheet(
-            "QTextEdit { background-color: #242424; color: #cccccc; border: none; padding: 8px; font-family: 'Monaco', 'Courier New', monospace; font-size: 13px; line-height: 1.4; }"
-        )
-        log_frame_layout.addWidget(self.log_text)
+        self.log_text.setMinimumHeight(120)
+        log_layout.addWidget(self.log_text)
 
-        log_layout.addWidget(log_frame)
-
-        # Green separator line at bottom of Activity Log - FULL WIDTH
-        log_bottom_separator = QFrame()
-        log_bottom_separator.setFrameShape(QFrame.Shape.HLine)
-        log_bottom_separator.setStyleSheet("border: none; background-color: #76e648; max-height: 1px; margin: 0px;")
-        log_layout.addWidget(log_bottom_separator)
-
-        # Removed premature log_group add to avoid duplicates
-
-        # Green separator line above Status Bar
-        bottom_separator = QFrame()
-        bottom_separator.setFrameShape(QFrame.Shape.HLine)
-        bottom_separator.setStyleSheet("border: none; background-color: #76e648; max-height: 1px; margin-top: 5px;")
-        main_layout.addWidget(bottom_separator)
-
-        # Stats labels at bottom
+        # Stats Section
         stats_layout = QHBoxLayout()
-        self.folders_label = QLabel("Folders: 0")
-        self.folders_label.setStyleSheet(
-            "color: #cccccc; font-size: 14px; font-weight: 500; padding: 4px 0; background-color: transparent;"
-        )
-        self.files_label = QLabel("Files: 0")
-        self.files_label.setStyleSheet(
-            "color: #cccccc; font-size: 14px; font-weight: 500; padding: 4px 0; background-color: transparent;"
-        )
-        self.size_label = QLabel("Size: 0 MB")
-        self.size_label.setStyleSheet(
-            "color: #76e648; font-size: 14px; font-weight: 600; padding: 4px 0; background-color: transparent;"
-        )
-
-        stats_layout.addWidget(self.folders_label)
+        stats_layout.setContentsMargins(0, 5, 0, 0)
+        self.folders_label = QLabel("FOLDERS: 0")
+        self.files_label = QLabel("FILES: 0")
+        self.size_label = QLabel("STORAGE: 0 MB")
+        for lbl in [self.folders_label, self.files_label, self.size_label]:
+            lbl.setStyleSheet("font-size: 10px; font-weight: 800; color: #555555;")
+            stats_layout.addWidget(lbl)
+            if lbl != self.size_label: stats_layout.addSpacing(15)
         stats_layout.addStretch()
-        stats_layout.addWidget(self.files_label)
-        stats_layout.addStretch()
-        stats_layout.addWidget(self.size_label)
         log_layout.addLayout(stats_layout)
-
         main_layout.addWidget(log_group)
 
-        # Final Layout Stabilization Stretch
         main_layout.addStretch()
 
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
-        self.status_bar.showMessage("Ready")
+        self.status_bar.showMessage("Engine Status: Ready")
 
     def setup_connections(self):
         """Connect signals and slots."""
@@ -404,6 +404,9 @@ class MainWindow(QMainWindow):
         # Sync scrolling: Input Box -> controls -> Line Numbers
         self.url_input.verticalScrollBar().valueChanged.connect(
             self.line_numbers.verticalScrollBar().setValue
+        )
+        self.url_input.verticalScrollBar().rangeChanged.connect(
+            lambda min_val, max_val: self.line_numbers.verticalScrollBar().setValue(self.url_input.verticalScrollBar().value())
         )
         self.start_cancel_btn.clicked.connect(self.handle_start_cancel_click)
         self.pause_resume_btn.clicked.connect(self.toggle_pause_resume)
@@ -442,45 +445,50 @@ class MainWindow(QMainWindow):
             self.add_log_message(f"📁 Download folder changed to: {folder}")
             self.status_bar.showMessage(f"Download folder: {folder}")
 
+    def _sync_scroll_bars(self):
+        """Force scroll synchronization between input and line numbers."""
+        current_scroll = self.url_input.verticalScrollBar().value()
+        self.line_numbers.verticalScrollBar().setValue(current_scroll)
+
     def validate_urls(self):
         """Validate URLs in real-time and update line numbers"""
         if getattr(self, "_validating", False):
             return
 
-        # 1. Capture current scroll state from the INPUT box (the driver)
-        current_scroll = self.url_input.verticalScrollBar().value()
+        # --- THE THREE-STEP PROCESS ---
 
-        raw_text = self.url_input.toPlainText()
-        all_lines = raw_text.split("\n")
-        line_count = max(1, len(all_lines))
+        # 1. Counting the Lines
+        # Use document().blockCount() - it's the most reliable way to track lines in real-time
+        line_count = max(1, self.url_input.document().blockCount())
 
-        # 2. Update line numbers display
-        # We align center and ensure distinct lines
+        # 2. Generating the Number Sequence
+        # Create a sequence like "1\n2\n3\n4\n5\n6\n7"
         line_nums = "\n".join(str(i) for i in range(1, line_count + 1))
 
         if self.line_numbers.toPlainText() != line_nums:
+            # Update the line numbers display
             self.line_numbers.setPlainText(line_nums)
-            # Robust centering for all line blocks (QPlainTextEdit safe)
+            # Maintain perfect pixel alignment
             cursor = self.line_numbers.textCursor()
             cursor.select(QTextCursor.SelectionType.Document)
             fmt = QTextBlockFormat()
             fmt.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            fmt.setLineHeight(140.0, QTextBlockFormat.LineHeightTypes.ProportionalHeight.value)
             cursor.setBlockFormat(fmt)
 
-        # 3. Dynamic height logic (Ditch expansion, keep it stable)
-        # We no longer resize the master container here to prevent jitter and overlaps.
-        # The master container's height is now fixed in setup_ui.
-        pass
+        # 3. Keeping Everything Synchronized
+        # We use a 0ms timer to defer scroll sync until the widget has processed the text update.
+        # This prevents the scrollbar from being 'capped' at the old maximum range when adding lines.
+        QTimer.singleShot(0, self._sync_scroll_bars)
 
-        # 4. CRITICAL FIX: Sync the scrollbars
-        # Set line_numbers scroll to match the input box
-        self.line_numbers.verticalScrollBar().setValue(current_scroll)
+        # --- END OF SYNC LOGIC ---
 
-        # Count non-empty lines for URL validation
+        raw_text = self.url_input.toPlainText()
+        all_lines = raw_text.split("\n")
         raw_lines = [ln.strip() for ln in all_lines if ln.strip()]
 
         # Update the URL counter label
-        self.url_count_label.setText(f"URLs: {len(raw_lines)}")
+        self.url_count_label.setText(f"QUEUE: {len(raw_lines)}")
 
         # Validate URL count (maximum 10)
         if len(raw_lines) > 10:
@@ -630,7 +638,7 @@ class MainWindow(QMainWindow):
             self.start_cancel_btn.setObjectName("startBtn")
             self.pause_resume_btn.setVisible(False)
             self.validate_urls()
-            self.speed_label.setText("Speed: 0.0 MB/s")
+            self.speed_label.setText("0.0 MB/s")
         elif state == "downloading":
             self.start_cancel_btn.setText("🛑 Cancel")
             self.start_cancel_btn.setObjectName("cancelBtn")
@@ -650,12 +658,12 @@ class MainWindow(QMainWindow):
             "valid": "#76e648",
             "invalid": "#f44336",
             "partial": "#FF9800",
-            "idle": "#888888",
+            "idle": "#666666",
         }
-        color = colors.get(state, "#888888")
+        color = colors.get(state, "#666666")
         self.status_bar.showMessage(text)
         self.status_bar.setStyleSheet(
-            f"QStatusBar {{ color: {color}; font-size: 14px; font-weight: 600; padding: 8px 0; }}"
+            f"QStatusBar {{ color: {color}; font-size: 11px; font-weight: 800; padding: 4px; letter-spacing: 0.5px; }}"
         )
 
     def update_progress(
@@ -679,7 +687,7 @@ class MainWindow(QMainWindow):
                 )
 
     def update_speed(self, speed: float):
-        self.speed_label.setText(f"Speed: {speed:.1f} MB/s")
+        self.speed_label.setText(f"{speed:.1f} MB/s")
 
     def add_log_message(self, message: str):
         timestamp = datetime.now().strftime("%H:%M:%S")
@@ -736,9 +744,9 @@ class MainWindow(QMainWindow):
                 ) / (1024 * 1024)
 
             # Update labels
-            self.folders_label.setText(f"Folders: {folder_count}")
-            self.files_label.setText(f"Files: {file_count}")
-            self.size_label.setText(f"Size: {size_mb:.1f} MB")
+            self.folders_label.setText(f"FOLDERS: {folder_count}")
+            self.files_label.setText(f"FILES: {file_count}")
+            self.size_label.setText(f"STORAGE: {size_mb:.1f} MB")
 
         except Exception as e:
             logger.warning(f"Could not update download stats: {e}")
