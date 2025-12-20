@@ -4,6 +4,14 @@ import logging
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, Optional
+import sys
+import os
+
+# Add src to path to allow direct execution
+current_file = Path(__file__).resolve()
+src_path = current_file.parents[2] # gui -> four_charm -> src
+if str(src_path) not in sys.path:
+    sys.path.insert(0, str(src_path))
 
 from PySide6.QtWidgets import (
     QApplication,
@@ -62,8 +70,9 @@ class MainWindow(QMainWindow):
             QPushButton:hover { background-color: #5a5a5a; }
             QPushButton:pressed { background-color: #4a4a4a; }
             QPushButton:disabled { background-color: #404040; color: #888888; }
-            QPushButton#startBtn { font-size: 15px; background-color: #76e648; color: #1a1a1a; font-weight: 700; border-radius: 8px; }
-            QPushButton#startBtn:disabled { background-color: #404040; color: #888888; }
+            QPushButton#startBtn { font-size: 15px; color: #76e648; background-color: transparent; border: 2px solid #76e648; font-weight: 600; border-radius: 8px; }
+            QPushButton#startBtn:hover { background-color: #1a3a0a; }
+            QPushButton#startBtn:disabled { background-color: #404040; color: #888888; border: 2px solid #404040; }
             QPushButton#cancelBtn { font-size: 15px; background-color: #ff4757; color: white; border-radius: 8px; }
             QPushButton#cancelBtn:hover { background-color: #ff3838; }
             QPushButton#pauseBtn { background-color: #ffa502; color: #1a1a1a; font-weight: 700; border-radius: 8px; }
@@ -182,6 +191,12 @@ class MainWindow(QMainWindow):
                 font-family: 'Monaco', 'Menlo', monospace;
                 font-size: 13px;
             }
+            QTextEdit QScrollBar:vertical {
+                width: 0px;
+            }
+            QTextEdit QScrollBar:horizontal {
+                height: 0px;
+            }
             """
         )
         container_layout.addWidget(self.url_input)
@@ -190,11 +205,17 @@ class MainWindow(QMainWindow):
         url_container.setMaximumHeight(150)
         url_layout.addWidget(url_container)
 
-        # Green separator line inside text box group
-        url_separator = QFrame()
-        url_separator.setFrameShape(QFrame.Shape.HLine)
-        url_separator.setStyleSheet("border: none; background-color: #76e648; max-height: 1px;")
-        url_layout.addWidget(url_separator)
+        # Green separator line inside text box group - REMOVED
+        # url_separator = QFrame()
+        # url_separator.setFrameShape(QFrame.Shape.HLine)
+        # url_separator.setStyleSheet("border: none; background-color: #76e648; max-height: 1px;")
+        # url_layout.addWidget(url_separator)
+
+        # Green separator line at bottom of URLs section
+        url_bottom_separator = QFrame()
+        url_bottom_separator.setFrameShape(QFrame.Shape.HLine)
+        url_bottom_separator.setStyleSheet("border: none; background-color: #76e648; max-height: 1px;")
+        url_layout.addWidget(url_bottom_separator)
 
         # URL counter label at bottom - aligned left
         self.url_count_label = QLabel("URLs: 0")
@@ -222,7 +243,7 @@ class MainWindow(QMainWindow):
         self.start_cancel_btn.setObjectName("startBtn")
         self.start_cancel_btn.setMinimumWidth(180)
         self.start_cancel_btn.setStyleSheet(
-            "background-color: #76e648; color: #1a1a1a; font-size: 15px; font-weight: 700; padding: 8px 16px; border-radius: 8px;"
+            "color: #76e648; background-color: transparent; border: 2px solid #76e648; font-size: 15px; font-weight: 600; padding: 8px 16px; border-radius: 8px;"
         )
         control_layout.addWidget(self.start_cancel_btn)
         self.clear_btn = QPushButton("Clear")
@@ -271,16 +292,17 @@ class MainWindow(QMainWindow):
         log_layout.setContentsMargins(10, 10, 10, 10)
         log_layout.setSpacing(8)
 
-        # Frame for the log area
+        # Frame for the log area - NOW WITH GREEN BORDER
         log_frame = QFrame()
         log_frame.setFrameShape(QFrame.Shape.Box)
         log_frame.setFrameShadow(QFrame.Shadow.Raised)
-        log_frame.setLineWidth(1)
+        log_frame.setLineWidth(2)
         log_frame.setStyleSheet(
             """
             QFrame {
-                border: none;
+                border: 2px solid #76e648;
                 background-color: #242424;
+                border-radius: 4px;
             }
         """
         )
@@ -298,6 +320,12 @@ class MainWindow(QMainWindow):
         log_frame_layout.addWidget(self.log_text)
 
         log_layout.addWidget(log_frame)
+
+        # Green separator line at bottom of Activity Log - FULL WIDTH
+        log_bottom_separator = QFrame()
+        log_bottom_separator.setFrameShape(QFrame.Shape.HLine)
+        log_bottom_separator.setStyleSheet("border: none; background-color: #76e648; max-height: 1px; margin: 0px;")
+        log_layout.addWidget(log_bottom_separator)
 
         main_layout.addWidget(log_group)
 
@@ -727,3 +755,12 @@ class MainWindow(QMainWindow):
             # Just add URLs, no numbering
             self.url_input.setPlainText("\n".join(valid_urls))
             self.validate_urls()
+
+if __name__ == "__main__":
+    # Setup basic logging for standalone run
+    logging.basicConfig(level=logging.INFO)
+
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    window.show()
+    sys.exit(app.exec())
