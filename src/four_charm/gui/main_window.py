@@ -288,7 +288,7 @@ class MainWindow(QMainWindow):
         self.line_numbers.setFrameStyle(QFrame.Shape.NoFrame)
         self.line_numbers.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.line_numbers.setFixedWidth(35)
-        self.line_numbers.setStyleSheet("color: rgba(118, 230, 72, 0.5); padding: 8px 0px;")
+        self.line_numbers.setStyleSheet("color: rgba(118, 230, 72, 0.5); padding: 4px 0px;")
         self.line_numbers.setPlainText("1")
 
         fmt = QTextBlockFormat()
@@ -305,8 +305,8 @@ class MainWindow(QMainWindow):
         self.url_input.setFrameStyle(QFrame.Shape.NoFrame)
         self.url_input.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
         self.url_input.setPlaceholderText("Paste thread URLs here...")
-        self.url_input.setFixedHeight(140)
-        self.url_input.setStyleSheet("padding: 8px 0px;")
+        self.url_input.setFixedHeight(105)
+        self.url_input.setStyleSheet("padding: 4px 0px;")
         
         # Match line height with line_numbers
         cursor = self.url_input.textCursor()
@@ -477,6 +477,9 @@ class MainWindow(QMainWindow):
             cursor.setBlockFormat(fmt)
 
         # 3. Keeping Everything Synchronized
+        # Ensure the cursor is always visible (especially when adding lines)
+        self.url_input.ensureCursorVisible()
+        
         # We use a 0ms timer to defer scroll sync until the widget has processed the text update.
         # This prevents the scrollbar from being 'capped' at the old maximum range when adding lines.
         QTimer.singleShot(0, self._sync_scroll_bars)
