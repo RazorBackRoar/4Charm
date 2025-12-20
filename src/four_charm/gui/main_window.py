@@ -153,25 +153,24 @@ class MainWindow(QMainWindow):
         container_layout.setSpacing(0)
 
         # Left side: Static line numbers (green)
+        # Left side: Static line numbers (green)
         self.line_numbers = QTextEdit()
         self.line_numbers.setReadOnly(True)
-        self.line_numbers.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.line_numbers.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff) # Changed to AlwaysOff to hide it completely visually
         self.line_numbers.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.line_numbers.setFixedWidth(35)
+        self.line_numbers.setFixedWidth(45) # Increased slightly for better spacing
+        self.line_numbers.setAlignment(Qt.AlignmentFlag.AlignRight) # Right align numbers
         self.line_numbers.setStyleSheet(
             """
             QTextEdit {
                 background-color: #252525;
                 color: #76e648;
                 border: none;
-                border-right: 1px solid #404040;
+                border-right: 2px solid #76e648;  /* FIXED: Changed to Green to connect the line */
                 padding: 8px 4px;
                 font-family: 'Monaco', 'Menlo', monospace;
                 font-size: 13px;
                 line-height: 1.5;
-            }
-            QTextEdit QScrollBar:vertical {
-                width: 0px;
             }
             """
         )
@@ -365,13 +364,11 @@ class MainWindow(QMainWindow):
         """Connect signals and slots."""
         self.url_input.textChanged.connect(self.validate_urls)
 
-        # Sync scrolling between line numbers and URL input (Two-way sync)
+        # Sync scrolling (Master = url_input, Slave = line_numbers)
         self.url_input.verticalScrollBar().valueChanged.connect(
-            self.line_numbers.verticalScrollBar().setValue
+            lambda v: self.line_numbers.verticalScrollBar().setValue(v)
         )
-        self.line_numbers.verticalScrollBar().valueChanged.connect(
-            self.url_input.verticalScrollBar().setValue
-        )
+        # We remove the reverse connection to prevent loop fighting
         self.start_cancel_btn.clicked.connect(self.handle_start_cancel_click)
         self.pause_resume_btn.clicked.connect(self.toggle_pause_resume)
         self.clear_btn.clicked.connect(self.clear_urls)
@@ -414,31 +411,39 @@ class MainWindow(QMainWindow):
         if getattr(self, "_validating", False):
             return
 
+        # 1. Capture current scroll state from the INPUT box (the driver)
+        current_scroll = self.url_input.verticalScrollBar().value()
+
         raw_text = self.url_input.toPlainText()
-        # Count all lines including empty ones for line numbering
         all_lines = raw_text.split("\n")
         line_count = max(1, len(all_lines))
 
-        # Update line numbers display
+        # 2. Update line numbers display
+        # We align right and ensure distinct lines
         line_nums = "\n".join(str(i) for i in range(1, line_count + 1))
+
         if self.line_numbers.toPlainText() != line_nums:
             self.line_numbers.setPlainText(line_nums)
+            self.line_numbers.setAlignment(Qt.AlignmentFlag.AlignRight)
 
-        # Dynamic height: 5 lines minimum, expand up to 10 lines, then scroll
-        # Increased line height estimate to prevent clipping
+        # 3. Dynamic height logic
         line_height = 25
         min_lines = 5
         max_lines = 10
         visible_lines = max(min_lines, min(line_count, max_lines))
-        new_height = visible_lines * line_height + 20  # +20 for padding
+        new_height = visible_lines * line_height + 20
 
-        # Find the url_container (parent of url_input)
         url_container = self.url_input.parentWidget()
         if url_container:
-            url_container.setMinimumHeight(new_height)
-            url_container.setMaximumHeight(new_height)
+            # Only resize if significantly different to prevent jitter
+            if abs(url_container.height() - new_height) > 5:
+                url_container.setMinimumHeight(new_height)
+                url_container.setMaximumHeight(new_height)
 
-        # Sync scroll position removed - handled by valueChanged connection
+        # 4. CRITICAL FIX: Restore the scrollbar position
+        # We enforce the line_numbers scrollbar to match the url_input scrollbar
+        self.line_numbers.verticalScrollBar().setValue(current_scroll)
+        self.url_input.verticalScrollBar().setValue(current_scroll)
 
         # Count non-empty lines for URL validation
         raw_lines = [ln.strip() for ln in all_lines if ln.strip()]
@@ -458,29 +463,22 @@ class MainWindow(QMainWindow):
             self.start_cancel_btn.setEnabled(False)
             return
 
+        # Simple string check for speed (avoid creating Scraper object repeatedly in UI thread)
         valid_count = 0
         invalid_count = 0
-        temp_scraper = FourChanScraper()
 
         for url in raw_lines:
-            parsed_url = temp_scraper.parse_url(url)
-            logger.info(f"Validating URL: {url}")
-            logger.info(f"Parsed URL: {parsed_url}")
-            if parsed_url:
+            if "boards.4chan.org" in url or "4channel.org" in url:
                 valid_count += 1
-                logger.info(f"Valid URL: {url}")
             else:
                 invalid_count += 1
-                logger.warning(f"Invalid URL: {url}")
 
-        logger.info(
-            f"Validation complete: {valid_count} valid, {invalid_count} invalid"
-        )
-
-        if valid_count > 0:
+        if valid_count > 0 and invalid_count == 0:
             self.start_cancel_btn.setEnabled(True)
+            self._update_url_status(f"Ready to download {valid_count} threads", "valid")
         else:
             self.start_cancel_btn.setEnabled(False)
+            self._update_url_status("⚠️ Invalid 4chan URLs detected", "invalid")
 
     def handle_start_cancel_click(self):
         """Handles clicks on the main button, either starting or cancelling."""
