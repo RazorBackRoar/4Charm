@@ -222,7 +222,6 @@ class MainWindow(QMainWindow):
         self.scraper = FourChanScraper()
         # Set default download directory: ~/Downloads/4Charm
         default_dir = Path.home() / "Downloads" / "4Charm"
-        default_dir.mkdir(parents=True, exist_ok=True)
         self.scraper.download_dir = default_dir
 
         self.download_thread: Optional[QThread] = None
@@ -573,6 +572,9 @@ class MainWindow(QMainWindow):
         if not parsed_urls:
             QMessageBox.critical(self, "Error", "No valid URLs found")
             return
+
+        # Ensure download directory exists before starting
+        self.scraper.download_dir.mkdir(parents=True, exist_ok=True)
 
         self.download_thread = QThread()
         self.download_worker = MultiUrlDownloadWorker(self.scraper, parsed_urls)
