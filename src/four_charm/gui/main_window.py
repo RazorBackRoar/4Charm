@@ -76,6 +76,11 @@ class MainWindow(QMainWindow):
         )
 
         self.scraper = FourChanScraper()
+        # Set default download directory: ~/Downloads/4Charm
+        default_dir = Path.home() / "Downloads" / "4Charm"
+        default_dir.mkdir(parents=True, exist_ok=True)
+        self.scraper.download_dir = default_dir
+
         self.download_thread: Optional[QThread] = None
         self.download_worker: Optional["MultiUrlDownloadWorker"] = None
         self.is_paused = False
@@ -110,7 +115,7 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(slogan)
 
         instruction = QLabel(
-            "Paste or drop multiple thread URLs (one per line) to download all media files concurrently\nPress Enter to validate & count URLs | Press Ctrl+Enter to start download"
+            "Paste or drop multiple thread URLs (one per line) to download all media files concurrently\nURLs are validated automatically | Press Ctrl+Enter to start download"
         )
         instruction.setAlignment(Qt.AlignmentFlag.AlignCenter)
         instruction.setStyleSheet(
@@ -123,116 +128,79 @@ class MainWindow(QMainWindow):
         url_layout.setContentsMargins(10, 10, 10, 10)
         url_layout.setSpacing(8)
 
-        # Frame for the URL input area
-        url_frame = QFrame()
-        url_frame.setFrameShape(QFrame.Shape.Box)
-        url_frame.setFrameShadow(QFrame.Shadow.Raised)
-        url_frame.setLineWidth(1)
-        url_frame.setStyleSheet(
+        # Container frame - Transparent background, no border (seamless look)
+        url_container = QFrame()
+        url_container.setStyleSheet(
             """
             QFrame {
-                border: 1px solid #404040;
-                border-radius: 10px;
                 background-color: #2d2d2d;
+                border: none;
+                border-radius: 4px;
             }
-        """
+            """
         )
+        container_layout = QHBoxLayout(url_container)
+        container_layout.setContentsMargins(0, 0, 0, 0)
+        container_layout.setSpacing(0)
 
-        url_frame_layout = QVBoxLayout(url_frame)
-        url_frame_layout.setContentsMargins(5, 5, 5, 5)
-        url_frame_layout.setSpacing(0)
+        # Left side: Static line numbers (green)
+        self.line_numbers = QTextEdit()
+        self.line_numbers.setReadOnly(True)
+        self.line_numbers.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.line_numbers.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.line_numbers.setFixedWidth(35)
+        self.line_numbers.setStyleSheet(
+            """
+            QTextEdit {
+                background-color: #252525;
+                color: #76e648;
+                border: none;
+                border-right: 1px solid #404040;
+                padding: 8px 4px;
+                font-family: 'Monaco', 'Menlo', monospace;
+                font-size: 13px;
+            }
+            """
+        )
+        self.line_numbers.setPlainText("1")
+        container_layout.addWidget(self.line_numbers)
 
-        # URL input area
+        # Right side: Editable URL input
         self.url_input = QTextEdit()
         self.url_input.setAcceptRichText(False)
-        self.url_input.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
-        self.url_input.setPlaceholderText(
-            "Enter thread URLs here, one per line...\n\n"
-            "Examples:\n"
-            "https://boards.4chan.org/g/thread/123456789\n"
-            "https://boards.4channel.org/vg/thread/987654321"
-        )
-
-        # ✅ FIX: Set minimum and maximum height for proper scrolling
-        self.url_input.setMinimumHeight(150)
-        self.url_input.setMaximumHeight(200)
-        self.url_input.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
-        )
-
-        # ✅ FIX: Ensure scrollbar is always visible when needed
-        self.url_input.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
-
-        # ✅ FIX: Remove document margins to prevent vertical centering
-        self.url_input.document().setDocumentMargin(0)
-
-        # ✅ FIX: Updated stylesheet with explicit scrollbar arrows
+        self.url_input.setLineWrapMode(QTextEdit.LineWrapMode.NoWrap)
+        self.url_input.setPlaceholderText("Enter thread URLs here, one per line...")
+        self.url_input.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.url_input.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.url_input.setStyleSheet(
             """
-    QTextEdit {
-        background-color: #2b2b2b;
-        color: #ffffff;
-        border: 1px solid #3a3a3a;
-        border-radius: 4px;
-        padding: 8px;
-        font-family: 'Consolas', 'Monaco', monospace;
-        font-size: 10pt;
-        selection-background-color: #4a4a4a;
-    }
-
-    /* Scrollbar track */
-    QScrollBar:vertical {
-        background: #2b2b2b;
-        width: 16px;
-        margin: 0;
-    }
-
-    /* Scrollbar handle */
-    QScrollBar::handle:vertical {
-        background: #4a4a4a;
-        min-height: 20px;
-        border-radius: 3px;
-    }
-
-    /* ✅ FIX: UP arrow button */
-    QScrollBar::sub-line:vertical {
-        height: 16px;
-        subcontrol-position: top;
-        subcontrol-origin: margin;
-        image: url(none);
-        background: #3a3a3a;
-        border-top: 1px solid #3a3a3a;
-    }
-
-    /* ✅ FIX: DOWN arrow button */
-    QScrollBar::add-line:vertical {
-        height: 16px;
-        subcontrol-position: bottom;
-        subcontrol-origin: margin;
-        image: url(none);
-        background: #3a3a3a;
-        border-bottom: 1px solid #3a3a3a;
-    }
-
-    /* Arrow button hover states */
-    QScrollBar::sub-line:vertical:hover, QScrollBar::add-line:vertical:hover {
-        background: #5a5a5a;
-    }
-
-    /* Scrollbar space above/below handle */
-    QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
-        background: none;
-    }
-"""
+            QTextEdit {
+                background-color: #2d2d2d;
+                color: #ffffff;
+                border: none;
+                padding: 8px;
+                font-family: 'Monaco', 'Menlo', monospace;
+                font-size: 13px;
+            }
+            """
         )
-        url_frame_layout.addWidget(self.url_input)
+        container_layout.addWidget(self.url_input)
 
-        url_layout.addWidget(url_frame)
+        url_container.setMinimumHeight(120)
+        url_container.setMaximumHeight(150)
+        url_layout.addWidget(url_container)
 
-        # URL counter label at bottom
+        # Green separator line inside text box group
+        url_separator = QFrame()
+        url_separator.setFrameShape(QFrame.Shape.HLine)
+        url_separator.setStyleSheet("border: none; background-color: #76e648; max-height: 1px;")
+        url_layout.addWidget(url_separator)
+
+        # URL counter label at bottom - aligned left
         self.url_count_label = QLabel("URLs: 0")
+        self.url_count_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.url_count_label.setStyleSheet(
-            "color: #cccccc; font-size: 14px; font-weight: 500; padding: 4px 0; background-color: transparent;"
+            "color: #cccccc; font-size: 13px; font-weight: 500; padding: 0 5px; background-color: transparent;"
         )
         url_layout.addWidget(self.url_count_label)
 
@@ -296,6 +264,7 @@ class MainWindow(QMainWindow):
 
         main_layout.addWidget(progress_group)
 
+        # Activity Log Section
         log_group = QGroupBox("Activity Log")
         log_group.setMinimumHeight(200)
         log_layout = QVBoxLayout(log_group)
@@ -310,8 +279,7 @@ class MainWindow(QMainWindow):
         log_frame.setStyleSheet(
             """
             QFrame {
-                border: 1px solid #404040;
-                border-radius: 10px;
+                border: none;
                 background-color: #242424;
             }
         """
@@ -330,6 +298,14 @@ class MainWindow(QMainWindow):
         log_frame_layout.addWidget(self.log_text)
 
         log_layout.addWidget(log_frame)
+
+        main_layout.addWidget(log_group)
+
+        # Green separator line above Status Bar
+        bottom_separator = QFrame()
+        bottom_separator.setFrameShape(QFrame.Shape.HLine)
+        bottom_separator.setStyleSheet("border: none; background-color: #76e648; max-height: 1px; margin-top: 5px;")
+        main_layout.addWidget(bottom_separator)
 
         # Stats labels at bottom
         stats_layout = QHBoxLayout()
@@ -369,10 +345,8 @@ class MainWindow(QMainWindow):
 
         self.paste_shortcut = QShortcut(QKeySequence.StandardKey.Paste, self)
         self.paste_shortcut.activated.connect(self.paste_from_clipboard)
-        self.start_shortcut = QShortcut(QKeySequence(Qt.Key.Key_Return), self.url_input)
-        self.start_shortcut.activated.connect(
-            self.validate_urls
-        )  # Trigger validation on Enter
+        # Note: Enter key is NOT captured - it allows normal text editing (new lines/scrolling)
+        # Validation happens automatically via textChanged signal
         self.download_shortcut = QShortcut(
             QKeySequence("Ctrl+Return"),
             self.url_input,
@@ -402,55 +376,40 @@ class MainWindow(QMainWindow):
             self.status_bar.showMessage(f"Download folder: {folder}")
 
     def validate_urls(self):
-        """Validate and auto-number URLs in real-time"""
-        # ✅ FIX: Save current scroll position
-        scrollbar = self.url_input.verticalScrollBar()
-        scroll_pos = scrollbar.value()
+        """Validate URLs in real-time and update line numbers"""
+        if getattr(self, "_validating", False):
+            return
 
-        if getattr(self, "_renumbering", False):
-            return  # avoid recursion while renumbering
+        raw_text = self.url_input.toPlainText()
+        # Count all lines including empty ones for line numbering
+        all_lines = raw_text.split("\n")
+        line_count = max(1, len(all_lines))
 
-        raw_text = self.url_input.toPlainText().strip()
-        raw_lines = [ln.strip() for ln in raw_text.split("\n") if ln.strip()]
+        # Update line numbers display
+        line_nums = "\n".join(str(i) for i in range(1, line_count + 1))
+        if self.line_numbers.toPlainText() != line_nums:
+            self.line_numbers.setPlainText(line_nums)
 
-        # Strip any existing leading numbering (e.g. "1. ")
-        cleaned_urls: list[str] = [re.sub(r"^\d+\.\s*", "", ln) for ln in raw_lines]
+        # Sync scroll position between line numbers and text
+        self.line_numbers.verticalScrollBar().setValue(
+            self.url_input.verticalScrollBar().value()
+        )
 
-        # Auto-number
-        numbered_lines = [f"{i + 1}. {u}" for i, u in enumerate(cleaned_urls)]
-        numbered_text = "\n".join(numbered_lines)
-
-        # Replace text only if different to prevent cursor flicker
-        if numbered_text != raw_text:
-            self._renumbering = True
-            self.url_input.setPlainText(numbered_text)
-            cursor = self.url_input.textCursor()
-            cursor.movePosition(QTextCursor.MoveOperation.End)
-            self.url_input.setTextCursor(cursor)
-            self._renumbering = False
-            self._scroll_url_input_to_end()
-
-        urls = cleaned_urls
+        # Count non-empty lines for URL validation
+        raw_lines = [ln.strip() for ln in all_lines if ln.strip()]
 
         # Update the URL counter label
-        self.url_count_label.setText(f"URLs: {len(cleaned_urls)}")
+        self.url_count_label.setText(f"URLs: {len(raw_lines)}")
 
-        # ✅ FIX: Validate URL count (maximum 10)
-        if len(cleaned_urls) > 10:
+        # Validate URL count (maximum 10)
+        if len(raw_lines) > 10:
             self._update_url_status(
                 "⚠️ Maximum 10 URLs allowed. Please remove some URLs.", "invalid"
             )
             self.start_cancel_btn.setEnabled(False)
             return
 
-        # ✅ FIX: Restore scroll position after validation
-        scrollbar.setValue(scroll_pos)
-
-        # ✅ FIX: If only one URL, ensure it's visible
-        if len(raw_lines) == 1 and raw_lines[0].strip():
-            self.url_input.ensureCursorVisible()
-
-        if not urls:
+        if not raw_lines:
             self.start_cancel_btn.setEnabled(False)
             return
 
@@ -458,7 +417,7 @@ class MainWindow(QMainWindow):
         invalid_count = 0
         temp_scraper = FourChanScraper()
 
-        for url in urls:
+        for url in raw_lines:
             parsed_url = temp_scraper.parse_url(url)
             logger.info(f"Validating URL: {url}")
             logger.info(f"Parsed URL: {parsed_url}")
@@ -765,22 +724,6 @@ class MainWindow(QMainWindow):
             url for url in urls if "boards.4chan.org" in url or "4chan.org" in url
         ]
         if valid_urls:
-            numbered_urls = [f"{i + 1}. {url}" for i, url in enumerate(valid_urls)]
-            self.url_input.setPlainText("\n".join(numbered_urls))
-            self._scroll_url_input_to_end()
-            self.validate_urls()  # Trigger validation after drop
-
-    def _scroll_url_input_to_end(self):
-        """Scroll URL input to the newest entry so users can see recent additions."""
-        # Use QTimer to ensure scrollbar maximum is calculated after text layout
-        QTimer.singleShot(0, self._do_scroll_to_end)
-
-    def _do_scroll_to_end(self):
-        """Actually perform the scroll to end operation."""
-        cursor = self.url_input.textCursor()
-        cursor.movePosition(QTextCursor.MoveOperation.End)
-        self.url_input.setTextCursor(cursor)
-        self.url_input.ensureCursorVisible()
-        scrollbar = self.url_input.verticalScrollBar()
-        if scrollbar:
-            scrollbar.setValue(scrollbar.maximum())
+            # Just add URLs, no numbering
+            self.url_input.setPlainText("\n".join(valid_urls))
+            self.validate_urls()
