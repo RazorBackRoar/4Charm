@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
     QSizePolicy,
     QHBoxLayout,
     QLabel,
+    QPlainTextEdit,
     QTextEdit,
     QPushButton,
     QGroupBox,
@@ -61,8 +62,26 @@ class MainWindow(QMainWindow):
             """
             QMainWindow { background-color: #1a1a1a; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
             QWidget#centralWidget { border-top: 2px solid #76e648; }
-            QGroupBox { border: none; margin-top: 25px; padding-top: 8px; padding-bottom: 0px; background-color: transparent; }
-            QGroupBox::title { subcontrol-origin: padding; left: 12px; padding: 0 12px; color: #76e648; font-size: 26px; font-weight: 700; }
+            QWidget#urlMasterContainer {
+                border: 2px solid #76e648;
+                border-radius: 6px;
+                background-color: #1e1e1e;
+                margin-top: 12px;
+            }
+            QLabel#urlSectionTitle {
+                color: #76e648;
+                font-size: 14px;
+                font-weight: 600;
+                padding: 4px 8px;
+                background-color: transparent;
+            }
+            QPlainTextEdit {
+                background-color: transparent;
+                color: #ffffff;
+                border: none;
+                font-family: 'Monaco', 'Menlo', monospace;
+                font-size: 13px;
+            }
             QLineEdit { background-color: #2d2d2d; color: #ffffff; border: 1px solid #404040; border-radius: 10px; padding: 12px 16px; font-size: 16px; selection-background-color: #76e648; }
             QLineEdit:focus { border: 2px solid #76e648; background-color: #353535; }
             QTextEdit { background-color: #2d2d2d; color: #ffffff; border: 2px solid #76e648; border-radius: 0px; padding: 8px 12px; font-size: 16px; selection-background-color: #76e648; line-height: 1.4; }
@@ -134,97 +153,72 @@ class MainWindow(QMainWindow):
         )
         main_layout.addWidget(instruction)
 
-        url_group = QGroupBox("URLs to Download")
-        url_layout = QVBoxLayout(url_group)
-        url_layout.setContentsMargins(0, 0, 0, 0)
-        url_layout.setSpacing(0)
+        # Native Qt Master Container Pattern
+        url_master = QWidget()
+        url_master.setObjectName("urlMasterContainer")
+        url_master_layout = QVBoxLayout(url_master)
+        url_master_layout.setContentsMargins(8, 8, 8, 8)
+        url_master_layout.setSpacing(4)
 
-        # Container frame - Transparent background, no border (seamless look)
-        url_container = QFrame()
-        url_container.setStyleSheet(
-            """
-            QFrame {
-                background-color: #2d2d2d;
-                border: 2px solid #76e648;
-                border-radius: 8px;
-            }
-            """
-        )
-        container_layout = QHBoxLayout(url_container)
-        container_layout.setContentsMargins(0, 0, 0, 0)
-        container_layout.setSpacing(0)
+        # 1. Section Title as QLabel
+        url_title = QLabel("URLs to Download")
+        url_title.setObjectName("urlSectionTitle")
+        url_master_layout.addWidget(url_title)
 
-        # Left side: Static line numbers (green)
-        self.line_numbers = QTextEdit()
+        # 2. Content Row (Numbers | Separator | Input)
+        content_container = QWidget()
+        content_layout = QHBoxLayout(content_container)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.setSpacing(0)
+
+        # Left side: Line numbers (QPlainTextEdit)
+        self.line_numbers = QPlainTextEdit()
         self.line_numbers.setReadOnly(True)
         self.line_numbers.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.line_numbers.document().setDocumentMargin(0)
+        self.line_numbers.setFrameStyle(QFrame.Shape.NoFrame)
+        self.line_numbers.setViewportMargins(0, 0, 0, 0)
+        self.line_numbers.setBackgroundVisible(False)
         self.line_numbers.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.line_numbers.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.line_numbers.setFixedWidth(45)
-        self.line_numbers.setStyleSheet(
-            """
-            QTextEdit {
-                background-color: #252525;
-                color: #76e648;
-                border: none;
-                padding-top: 10px;
-                font-family: 'Monaco', 'Menlo', monospace;
-                font-size: 13px;
-            }
-            """
-        )
+        self.line_numbers.setFixedWidth(40)
+        self.line_numbers.setStyleSheet("color: #76e648; padding-top: 10px;")
         self.line_numbers.setPlainText("1")
 
-        # Robust centering for all blocks
-        cursor = self.line_numbers.textCursor()
-        cursor.select(QTextCursor.SelectionType.Document)
+        # Doc-wide centering for QPlainTextEdit
         fmt = QTextBlockFormat()
         fmt.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        cursor = self.line_numbers.textCursor()
+        cursor.select(QTextCursor.SelectionType.Document)
         cursor.setBlockFormat(fmt)
 
-        container_layout.addWidget(self.line_numbers)
+        content_layout.addWidget(self.line_numbers)
 
-        # Dedicated vertical separator line
+        # Dedicated vertical separator
         v_separator = QFrame()
         v_separator.setFrameShape(QFrame.Shape.VLine)
         v_separator.setFixedWidth(2)
         v_separator.setStyleSheet("background-color: #76e648; border: none; margin: 0px;")
-        container_layout.addWidget(v_separator)
+        content_layout.addWidget(v_separator)
 
-        # Right side: Editable URL input
-        self.url_input = QTextEdit()
-        self.url_input.document().setDocumentMargin(0)
-        self.url_input.setAcceptRichText(False)
-        self.url_input.setLineWrapMode(QTextEdit.LineWrapMode.NoWrap)
+        # Right side: URL input (QPlainTextEdit)
+        self.url_input = QPlainTextEdit()
+        self.url_input.setFrameStyle(QFrame.Shape.NoFrame)
+        self.url_input.setViewportMargins(0, 0, 0, 0)
+        self.url_input.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
         self.url_input.setPlaceholderText("Enter thread URLs here, one per line...")
         self.url_input.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.url_input.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.url_input.setStyleSheet(
-            """
-            QTextEdit {
-                background-color: #2d2d2d;
-                color: #ffffff;
-                border: none;
-                padding: 10px 8px;
-                font-family: 'Monaco', 'Menlo', monospace;
-                font-size: 13px;
-            }
-            QTextEdit QScrollBar:vertical {
-                width: 0px;
-            }
-            QTextEdit QScrollBar:horizontal {
-                height: 0px;
-            }
-            """
-        )
-        container_layout.addWidget(self.url_input)
+        self.url_input.setStyleSheet("color: #ffffff; padding: 10px 8px;")
 
-        # Dynamic height - start at 5 lines (~130px), allow expansion
-        url_container.setMinimumHeight(130)
-        url_layout.addWidget(url_container)
+        # Kill implicit scrollbar width
+        self.url_input.verticalScrollBar().setStyleSheet("width: 0px;")
 
-        main_layout.addWidget(url_group)
+        content_layout.addWidget(self.url_input)
+        url_master_layout.addWidget(content_container)
+
+        # Minimum height and add to main layout
+        url_master.setMinimumHeight(160)
+        main_layout.addWidget(url_master)
 
         # Green separator line between URL box and count label
         url_separator = QFrame()
@@ -272,6 +266,8 @@ class MainWindow(QMainWindow):
         main_layout.addLayout(control_layout)
 
         progress_group = QGroupBox("Download Progress")
+        progress_group.setStyleSheet("QGroupBox { border: 1px solid #404040; border-radius: 8px; margin-top: 15px; padding-top: 15px; }")
+        progress_group.setStyleSheet(progress_group.styleSheet() + " QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 5px; color: #888888; font-size: 13px; font-weight: 600; }")
         progress_group.setMinimumHeight(150)
         progress_layout = QVBoxLayout(progress_group)
         progress_layout.setContentsMargins(10, 10, 10, 10)
@@ -300,6 +296,8 @@ class MainWindow(QMainWindow):
 
         # Activity Log Section
         log_group = QGroupBox("Activity Log")
+        log_group.setStyleSheet("QGroupBox { border: 1px solid #404040; border-radius: 8px; margin-top: 15px; padding-top: 15px; }")
+        log_group.setStyleSheet(log_group.styleSheet() + " QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 5px; color: #888888; font-size: 13px; font-weight: 600; }")
         log_group.setMinimumHeight(200)
         log_layout = QVBoxLayout(log_group)
         log_layout.setContentsMargins(10, 10, 10, 10)
@@ -405,7 +403,7 @@ class MainWindow(QMainWindow):
 
     def clear_urls(self):
         """Clear all URLs from the input field."""
-        self.url_input.clear()
+        self.url_input.setPlainText("")
         self.validate_urls()
 
     def choose_download_folder(self):
@@ -439,27 +437,28 @@ class MainWindow(QMainWindow):
 
         if self.line_numbers.toPlainText() != line_nums:
             self.line_numbers.setPlainText(line_nums)
-            # Robust centering for all line blocks
+            # Robust centering for all line blocks (QPlainTextEdit safe)
             cursor = self.line_numbers.textCursor()
             cursor.select(QTextCursor.SelectionType.Document)
             fmt = QTextBlockFormat()
             fmt.setAlignment(Qt.AlignmentFlag.AlignCenter)
             cursor.setBlockFormat(fmt)
 
-        # 3. Dynamic height logic (Expands box as you type)
+        # 3. Dynamic height logic (Expands master box as you type)
         line_height = 20 # Approximate height per line
         min_lines = 5
         max_lines = 10
         visible_lines = max(min_lines, min(line_count, max_lines))
-        # Calculate pixel height (+ padding)
-        new_height = visible_lines * 22 + 25
+        # Calculate pixel height (+ title and padding)
+        new_height = visible_lines * 22 + 65 # Extra space for title
 
-        url_container = self.url_input.parentWidget()
-        if url_container:
+        # Target the Master Container Pattern (url_master)
+        url_master = self.url_input.window().findChild(QWidget, "urlMasterContainer")
+        if url_master:
             # Only resize if significantly different to prevent jitter
-            if abs(url_container.height() - new_height) > 5:
-                url_container.setMinimumHeight(new_height)
-                url_container.setMaximumHeight(new_height)
+            if abs(url_master.height() - new_height) > 5:
+                url_master.setMinimumHeight(new_height)
+                url_master.setMaximumHeight(new_height)
 
         # 4. CRITICAL FIX: Sync the scrollbars
         # Set line_numbers scroll to match the input box
