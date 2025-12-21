@@ -285,6 +285,7 @@ class MainWindow(QMainWindow):
         self.line_numbers = QPlainTextEdit()
         self.line_numbers.setReadOnly(True)
         self.line_numbers.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.line_numbers.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
         self.line_numbers.setFrameStyle(QFrame.Shape.NoFrame)
         self.line_numbers.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.line_numbers.setFixedWidth(40)
