@@ -1,6 +1,6 @@
 [project]
 name = "4Charm"
-version = "6.1.5"
+version = "6.1.6"
 description = "4Charm - Advanced 4chan Media Downloader"
 authors = [
     {name = "RazorBackRoar"}
