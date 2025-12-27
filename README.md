@@ -12,12 +12,11 @@
 > **High-performance 4chan media downloader for macOS**  
 > Native app built with Python and PySide6. Download entire threads, catalogs, or boards with intelligent organization, fail-safe resume, and zero duplicates.
 
-[![GitHub release](https://img.shields.io/github/v/release/RazorBackRoar/4Charm)](https://github.com/RazorBackRoar/4Charm/releases)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Apple Silicon](https://img.shields.io/badge/Apple%20Silicon-Native-brightgreen.svg)](https://support.apple.com/en-us/HT211814)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![macOS](https://img.shields.io/badge/macOS-10.13+-blue.svg)](https://www.apple.com/macos)
-[![Apple Silicon](https://img.shields.io/badge/Apple%20Silicon-Native-green.svg)](https://support.apple.com/en-us/HT211814)
-[![Python](https://img.shields.io/badge/Python-3.13-blue.svg)](https://www.python.org/)
-[![PySide6](https://img.shields.io/badge/PySide6-Qt6-green.svg)](https://doc.qt.io/qtforpython/)
+[![PySide6](https://img.shields.io/badge/PySide6-Qt6-orange.svg)](https://doc.qt.io/qtforpython/)
+[![Python](https://img.shields.io/badge/Python-3.13-blueviolet.svg)](https://www.python.org/)
 
 ---
 
