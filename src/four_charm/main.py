@@ -19,6 +19,23 @@ logger = setup_logging()
 def get_version() -> str:
     """Get version from pyproject.toml."""
     try:
+        if getattr(sys, "frozen", False):
+            import plistlib
+
+            exe_path = Path(sys.executable)
+            for parent in exe_path.parents:
+                if parent.suffix == ".app":
+                    info_plist = parent / "Contents" / "Info.plist"
+                    if info_plist.exists():
+                        with info_plist.open("rb") as f:
+                            data = plistlib.load(f)
+                        version = data.get("CFBundleShortVersionString") or data.get(
+                            "CFBundleVersion"
+                        )
+                        if version:
+                            return str(version)
+                    break
+
         try:
             import tomllib
         except ModuleNotFoundError:
@@ -29,9 +46,9 @@ def get_version() -> str:
         with open(pyproject_path, "rb") as f:
             data = tomllib.load(f)
         return data["project"]["version"]
-    except Exception as e:
-        logger.warning(f"Could not read version from pyproject.toml: {e}")
-        return "5.2.0"
+    except (OSError, KeyError, ValueError) as e:
+        logger.warning("Could not read version from pyproject.toml: %s", e)
+        return "0.0.0"
 
 
 def main():
@@ -41,7 +58,16 @@ def main():
     app.setApplicationVersion(get_version())
 
     # Set application icon (assets/icons/ is at project root)
-    icon_path = Path(__file__).parent.parent.parent.parent / "assets" / "icons" / "4Charm.icns"
+    icon_path: Path
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        icon_path = Path(sys._MEIPASS) / "assets" / "icons" / "4Charm.icns"  # type: ignore[attr-defined]
+    else:
+        icon_path = (
+            Path(__file__).parent.parent.parent.parent
+            / "assets"
+            / "icons"
+            / "4Charm.icns"
+        )
     if icon_path.exists():
         app.setWindowIcon(QIcon(str(icon_path)))
 
