@@ -43,7 +43,7 @@ PLIST = {
     "CFBundleIdentifier": BUNDLE_ID,
     "CFBundleVersion": APP_VERSION,
     "CFBundleShortVersionString": APP_VERSION,
-    "NSHumanReadableCopyright": f"Copyright © 2025 {AUTHOR_NAME}. All rights reserved.",
+    "NSHumanReadableCopyright": "Copyright \u00A9 2026 RazorBackRoar. All rights reserved.",
     "NSHighResolutionCapable": True,
     "NSRequiresAquaSystemAppearance": False,
     "LSMinimumSystemVersion": "11.0",
