@@ -290,7 +290,12 @@ class MainWindow(QMainWindow):
         self.line_numbers.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.line_numbers.setFixedWidth(40)
         self.line_numbers.document().setDocumentMargin(0)
-        self.line_numbers.setStyleSheet("color: rgba(118, 230, 72, 0.5); padding: 12px 0px;")
+        self.line_numbers.setStyleSheet(
+            "color: rgba(118, 230, 72, 0.5); "
+            "padding: 12px 0px; "
+            "selection-background-color: transparent; "
+            "selection-color: rgba(118, 230, 72, 0.5);"
+        )
         self.line_numbers.setPlainText("1")
 
         fmt = QTextBlockFormat()
