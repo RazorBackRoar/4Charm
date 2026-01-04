@@ -198,7 +198,13 @@ class FourChanScraper:
         if thread_title and thread_title.strip():
             # Sanitize the thread title for folder name
             folder_name = self._sanitize_folder_component(thread_title)
-            # Truncate if too long
+            
+            # Remove only "thread" word (keep pics, collection, videos, gifs, etc.)
+            words_to_remove = ["thread", "Thread", "THREAD"]
+            words = folder_name.split()
+            folder_name = " ".join(w for w in words if w not in words_to_remove)
+            
+            # Truncate if too long (keep it short and clean)
             if len(folder_name) > Config.MAX_FOLDER_NAME_LENGTH:
                 folder_name = folder_name[: Config.MAX_FOLDER_NAME_LENGTH].rstrip("-_ ")
             # Only return if we have a valid title

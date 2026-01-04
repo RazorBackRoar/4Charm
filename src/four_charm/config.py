@@ -10,7 +10,7 @@ class Config:
     MAX_FILENAME_LENGTH = 200
     MIN_FREE_SPACE_MB = 100
     PROGRESS_UPDATE_INTERVAL = 0.1
-    MAX_FOLDER_NAME_LENGTH = 60
+    MAX_FOLDER_NAME_LENGTH = 40
 
     # Network timeouts and delays
     API_TIMEOUT = 30  # API request timeout in seconds
