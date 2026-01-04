@@ -194,18 +194,19 @@ class FourChanScraper:
     def build_thread_folder_name(
         self, thread_title: Optional[str], thread_id: str, board: str
     ) -> str:
-        """Build folder name for thread using title only."""
-        if thread_title:
+        """Build folder name for thread using title. Falls back to board-thread_id if no title."""
+        if thread_title and thread_title.strip():
             # Sanitize the thread title for folder name
             folder_name = self._sanitize_folder_component(thread_title)
             # Truncate if too long
             if len(folder_name) > Config.MAX_FOLDER_NAME_LENGTH:
                 folder_name = folder_name[: Config.MAX_FOLDER_NAME_LENGTH].rstrip("-_ ")
-        else:
-            # If no title, use thread ID as the folder name
-            folder_name = thread_id
-
-        return folder_name or thread_id
+            # Only return if we have a valid title
+            if folder_name:
+                return folder_name
+        
+        # Fallback: use board-thread_id format if no title available
+        return f"{board}-{thread_id}"
 
     def check_disk_space(self, required_mb: float = 0) -> bool:
         """Check if sufficient disk space is available."""
@@ -256,8 +257,21 @@ class FourChanScraper:
             # Extract thread title from the first post (OP)
             posts = thread_data.get("posts", [])
             thread_title = None
-            if posts and "sub" in posts[0]:
-                thread_title = posts[0]["sub"]
+            if posts:
+                op = posts[0]
+                # First try "sub" field (subject/title)
+                if "sub" in op and op["sub"]:
+                    thread_title = op["sub"]
+                # Fallback to first part of comment if no subject
+                elif "com" in op and op["com"]:
+                    # Extract text from HTML comment, take first 60 chars
+                    text = re.sub(r"<[^>]+>", "", op["com"])  # Remove HTML tags
+                    text = text.strip()
+                    if text:
+                        # Use first 60 characters as title
+                        thread_title = text[:60].strip()
+                        # Remove newlines and extra spaces
+                        thread_title = re.sub(r"\s+", " ", thread_title)
             thread_data["_thread_title"] = thread_title
             self.adaptive_delay(success=True)  # Success, reduce delay
             return thread_data
@@ -272,8 +286,22 @@ class FourChanScraper:
                     thread_data = response.json()
                     posts = thread_data.get("posts", [])
                     thread_title = None
-                    if posts and "sub" in posts[0]:
-                        thread_title = posts[0]["sub"]
+                    if posts:
+                        op = posts[0]
+                        # First try "sub" field (subject/title)
+                        if "sub" in op and op["sub"]:
+                            thread_title = op["sub"]
+                        # Fallback to first part of comment if no subject
+                        elif "com" in op and op["com"]:
+                            # Extract text from HTML comment, take first 60 chars
+                            import re
+                            text = re.sub(r"<[^>]+>", "", op["com"])  # Remove HTML tags
+                            text = text.strip()
+                            if text:
+                                # Use first 60 characters as title
+                                thread_title = text[:60].strip()
+                                # Remove newlines and extra spaces
+                                thread_title = re.sub(r"\s+", " ", thread_title)
                     thread_data["_thread_title"] = thread_title
                     return thread_data
                 except Exception as e2:
@@ -308,7 +336,7 @@ class FourChanScraper:
     def extract_media_from_posts(
         self, posts: List[Dict], board: str, thread_id: str = ""
     ) -> List[MediaFile]:
-        """Extract media files from posts."""
+        """Extract media files from posts. Downloads original, full-quality files from i.4cdn.org."""
         media_files = []
         for post in posts:
             if "tim" in post and "ext" in post:
@@ -316,6 +344,7 @@ class FourChanScraper:
                 if ext in Config.MEDIA_EXTENSIONS:
                     filename = f"{post['tim']}{ext}"
                     original_name = post.get("filename", "unnamed") + ext
+                    # i.4cdn.org serves original, full-quality files (same as browsers download)
                     media_url = f"https://i.4cdn.org/{board}/{filename}"
                     safe_filename = self.sanitize_filename(original_name)
                     media_file = MediaFile(
@@ -324,6 +353,9 @@ class FourChanScraper:
                         board=board,
                         thread_id=thread_id,
                     )
+                    # Store file size from API if available (for quality verification)
+                    if "fsize" in post:
+                        media_file.size = post["fsize"]
                     media_files.append(media_file)
         return media_files
 

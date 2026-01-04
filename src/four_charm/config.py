@@ -44,4 +44,4 @@ class Config:
 
     VIDEO_EXTENSIONS = {".webm", ".mp4", ".mov", ".avi", ".mkv"}
 
-    USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+    USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
