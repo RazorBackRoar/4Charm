@@ -24,6 +24,7 @@ build/
 !build/DMG_BUILD_README.md
 pip-wheel-metadata/
 *.spec
+!4Charm.spec
 temp-dmg-*
 
 # Virtual envs
