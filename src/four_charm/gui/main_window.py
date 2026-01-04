@@ -483,6 +483,9 @@ class MainWindow(QMainWindow):
             fmt.setAlignment(Qt.AlignmentFlag.AlignCenter)
             fmt.setLineHeight(140.0, QTextBlockFormat.LineHeightTypes.ProportionalHeight.value)
             cursor.setBlockFormat(fmt)
+            # Clear selection to prevent highlighting
+            cursor.clearSelection()
+            cursor.movePosition(QTextCursor.MoveOperation.End)
             self.line_numbers.setTextCursor(cursor)
 
         # 3. Keeping Everything Synchronized
