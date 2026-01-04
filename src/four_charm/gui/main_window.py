@@ -221,9 +221,10 @@ class MainWindow(QMainWindow):
         )
 
         self.scraper = FourChanScraper()
-        # Don't set a default directory - let user choose on first use
-        # This prevents automatic folder creation in Downloads
-        self.scraper.download_dir = None
+        # Set default download directory to ~/Downloads/4Charm
+        default_dir = Path.home() / "Downloads" / "4Charm"
+        default_dir.mkdir(parents=True, exist_ok=True)
+        self.scraper.download_dir = default_dir
 
         self.download_thread: Optional[QThread] = None
         self.download_worker: Optional["MultiUrlDownloadWorker"] = None
@@ -234,6 +235,9 @@ class MainWindow(QMainWindow):
         self._update_ui_for_state("idle")
         # Initialize download stats
         self.update_download_stats()
+        # Show default download directory in status bar
+        if self.scraper.download_dir:
+            self.status_bar.showMessage(f"Download folder: {self.scraper.download_dir}")
 
     def setup_ui(self):
         """Setup the user interface."""
@@ -337,9 +341,9 @@ class MainWindow(QMainWindow):
         self.pause_resume_btn = QPushButton("⏸️ Pause")
         self.pause_resume_btn.setObjectName("pauseBtn")
 
-        buttons_layout.addWidget(self.folder_btn)
         buttons_layout.addWidget(self.start_cancel_btn)
         buttons_layout.addWidget(self.clear_btn)
+        buttons_layout.addWidget(self.folder_btn)
         buttons_layout.addWidget(self.pause_resume_btn)
         url_master_layout.addWidget(buttons_container)
 
