@@ -9,9 +9,11 @@
      ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝
 ```
 
-> **High-performance 4chan media downloader for macOS**  
+> **High-performance 4chan media downloader for macOS**
 > Native app built with Python and PySide6. Download entire threads, catalogs, or boards with intelligent organization, fail-safe resume, and zero duplicates.
 
+[![CI](https://github.com/RazorBackRoar/4Charm/actions/workflows/ci.yml/badge.svg)](https://github.com/RazorBackRoar/4Charm/actions/workflows/ci.yml)
+[![Pylint](https://github.com/RazorBackRoar/4Charm/actions/workflows/pylint.yml/badge.svg)](https://github.com/RazorBackRoar/4Charm/actions/workflows/pylint.yml)
 [![Apple Silicon](https://img.shields.io/badge/Apple%20Silicon-Native-brightgreen.svg)](https://support.apple.com/en-us/HT211814)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![macOS](https://img.shields.io/badge/macOS-10.13+-blue.svg)](https://www.apple.com/macos)
@@ -73,7 +75,7 @@ Most 4chan downloaders are either CLI tools that require terminal knowledge, bro
 
 ### For End Users
 
-1. **Download** the latest release:  
+1. **Download** the latest release:
    → [4Charm_X.X.X.dmg](https://github.com/RazorBackRoar/4Charm/releases)
 
 2. **Install** the app:
