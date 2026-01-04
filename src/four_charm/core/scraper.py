@@ -199,12 +199,7 @@ class FourChanScraper:
             # Sanitize the thread title for folder name
             folder_name = self._sanitize_folder_component(thread_title)
             
-            # Remove only "thread" word (keep pics, collection, videos, gifs, etc.)
-            words_to_remove = ["thread", "Thread", "THREAD"]
-            words = folder_name.split()
-            folder_name = " ".join(w for w in words if w not in words_to_remove)
-            
-            # Truncate if too long (keep it short and clean)
+            # Truncate if too long (keep all words, just shorten if needed)
             if len(folder_name) > Config.MAX_FOLDER_NAME_LENGTH:
                 folder_name = folder_name[: Config.MAX_FOLDER_NAME_LENGTH].rstrip("-_ ")
             # Only return if we have a valid title
@@ -271,13 +266,13 @@ class FourChanScraper:
                 # Fallback to first part of comment if no subject
                 elif "com" in op and op["com"]:
                     # Extract text from HTML comment, take first 60 chars
-                    text = re.sub(r"<[^>]+>", "", op["com"])  # Remove HTML tags
+                    text = re.sub(r"<[^>]+>", "", op["com"])  # type: ignore[reportUnboundVariable] # Remove HTML tags
                     text = text.strip()
                     if text:
                         # Use first 60 characters as title
                         thread_title = text[:60].strip()
                         # Remove newlines and extra spaces
-                        thread_title = re.sub(r"\s+", " ", thread_title)
+                        thread_title = re.sub(r"\s+", " ", thread_title)  # type: ignore[reportUnboundVariable]
             thread_data["_thread_title"] = thread_title
             self.adaptive_delay(success=True)  # Success, reduce delay
             return thread_data
@@ -416,13 +411,13 @@ class FourChanScraper:
         self.download_queue.start_download(media_file.url)
 
         if self.cancelled:
-            self.download_queue.fail_download(media_file.url, "Cancelled")
+            self.download_queue.fail_download(media_file.url, Exception("Cancelled"))
             return False
 
         while self.paused:
             time.sleep(0.1)
             if self.cancelled:
-                self.download_queue.fail_download(media_file.url, "Cancelled")
+                self.download_queue.fail_download(media_file.url, Exception("Cancelled"))
                 return False
 
         for attempt in range(Config.MAX_RETRIES):
@@ -472,7 +467,7 @@ class FourChanScraper:
                     self.stats["failed"] += 1
                     self.stats_mutex.unlock()
                     self.download_queue.fail_download(
-                        media_file.url, "Insufficient disk space"
+                        media_file.url, Exception("Insufficient disk space")
                     )
                     return False
 
@@ -575,12 +570,12 @@ class FourChanScraper:
                     self.stats["failed"] += 1
                     self.stats_mutex.unlock()
                     # Mark as failed in queue
-                    self.download_queue.fail_download(media_file.url, str(e))
+                    self.download_queue.fail_download(media_file.url, e)
                     return False
                 time.sleep(2**attempt)
 
         # If we exit the loop without success, mark as failed
-        self.download_queue.fail_download(media_file.url, "Max retries exceeded")
+        self.download_queue.fail_download(media_file.url, Exception("Max retries exceeded"))
         return False
 
     def pause_downloads(self):
