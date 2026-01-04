@@ -509,10 +509,10 @@ class MainWindow(QMainWindow):
         # Update the URL counter label
         self.url_count_label.setText(f"QUEUE: {len(raw_lines)}")
 
-        # Validate URL count (maximum 10)
-        if len(raw_lines) > 10:
+        # Validate URL count (maximum 20)
+        if len(raw_lines) > 20:
             self._update_url_status(
-                "⚠️ Maximum 10 URLs allowed. Please remove some URLs.", "invalid"
+                "⚠️ Maximum 20 URLs allowed. Please remove some URLs.", "invalid"
             )
             self.start_cancel_btn.setEnabled(False)
             return

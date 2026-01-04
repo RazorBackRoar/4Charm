@@ -30,7 +30,7 @@ Most 4chan downloaders are either CLI tools that require terminal knowledge, bro
 |---------|--------|-------------------|-----------|------------------|
 | **Native macOS UI** | ✅ Modern Qt6 | ❌ Browser-dependent | ❌ Terminal only | ⚠️ Often Tkinter/outdated |
 | **Apple Silicon Optimized** | ✅ M1/M2/M3 native | ❌ N/A | ⚠️ Depends | ❌ Rarely |
-| **Bulk Downloads** | ✅ 10 concurrent URLs | ⚠️ Limited | ✅ Yes | ⚠️ Sometimes |
+| **Bulk Downloads** | ✅ 20 concurrent URLs | ⚠️ Limited | ✅ Yes | ⚠️ Sometimes |
 | **Smart Organization** | ✅ Per-thread + WEBM folders | ❌ Dumps everything | ⚠️ Basic | ❌ Usually flat |
 | **Fail-Safe Resume** | ✅ Automatic | ❌ No | ⚠️ Manual | ❌ Usually no |
 | **Duplicate Prevention** | ✅ SHA-256 hashing | ❌ No | ❌ Rarely | ❌ Rarely |
@@ -45,7 +45,7 @@ Most 4chan downloaders are either CLI tools that require terminal knowledge, bro
 ## ✨ Features
 
 ### Core Functionality
-- **Bulk URL Processing** - Queue up to 10 URLs simultaneously (threads, catalogs, or entire boards)
+- **Bulk URL Processing** - Queue up to 20 URLs simultaneously (threads, catalogs, or entire boards)
 - **Multi-threaded Engine** - Parallel download workers with configurable concurrency
 - **Smart Organization** - Automatic per-thread folder structure with dedicated WEBM subdirectories
 - **Fail-Safe Resume** - Interrupted downloads automatically resume from last checkpoint
@@ -93,7 +93,7 @@ Most 4chan downloaders are either CLI tools that require terminal knowledge, bro
 
 4. **Use it:**
    - Launch 4Charm
-   - Paste up to 10 4chan URLs (threads, catalogs, or boards)
+   - Paste up to 20 4chan URLs (threads, catalogs, or boards)
    - Choose download location
    - Click **Start Download**
    - Watch the live log for progress
