@@ -1,0 +1,43 @@
+# Agent Instructions for 4Charm
+
+## Project Overview
+- **Type**: Native macOS Desktop App (4chan Media Downloader)
+- **Stack**: Python 3.10+, PySide6 (Qt6)
+- **Architecture**: `.razorcore` shared library architecture
+- **Build System**: PyInstaller (managed via `razorcore build`)
+- **Target**: macOS ARM64 (Apple Silicon)
+
+## Critical Rules
+1. **Build System**: ALWAYS use `razorcore build 4Charm`. NEVER use `py2app`, `briefcase`, or manual `pyinstaller` commands.
+   - The build process uses the **universal build script** in `.razorcore/universal-build.sh`.
+   - Settings for DMGs are **global** (hardcoded in universal-build.sh) for consistency.
+2. **Shared Library**: Logic common to apps exists in `.razorcore`. Check there before reinventing the wheel.
+3. **Assets**: Icons and resources live in `assets/`, NOT `src/resources/`.
+4. **Versioning**: Single source of truth is `pyproject.toml`.
+
+## File Structure
+- `pyproject.toml`       # Metadata & Version
+- `4Charm.spec`          # PyInstaller Config (Required)
+- `assets/`              # Icons (.icns)
+- `src/`                 # Source Code
+  - `four_charm/`
+    - `gui/`             # PySide6 Widgets (No .ui files, use code)
+    - `core/`            # Business Logic
+    - `utils/`           # Utilities
+
+## Qt/PySide6 Guidelines
+- **Framework**: PySide6 exclusively.
+- **Styling**: Apps use a neon-dark theme. Use `razorcore.styling` widgets when possible.
+- **Threading**: Use `razorcore.threading.BaseWorker` for background tasks to avoid freezing UI.
+- **Layouts**: Always use standard layouts (QVBoxLayout, QHBoxLayout).
+
+## Development Workflow
+1. **Install**: `pip install -r requirements.txt && pip install -e ../.razorcore`
+2. **Run**: `python src/four_charm/main.py`
+3. **Build**: `razorcore build 4Charm` (Builds .app + DMG using universal system)
+4. **Release**: `razorcore save 4Charm` (Auto-commits, bumps version, pushes)
+
+## Coding Standards
+- **Imports**: Absolute imports (`from four_charm.gui import ...`).
+- **Type Hints**: Required for all function signatures.
+- **Formatting**: Follows Black/Ruff via `.razorcore` configs.

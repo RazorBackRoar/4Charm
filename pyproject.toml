@@ -1,12 +1,36 @@
 [project]
 name = "4Charm"
-version = "6.4.1"
-description = "4Charm - Advanced 4chan Media Downloader"
+version = "6.4.2"
+description = "High-performance native macOS 4chan media downloader"
 authors = [
     {name = "RazorBackRoar"}
 ]
 requires-python = ">=3.9"
-
+keywords = [
+    "Python",
+    "PySide6",
+    "Qt",
+    "macOS",
+    "Apple-Silicon",
+    "4chan",
+    "downloader",
+    "GUI",
+    "media-archiver"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: MacOS X :: Cocoa",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS :: MacOS X",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Multimedia :: Graphics :: Capture"
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]
