@@ -17,11 +17,11 @@ logger = setup_logging()
 
 
 def get_version() -> str:
-    """Get version from pyproject.toml."""
-    try:
-        if getattr(sys, "frozen", False):
+    """Get version from Info.plist (frozen) or pyproject.toml (dev)."""
+    # 1. Frozen app: read from Info.plist
+    if getattr(sys, "frozen", False):
+        try:
             import plistlib
-
             exe_path = Path(sys.executable)
             for parent in exe_path.parents:
                 if parent.suffix == ".app":
@@ -29,19 +29,22 @@ def get_version() -> str:
                     if info_plist.exists():
                         with info_plist.open("rb") as f:
                             data = plistlib.load(f)
-                        version = data.get("CFBundleShortVersionString") or data.get(
-                            "CFBundleVersion"
-                        )
+                        version = data.get("CFBundleShortVersionString") or data.get("CFBundleVersion")
                         if version:
                             return str(version)
                     break
+        except Exception as e:
+            logger.warning("Could not read version from Info.plist: %s", e)
+        # Frozen apps should have version in plist; if not, return hardcoded
+        return "6.4.2"
 
+    # 2. Development: read from pyproject.toml
+    try:
         try:
             import tomllib
         except ModuleNotFoundError:
             import tomli as tomllib  # type: ignore
 
-        # pyproject.toml is at project root (3 levels up from this file)
         pyproject_path = Path(__file__).parent.parent.parent.parent / "pyproject.toml"
         with open(pyproject_path, "rb") as f:
             data = tomllib.load(f)
