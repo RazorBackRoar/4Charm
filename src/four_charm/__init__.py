@@ -1,5 +1,8 @@
 """4Charm - Advanced 4chan Media Downloader."""
 
-from importlib.metadata import version
+from importlib.metadata import version, PackageNotFoundError
 
-__version__ = version("4Charm")
+try:
+    __version__ = version("4Charm")
+except PackageNotFoundError:
+    __version__ = "6.4.2"  # Fallback for bundled apps
