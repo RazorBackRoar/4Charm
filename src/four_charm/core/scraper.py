@@ -295,7 +295,6 @@ class FourChanScraper:
                         # Fallback to first part of comment if no subject
                         elif "com" in op and op["com"]:
                             # Extract text from HTML comment, take first 60 chars
-                            import re
                             text = re.sub(r"<[^>]+>", "", op["com"])  # Remove HTML tags
                             text = text.strip()
                             if text:
@@ -502,6 +501,8 @@ class FourChanScraper:
                         file_path.unlink()  # Remove partial file
                 else:
                     response.raise_for_status()
+                    # Fallback to overwrite if status is success but not 200/206
+                    mode = "wb"
 
                 total_size = int(response.headers.get("content-length", 0))
                 if existing_size > 0 and total_size > 0:
