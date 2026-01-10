@@ -303,3 +303,4 @@ Please include:
 [⬇️ Download](https://github.com/RazorBackRoar/4Charm/releases) • [📖 Docs](BUILD.md) • [🐛 Report Bug](https://github.com/RazorBackRoar/4Charm/issues) • [💡 Request Feature](https://github.com/RazorBackRoar/4Charm/discussions)
 
 </div>
+# README
