@@ -1,5 +1,5 @@
 # 4Charm - Required Dependencies
-# Python 3.9+ required
+# Python 3.13+ required
 
 # GUI Framework
 PySide6>=6.5.0
@@ -12,9 +12,6 @@ certifi>=2023.7.22
 # Optional encoding/parsing helpers
 chardet>=5.0.0
 html5lib>=1.1
-
-# TOML parsing (for Python 3.9/3.10 compatibility - tomllib is built-in 3.11+)
-tomli>=2.0.0;python_version<"3.11"
 
 # Build Tools (for creating .app bundle)
 pyinstaller>=6.0.0
