@@ -73,7 +73,7 @@ pip install -e ../.razorcore  # Install build tools
 ### Build & Release
 ```bash
 # Build app and create DMG
-razorcore build 4Charm
+razorbuild 4Charm
 
 # Create release (auto-commits & tags)
 razorcore save 4Charm

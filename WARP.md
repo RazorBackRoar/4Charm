@@ -12,7 +12,7 @@ python src/four_charm/main.py
 pytest tests/
 
 # Build
-razorcore build 4Charm
+razorbuild 4Charm
 ```
 
 ## Architecture
@@ -36,7 +36,7 @@ razorcore build 4Charm
 - `MAX_RETRIES`: HTTP retries
 
 ## Rules
-1. Build with `razorcore build 4Charm`
+1. Build with `razorbuild 4Charm`
 2. Version lives in `pyproject.toml`
 3. Use QThread workers for downloads
 4. Respect rate limits to prevent IP bans
