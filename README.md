@@ -40,7 +40,9 @@ fail-safe resume, and zero duplicates.
 ### Installation
 
 1. Download the latest `4Charm.dmg` from
+
    [Releases](https://github.com/RazorBackRoar/4Charm/releases)
+
 2. Drag `4Charm.app` to `/Applications`
 3. **First Launch**:
 

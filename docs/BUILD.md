@@ -284,6 +284,7 @@ setup(
 #### Special Settings
 
 - `argv_emulation: False` - Prevents command-line argument issues in bundled
+
   apps
 
 ## Code Signing

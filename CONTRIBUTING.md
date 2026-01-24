@@ -10,13 +10,16 @@ branch.
 - **Status:** Protected.
 - **Rule:** **NEVER DELETE `main`**. It is the primary branch.
 - **Usage:** Contains stable code. Do not commit directly to `main`; always use
+
   a Pull Request.
 
 ### Workflow
 
 1. **Create a Feature Branch**
    - Naming convention: `feature/name-of-feature`, `fix/issue-description`, or
+
      `chore/task-name`.
+
    - Example: `fix-ci-build`.
 
 2. **Make Changes**
@@ -29,7 +32,9 @@ branch.
 
 4. **Merge & Delete Feature Branch**
    - Once the PR is approved and merged, **delete the feature branch** (e.g.,
+
      `fix-ci-build`).
+
    - **Do NOT delete `main`**.
 
 ## Branch Protection
