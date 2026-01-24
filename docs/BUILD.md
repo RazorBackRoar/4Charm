@@ -25,10 +25,10 @@ Before building 4Charm, ensure you have the following tools installed:
 #### Python 3.10 or later
 
 ```bash
-# Check Python version
+## Check Python version
 python3 --version
 
-# Install via Homebrew (if needed)
+## Install via Homebrew (if needed)
 brew install python@3.10
 ```
 
@@ -63,13 +63,13 @@ pip install PySide6 requests urllib3 certifi
 Check that all tools are available:
 
 ```bash
-# Verify py2app
+## Verify py2app
 python3 -c "import py2app; print('py2app installed')"
 
-# Verify create-dmg
+## Verify create-dmg
 which create-dmg
 
-# Verify codesign
+## Verify codesign
 which codesign
 ```
 
@@ -91,13 +91,13 @@ Before building, verify your project has the correct structure:
 ### Check Required Files
 
 ```bash
-# Verify main.py exists
+## Verify main.py exists
 test -f main.py && echo "✓ main.py found" || echo "✗ main.py missing"
 
-# Verify icon file exists
+## Verify icon file exists
 test -f resources/4Charm.icns && echo "✓ Icon found" || echo "✗ Icon missing"
 
-# Verify setup.py exists
+## Verify setup.py exists
 test -f setup.py && echo "✓ setup.py found" || echo "✗ setup.py missing"
 ```
 
@@ -199,10 +199,10 @@ create-dmg \
 Mount and test the DMG:
 
 ```bash
-# Mount the DMG
+## Mount the DMG
 open 4Charm_1.0.0.dmg
 
-# After mounting, test the app
+## After mounting, test the app
 open /Volumes/4Charm/4Charm.app
 ```
 
@@ -306,13 +306,13 @@ codesign --force --deep --sign - dist/4Charm.app
 ### Verify Signature
 
 ```bash
-# Basic verification
+## Basic verification
 codesign --verify dist/4Charm.app
 
-# Detailed verification
+## Detailed verification
 codesign --verify --deep --verbose=2 dist/4Charm.app
 
-# Display signature information
+## Display signature information
 codesign --display --verbose=4 dist/4Charm.app
 ```
 
@@ -336,13 +336,13 @@ For production releases, consider purchasing an Apple Developer account
 ($99/year):
 
 ```bash
-# Sign with Developer ID
+## Sign with Developer ID
 codesign --force --deep --sign "Developer ID Application: Your Name" dist/4Charm.app
 
-# Notarize the app
+## Notarize the app
 xcrun notarytool submit 4Charm_1.0.0.dmg --apple-id your@email.com --password app-specific-password --team-id TEAMID
 
-# Staple notarization ticket
+## Staple notarization ticket
 xcrun stapler staple dist/4Charm.app
 ```
 
@@ -412,10 +412,10 @@ The `release.sh` script automates the entire build process.
 ### Basic Usage
 
 ```bash
-# Build with default version (1.0.0)
+## Build with default version (1.0.0)
 ./release.sh
 
-# Build with specific version
+## Build with specific version
 ./release.sh 1.2.3
 ```
 
@@ -575,10 +575,10 @@ git push origin v0.9.0-beta
 Then delete the test release and tag:
 
 ```bash
-# Delete remote tag
+## Delete remote tag
 git push --delete origin v0.9.0-beta
 
-# Delete local tag
+## Delete local tag
 git tag -d v0.9.0-beta
 ```
 
@@ -587,10 +587,10 @@ git tag -d v0.9.0-beta
 ### Complete Build Process
 
 ```bash
-# One-line build (using release script)
+## One-line build (using release script)
 ./release.sh 1.0.0
 
-# Manual build steps
+## Manual build steps
 rm -rf build dist
 python3 setup.py py2app
 codesign --force --deep --sign - dist/4Charm.app
@@ -603,44 +603,44 @@ create-dmg --volname "4Charm" --volicon "resources/4Charm.icns" \
 ### Verification Commands
 
 ```bash
-# Verify app bundle structure
+## Verify app bundle structure
 ls -la dist/4Charm.app/Contents/MacOS/
 ls -la dist/4Charm.app/Contents/Resources/
 
-# Verify code signature
+## Verify code signature
 codesign --verify --deep dist/4Charm.app
 
-# Check bundle info
+## Check bundle info
 plutil -p dist/4Charm.app/Contents/Info.plist
 
-# Test app launch
+## Test app launch
 open dist/4Charm.app
 ```
 
 ### Cleanup Commands
 
 ```bash
-# Remove build artifacts
+## Remove build artifacts
 rm -rf build dist
 
-# Remove DMG files
+## Remove DMG files
 rm -f *.dmg
 
-# Complete cleanup
+## Complete cleanup
 rm -rf build dist *.dmg
 ```
 
 ### Git Release Commands
 
 ```bash
-# Create and push release tag
+## Create and push release tag
 git tag v1.0.0
 git push origin v1.0.0
 
-# List all tags
+## List all tags
 git tag -l
 
-# Delete tag (if needed)
+## Delete tag (if needed)
 git tag -d v1.0.0
 git push --delete origin v1.0.0
 ```
@@ -700,13 +700,13 @@ error: [Errno 2] No such file or directory: 'resources/4Charm.icns'
 #### Solution (missing icon)
 
 ```bash
-# Check if icon exists
+## Check if icon exists
 ls -la resources/4Charm.icns
 
-# Create resources directory if missing
+## Create resources directory if missing
 mkdir -p resources
 
-# Ensure icon file is present
+## Ensure icon file is present
 ```
 
 ### Code Signing Failure
@@ -720,10 +720,10 @@ code object is not signed at all
 #### Solution (code signing)
 
 ```bash
-# Ensure Xcode Command Line Tools are installed
+## Ensure Xcode Command Line Tools are installed
 xcode-select --install
 
-# Try signing again with verbose output
+## Try signing again with verbose output
 codesign --force --deep --sign - --verbose=4 dist/4Charm.app
 ```
 
@@ -766,13 +766,13 @@ OSError: [Errno 28] No space left on device
 #### Solution (disk space)
 
 ```bash
-# Check available space
+## Check available space
 df -h
 
-# Clean up old builds
+## Clean up old builds
 rm -rf build dist *.dmg
 
-# Free up space on your system
+## Free up space on your system
 ```
 
 ### App Won't Launch
@@ -872,13 +872,13 @@ RuntimeError: Python 3.10 or later is required
 #### Solution (python version)
 
 ```bash
-# Check Python version (2)
+## Check Python version (2)
 python3 --version
 
-# Install correct version via Homebrew
+## Install correct version via Homebrew
 brew install python@3.10
 
-# Update PATH if needed
+## Update PATH if needed
 export PATH="/usr/local/opt/python@3.10/bin:$PATH"
 ```
 

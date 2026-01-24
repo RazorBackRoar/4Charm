@@ -5,16 +5,16 @@
 ## Quick Commands
 
 ```bash
-# Run
+## Run
 python src/four_charm/main.py
 
-# Test
+## Test
 pytest tests/
 
-# Build (full DMG)
+## Build (full DMG)
 4charmbuild
 
-# Build (fast .app only)
+## Build (fast .app only)
 4charmtest
 ```
 

@@ -18,7 +18,9 @@ branch.
 1. **Create a Feature Branch**
    - Naming convention: `feature/name-of-feature`, `fix/issue-description`, or
 
-     `chore/task-name`.
+```text
+`chore/task-name`.
+```
 
    - Example: `fix-ci-build`.
 
