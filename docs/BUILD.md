@@ -1,6 +1,7 @@
 # 4Charm macOS Build Guide
 
-This guide provides complete instructions for building and distributing the 4Charm macOS application.
+This guide provides complete instructions for building and distributing the
+4Charm macOS application.
 
 ## Table of Contents
 
@@ -117,7 +118,8 @@ This script will:
 - Ad-hoc sign the app with `codesign`
 - Create `dist/4Charm.dmg` with the 2×2 Finder layout
 
-The sections below document the **equivalent manual commands** that `build.sh` performs.
+The sections below document the **equivalent manual commands** that `build.sh`
+performs.
 
 ### 1. Clean Previous Builds
 
@@ -175,7 +177,8 @@ If you use `./build.sh`, the script will automatically:
 - Set the Finder window to a compact 2×2 layout
 - Convert it to a compressed DMG at `dist/4Charm.dmg`
 
-If you prefer to create a DMG manually (advanced use or CI), you can also use `create-dmg` as shown below:
+If you prefer to create a DMG manually (advanced use or CI), you can also use
+`create-dmg` as shown below:
 
 ```bash
 create-dmg \
@@ -205,7 +208,8 @@ open /Volumes/4Charm/4Charm.app
 
 ## Setup.py Configuration
 
-The `setup.py` file configures py2app for building 4Charm. Here's the complete configuration:
+The `setup.py` file configures py2app for building 4Charm. Here's the complete
+configuration:
 
 ```python
 from setuptools import setup
@@ -279,7 +283,8 @@ setup(
 
 #### Special Settings
 
-- `argv_emulation: False` - Prevents command-line argument issues in bundled apps
+- `argv_emulation: False` - Prevents command-line argument issues in bundled
+  apps
 
 ## Code Signing
 
@@ -326,7 +331,8 @@ codesign --display --verbose=4 dist/4Charm.app
 
 ### Upgrading to Developer ID Signing
 
-For production releases, consider purchasing an Apple Developer account ($99/year):
+For production releases, consider purchasing an Apple Developer account
+($99/year):
 
 ```bash
 # Sign with Developer ID
@@ -527,22 +533,22 @@ jobs:
 
 1. **Commit all changes:**
 
-   ```bash
+```bash
    git add .
    git commit -m "Release v1.0.0"
-   ```
+```
 
 2. **Create a version tag:**
 
-   ```bash
+```bash
    git tag v1.0.0
-   ```
+```
 
 3. **Push the tag:**
 
-   ```bash
+```bash
    git push origin v1.0.0
-   ```
+```
 
 4. **Monitor the workflow:**
    - Go to GitHub repository → Actions tab
@@ -732,21 +738,21 @@ create-dmg: command failed with exit code 1
 
 1. **Check if DMG already exists:**
 
-   ```bash
+```bash
    rm -f 4Charm_1.0.0.dmg
-   ```
+```
 
 2. **Verify app bundle exists:**
 
-   ```bash
+```bash
    ls -la dist/4Charm.app
-   ```
+```
 
 3. **Check disk space:**
 
-   ```bash
+```bash
    df -h .
-   ```
+```
 
 ### Insufficient Disk Space
 
@@ -778,33 +784,34 @@ Double-clicking the app does nothing or shows an error.
 
 1. **Check for crash logs:**
 
-   ```bash
+```bash
    open ~/Library/Logs/DiagnosticReports/
-   ```
+```
 
 2. **Run from terminal to see errors:**
 
-   ```bash
+```bash
    dist/4Charm.app/Contents/MacOS/4Charm
-   ```
+```
 
 3. **Verify all dependencies are bundled:**
 
-   ```bash
+```bash
    ls -la dist/4Charm.app/Contents/Resources/lib/python3.*/
-   ```
+```
 
 4. **Check Info.plist is valid:**
 
-   ```bash
+```bash
    plutil -lint dist/4Charm.app/Contents/Info.plist
-   ```
+```
 
 ### Gatekeeper Blocks App
 
 #### Issue (Gatekeeper)
 
-macOS shows "4Charm cannot be opened because it is from an unidentified developer"
+macOS shows "4Charm cannot be opened because it is from an unidentified
+developer"
 
 #### Solutions (Gatekeeper)
 
@@ -816,9 +823,9 @@ macOS shows "4Charm cannot be opened because it is from an unidentified develope
 
 2. **Remove quarantine attribute:**
 
-   ```bash
+```bash
    xattr -cr /Applications/4Charm.app
-   ```
+```
 
 3. **System Settings method:**
    - Open System Settings → Privacy & Security
@@ -848,10 +855,10 @@ CI/CD build fails on GitHub
 
 3. **Test locally first:**
 
-   ```bash
+```bash
    # Ensure local build works
    ./release.sh
-   ```
+```
 
 ### Python Version Mismatch
 
@@ -864,7 +871,7 @@ RuntimeError: Python 3.10 or later is required
 #### Solution (python version)
 
 ```bash
-# Check Python version
+# Check Python version (2)
 python3 --version
 
 # Install correct version via Homebrew
@@ -884,29 +891,29 @@ App bundle is over 300 MB
 
 1. **Check what's included:**
 
-   ```bash
+```bash
    du -sh dist/4Charm.app/*
-   ```
+```
 
 2. **Add more exclusions to setup.py:**
 
-   ```python
+```python
    'excludes': [
        'PyQt6', 'PyQt5', 'tkinter',
        'test', 'unittest', 'email',
        'xml', 'pydoc', 'doctest',
    ]
-   ```
+```
 
 3. **Enable optimization:**
 
-   ```python
+```python
    OPTIONS = {
        'optimize': 2,
        'compressed': True,
        # ... other options
    }
-   ```
+```
 
 ---
 

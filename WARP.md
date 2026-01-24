@@ -21,7 +21,7 @@ pytest tests/
 ## Architecture
 
 | Component | Location | Purpose |
-| ----------- | ---------- | --------- |
+| --- | --- | --- |
 | **FourChanScraper** | `core/scraper.py` | HTTP scraping, rate limiting, SHA-256 dedup |
 | **DownloadWorker** | `gui/workers.py` | Concurrent downloads with ThreadPoolExecutor |
 | **MainWindow** | `gui/main_window.py` | URL input, progress tracking, live log |
