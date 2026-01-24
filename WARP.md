@@ -11,32 +11,38 @@ python src/four_charm/main.py
 # Test
 pytest tests/
 
-# Build
-razorbuild 4Charm
+# Build (full DMG)
+4charmbuild
+
+# Build (fast .app only)
+4charmtest
 ```
 
 ## Architecture
 
 | Component | Location | Purpose |
-|-----------|----------|---------|
+| ----------- | ---------- | --------- |
 | **FourChanScraper** | `core/scraper.py` | HTTP scraping, rate limiting, SHA-256 dedup |
 | **DownloadWorker** | `gui/workers.py` | Concurrent downloads with ThreadPoolExecutor |
 | **MainWindow** | `gui/main_window.py` | URL input, progress tracking, live log |
 | **config** | `config.py` | MAX_WORKERS, delays, user agent |
 
 ## Key Features
+
 - Adaptive rate limiting with backoff
 - SHA-256 duplicate detection
 - Auto folder naming from board/thread/title
 - Separate WEBM folder organization
 
 ## Config (config.py)
+
 - `MAX_WORKERS`: Concurrent threads
 - `BASE_DELAY` / `MAX_DELAY`: Rate limiting
 - `MAX_RETRIES`: HTTP retries
 
 ## Rules
-1. Build with `razorbuild 4Charm`
+
+1. Build with `4charmbuild` (or `4charmtest` for fast .app only)
 2. Version lives in `pyproject.toml`
 3. Use QThread workers for downloads
 4. Respect rate limits to prevent IP bans
