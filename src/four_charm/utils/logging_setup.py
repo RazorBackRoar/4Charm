@@ -5,11 +5,12 @@ from logging.handlers import RotatingFileHandler
 
 def setup_logging():
     """Setup comprehensive logging with file output and console output."""
-    # Create log directory in user's home
-    log_dir = Path.home() / ".4charm" / "logs"
+    # Create log directory in macOS Application Support (proper location)
+    log_dir = Path.home() / "Library" / "Application Support" / "4Charm" / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
 
     log_file = log_dir / "4charm.log"
+
 
     # Create formatters
     file_formatter = logging.Formatter(
