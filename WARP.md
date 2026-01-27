@@ -33,3 +33,4 @@
 2.  **Imports**: Absolute ONLY (`from four_charm.core import X`).
 3.  **Threading**: Use `BaseWorker` (never raw QThread).
 4.  **Version**: Read from `pyproject.toml` (SSOT).
+
