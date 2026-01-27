@@ -1,7 +1,7 @@
 # 🍀 4Charm - 4chan Media Downloader Agent
 
-**Package:** `four_charm`  
-**Version:** 6.4.20  
+**Package:** `four_charm`
+**Version:** 6.4.20
 **Context Level:** LEVEL 3 (Application-Specific)
 
 ---
@@ -26,6 +26,13 @@ This file contains **4Charm-specific** overrides and critical implementation det
 
 ## ⚡ Critical 4Charm-Specific Rules
 
+### ⚡ Performance Optimization (Bolt)
+
+- **Agent:** Bolt ⚡
+- **Activation:** `razorcore bolt`
+- **Goal:** < 2s startup, < 50MB bundle
+- **Journal:** `.razorcore/bolt/journal.md`
+
 ### 1. File Naming (MANDATORY - Will Crash Without This)
 
 ```python
@@ -49,21 +56,25 @@ import time
 from requests.exceptions import HTTPError
 
 class FourChanScraper:
-    """All API interactions MUST implement rate limiting."""
-    
+
+```
+"""All API interactions MUST implement rate limiting."""
+
+```text
+
     RATE_LIMIT_DELAY = 1.0  # Minimum 1 second between requests
-    
+
     def fetch_thread(self, board: str, thread_id: int):
         try:
             response = requests.get(
-                f"https://a.4cdn.org/{board}/thread/{thread_id}.json",
+                f"<https://a.4cdn.org/{board}/thread/{thread_id}.json",>
                 timeout=10
             )
             response.raise_for_status()
-            
+
             # ⚠️ MANDATORY: Wait before next request
             time.sleep(self.RATE_LIMIT_DELAY)
-            
+
             return response.json()
         except HTTPError as e:
             if e.response.status_code == 429:  # Too Many Requests
@@ -74,8 +85,8 @@ class FourChanScraper:
 
 **Limits:**
 - **Global:** 1 request/second to 4chan API
-- **Thread Fetching:** Use CDN URLs (`https://a.4cdn.org/`)
-- **Media Downloads:** Use media CDN (`https://i.4cdn.org/`)
+- **Thread Fetching:** Use CDN URLs (`<https://a.4cdn.org/>`)
+- **Media Downloads:** Use media CDN (`<https://i.4cdn.org/>`)
 
 ### 3. Download Queue Architecture (BaseWorker Required)
 
@@ -89,37 +100,37 @@ class DownloadWorker(BaseWorker):
     This ensures thread safety and proper GUI responsiveness.
     """
     # BaseWorker provides: progress, finished, error signals
-    
+
     def __init__(self, thread_url: str, output_dir: str):
         super().__init__()
         self.thread_url = thread_url
         self.output_dir = output_dir
-    
+
     def run(self):
         """Main download logic runs in separate thread."""
         try:
             # Emit progress updates for GUI
             self.progress.emit(0, "Fetching thread metadata...")
-            
+
             # Fetch thread JSON
             thread_data = self.scraper.fetch_thread(board, thread_id)
-            
+
             # Download media files
             total_files = len(thread_data['posts'])
             for i, post in enumerate(thread_data['posts']):
                 if self.is_canceled():  # Check for user cancellation
                     return
-                
+
                 # Download file with sanitized name
                 self._download_file(post)
-                
+
                 # Update progress
                 progress_pct = int((i + 1) / total_files * 100)
                 self.progress.emit(progress_pct, f"Downloaded {i+1}/{total_files}")
-            
+
             # Signal completion
             self.finished.emit()
-            
+
         except Exception as e:
             # Report errors to GUI
             self.error.emit(f"Download failed: {str(e)}")
@@ -133,26 +144,26 @@ import sqlite3
 
 class DuplicateChecker:
     """Prevents re-downloading the same media files."""
-    
+
     def __init__(self, db_path: str = "~/.4charm/hashes.db"):
         self.db_path = Path(db_path).expanduser()
         self._init_database()
-    
+
     def is_duplicate(self, file_path: Path) -> bool:
         """Check if file hash already exists in database."""
         file_hash = compute_file_hash(file_path)
-        
+
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.execute(
                 "SELECT COUNT(*) FROM files WHERE hash = ?",
                 (file_hash,)
             )
             return cursor.fetchone()[0] > 0
-    
+
     def mark_downloaded(self, file_path: Path):
         """Store file hash to prevent future duplicates."""
         file_hash = compute_file_hash(file_path)
-        
+
         with sqlite3.connect(self.db_path) as conn:
             conn.execute(
                 "INSERT OR IGNORE INTO files (hash, path) VALUES (?, ?)",
@@ -164,7 +175,7 @@ class DuplicateChecker:
 
 ## 🏗️ 4Charm Project Structure
 
-```
+```text
 4Charm/
 ├── src/four_charm/
 │   ├── __init__.py              # Contains __version__
@@ -215,8 +226,9 @@ razorcheck
 
 ### ❌ Error: "OSError: Invalid argument" when saving files
 
-**Cause:** Using raw 4chan thread titles as filenames (contain `/`, `:`)  
+**Cause:** Using raw 4chan thread titles as filenames (contain `/`, `:`)
 **Fix:**
+
 ```python
 from razorcore.filesystem import sanitize_filename
 safe_name = sanitize_filename(thread_title)  # ALWAYS use this
@@ -224,13 +236,14 @@ safe_name = sanitize_filename(thread_title)  # ALWAYS use this
 
 ### ❌ Error: "HTTPError 429: Too Many Requests"
 
-**Cause:** Not implementing rate limiting for 4chan API  
+**Cause:** Not implementing rate limiting for 4chan API
 **Fix:** Add `time.sleep(1)` between ALL requests to 4chan
 
 ### ❌ Error: "ModuleNotFoundError: No module named 'razorcore'"
 
-**Cause:** Shared library not installed in editable mode  
+**Cause:** Shared library not installed in editable mode
 **Fix:**
+
 ```bash
 cd /Users/home/Workspace/Apps
 pip install -e .razorcore/
@@ -238,13 +251,14 @@ pip install -e .razorcore/
 
 ### ❌ Downloads Complete but App Freezes
 
-**Cause:** Running downloads in main thread instead of QThread  
+**Cause:** Running downloads in main thread instead of QThread
 **Fix:** Ensure all `DownloadWorker` classes inherit from `BaseWorker`
 
 ### ❌ Build Succeeds but .app Crashes on Launch
 
-**Cause:** Missing `hiddenimports` in `4Charm.spec`  
+**Cause:** Missing `hiddenimports` in `4Charm.spec`
 **Fix:** Add to spec file:
+
 ```python
 hiddenimports=[
     'razorcore.styling',
@@ -286,7 +300,7 @@ pytest tests/test_scraper.py::test_rate_limiting -v
 ## 🎯 When to Use What
 
 | Scenario | Command/Pattern |
-|----------|----------------|
+| --- | --- |
 | Testing new download feature | `python src/four_charm/main.py` |
 | Quick .app build for testing | `4charmtest` |
 | Release to production | `4charmbuild` |

@@ -35,7 +35,9 @@ branch.
 4. **Merge & Delete Feature Branch**
    - Once the PR is approved and merged, **delete the feature branch** (e.g.,
 
-     `fix-ci-build`).
+```text
+`fix-ci-build`).
+```
 
    - **Do NOT delete `main`**.
 

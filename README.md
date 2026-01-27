@@ -13,8 +13,13 @@ Silicon](https://img.shields.io/badge/Apple%20Silicon-Native-brightgreen.svg)](h
 ██║  ██║██╔════╝██║  ██║██╔══██╗██╔══██╗████╗ ████║
 ███████║██║     ███████║███████║██████╔╝██╔████╔██║
 ╚════██║██║     ██╔══██║██╔══██║██╔══██╗██║╚██╔╝██║
-     ██║╚██████╗██║  ██║██║  ██║██║  ██║██║ ╚═╝ ██║
-     ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝
+
+```
+██║╚██████╗██║  ██║██║  ██║██║  ██║██║ ╚═╝ ██║
+╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝
+
+```text
+
 ```
 
 > **High-performance native macOS 4chan media downloader**
@@ -72,7 +77,7 @@ This project uses `.razorcore` for build tooling.
 ### Setup
 
 ```bash
-git clone https://github.com/RazorBackRoar/4Charm.git
+git clone <https://github.com/RazorBackRoar/4Charm.git>
 cd 4Charm
 pip install -r requirements.txt
 pip install -e ../.razorcore  # Install build tools
@@ -94,4 +99,3 @@ razorcore save 4Charm
 
 MIT License - see [LICENSE](LICENSE) for details.
 Copyright © 2026 RazorBackRoar
-

@@ -216,7 +216,12 @@ from setuptools import setup
 
 APP = ['main.py']
 DATA_FILES = [
-    ('resources', ['resources/4Charm.icns']),
+
+```
+('resources', ['resources/4Charm.icns']),
+
+```text
+
 ]
 
 OPTIONS = {
