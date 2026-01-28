@@ -257,11 +257,16 @@ OPTIONS = {
 }
 
 setup(
-    app=APP,
-    name='4Charm',
-    data_files=DATA_FILES,
-    options={'py2app': OPTIONS},
-    setup_requires=['py2app'],
+
+```
+app=APP,
+name='4Charm',
+data_files=DATA_FILES,
+options={'py2app': OPTIONS},
+setup_requires=['py2app'],
+
+```text
+
 )
 ```
 
