@@ -309,3 +309,5 @@ pytest tests/test_scraper.py::test_rate_limiting -v
 | Process thread titles | **ALWAYS** use `sanitize_filename()` |
 | Long-running operation | Inherit from `BaseWorker` |
 | Check for duplicates | Use SHA-256 hash lookup before download |
+
+<!-- verification check Tue Jan 27 23:52:04 MST 2026 -->
