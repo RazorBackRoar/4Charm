@@ -5,4 +5,4 @@ from importlib.metadata import version, PackageNotFoundError
 try:
     __version__ = version("4Charm")
 except PackageNotFoundError:
-    __version__ = "6.8.0"  # Fallback for bundled apps
+    __version__ = "6.9.0"  # Fallback for bundled apps
