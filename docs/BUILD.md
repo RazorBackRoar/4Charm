@@ -485,8 +485,12 @@ name: Build and Release DMG
 
 on:
   push:
-    tags:
-      - 'v*'
+
+```
+tags:
+- 'v*'
+
+```text
 
 jobs:
   build:
