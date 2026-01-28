@@ -225,30 +225,35 @@ DATA_FILES = [
 ]
 
 OPTIONS = {
-    'argv_emulation': False,
-    'iconfile': 'resources/4Charm.icns',
-    'packages': ['PySide6', 'requests', 'urllib3', 'certifi'],
-    'includes': [
-        'PySide6.QtCore',
-        'PySide6.QtWidgets',
-        'PySide6.QtGui',
-    ],
-    'excludes': [
-        'PyQt6',
-        'PyQt5',
-        'tkinter',
-        'test',
-        'unittest',
-    ],
-    'plist': {
-        'CFBundleName': '4Charm',
-        'CFBundleDisplayName': '4Charm',
-        'CFBundleVersion': '1.0.0',
-        'CFBundleShortVersionString': '1.0.0',
-        'CFBundleIdentifier': 'com.RazorBackRoar.4Charm',
-        'NSHighResolutionCapable': True,
-        'NSRequiresAquaSystemAppearance': False,
-    }
+
+```
+'argv_emulation': False,
+'iconfile': 'resources/4Charm.icns',
+'packages': ['PySide6', 'requests', 'urllib3', 'certifi'],
+'includes': [
+'PySide6.QtCore',
+'PySide6.QtWidgets',
+'PySide6.QtGui',
+],
+'excludes': [
+'PyQt6',
+'PyQt5',
+'tkinter',
+'test',
+'unittest',
+],
+'plist': {
+'CFBundleName': '4Charm',
+'CFBundleDisplayName': '4Charm',
+'CFBundleVersion': '1.0.0',
+'CFBundleShortVersionString': '1.0.0',
+'CFBundleIdentifier': 'com.RazorBackRoar.4Charm',
+'NSHighResolutionCapable': True,
+'NSRequiresAquaSystemAppearance': False,
+}
+
+```text
+
 }
 
 setup(
