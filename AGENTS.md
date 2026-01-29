@@ -71,7 +71,7 @@ RATE_LIMIT_DELAY = 1.0  # Minimum 1 second between requests
 def fetch_thread(self, board: str, thread_id: int):
 try:
 response = requests.get(
-f"<<<<https://a.4cdn.org/{board}/thread/{thread_id}.json",>>>>
+f"<<<<<https://a.4cdn.org/{board}/thread/{thread_id}.json",>>>>>
 timeout=10
 )
 response.raise_for_status()
@@ -84,18 +84,22 @@ time.sleep(self.RATE_LIMIT_DELAY)
 
 ```text
 
-            return response.json()
-        except HTTPError as e:
-            if e.response.status_code == 429:  # Too Many Requests
-                # Exponential backoff: 2, 4, 8, 16 seconds
-                wait_time = 2 ** self._retry_count
-                time.sleep(wait_time)
+```
+return response.json()
+except HTTPError as e:
+if e.response.status_code == 429:  # Too Many Requests
+# Exponential backoff: 2, 4, 8, 16 seconds
+wait_time = 2 ** self._retry_count
+time.sleep(wait_time)
+
+```text
+
 ```
 
 **Limits:**
 - **Global:** 1 request/second to 4chan API
-- **Thread Fetching:** Use CDN URLs (`<<<<https://a.4cdn.org/>>>>`)
-- **Media Downloads:** Use media CDN (`<<<<https://i.4cdn.org/>>>>`)
+- **Thread Fetching:** Use CDN URLs (`<<<<<https://a.4cdn.org/>>>>>`)
+- **Media Downloads:** Use media CDN (`<<<<<https://i.4cdn.org/>>>>>`)
 
 ### 3. Download Queue Architecture (BaseWorker Required)
 

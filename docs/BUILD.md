@@ -494,7 +494,11 @@ tags:
 
 jobs:
   build:
-    runs-on: macos-latest
+
+```
+runs-on: macos-latest
+
+```text
 
     steps:
       - name: Checkout code
