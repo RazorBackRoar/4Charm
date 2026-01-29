@@ -13,7 +13,7 @@
 
 [project]
 name = "four_charm"
-version = "6.4.20"
+version = "6.5.0"
 description = "4Charm - macOS application"
 requires-python = ">=3.13,<3.14"
 # WHY: Python 3.13.x is locked per IDE_CONTEXT.md requirements
