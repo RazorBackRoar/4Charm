@@ -22,24 +22,24 @@ branch.
 `chore/task-name`.
 ```
 
-   - Example: `fix-ci-build`.
+- Example: `fix-ci-build`.
 
-2. **Make Changes**
+1. **Make Changes**
    - Commit your changes to your feature branch.
 
-3. **Open a Pull Request**
+2. **Open a Pull Request**
    - Open a PR targeting `main`.
    - Ensure all checks pass (CI, Pylint).
    - Request review if required.
 
-4. **Merge & Delete Feature Branch**
+3. **Merge & Delete Feature Branch**
    - Once the PR is approved and merged, **delete the feature branch** (e.g.,
 
 ```text
 `fix-ci-build`).
 ```
 
-   - **Do NOT delete `main`**.
+- **Do NOT delete `main`**.
 
 ## Branch Protection
 

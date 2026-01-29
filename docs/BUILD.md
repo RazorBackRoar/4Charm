@@ -500,9 +500,12 @@ runs-on: macos-latest
 
 ```text
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+```
+steps:
+- name: Checkout code
+uses: actions/checkout@v3
+
+```text
 
       - name: Setup Python
         uses: actions/setup-python@v4
