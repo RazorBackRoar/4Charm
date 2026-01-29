@@ -507,10 +507,13 @@ uses: actions/checkout@v3
 
 ```text
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
+```
+- name: Setup Python
+uses: actions/setup-python@v4
+with:
+python-version: '3.10'
+
+```text
 
       - name: Install Python dependencies
         run: |
