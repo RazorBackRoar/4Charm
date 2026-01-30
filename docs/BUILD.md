@@ -522,9 +522,12 @@ pip install py2app PySide6 requests urllib3 certifi
 
 ```text
 
-      - name: Install create-dmg
-        run: |
-          brew install create-dmg
+```
+- name: Install create-dmg
+run: |
+brew install create-dmg
+
+```text
 
       - name: Build app bundle
         run: |

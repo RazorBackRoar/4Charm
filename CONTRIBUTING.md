@@ -29,7 +29,7 @@ branch.
 
 2. **Open a Pull Request**
    - Open a PR targeting `main`.
-   - Ensure all checks pass (CI, Pylint).
+   - Ensure all checks pass (CI, Ruff).
    - Request review if required.
 
 3. **Merge & Delete Feature Branch**
@@ -52,5 +52,5 @@ This repository uses branch protection rules for `main`.
 
 ## Code Style
 
-- We use `pylint` for linting.
+- We use `ruff` for linting and formatting.
 - Follow PEP 8 guidelines.
