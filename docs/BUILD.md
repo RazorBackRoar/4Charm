@@ -536,9 +536,12 @@ python3 setup.py py2app
 
 ```text
 
-      - name: Sign application
-        run: |
-          codesign --force --deep --sign - dist/4Charm.app
+```
+- name: Sign application
+run: |
+codesign --force --deep --sign - dist/4Charm.app
+
+```text
 
       - name: Extract version from tag
         id: get_version
