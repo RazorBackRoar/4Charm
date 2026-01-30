@@ -515,9 +515,12 @@ python-version: '3.10'
 
 ```text
 
-      - name: Install Python dependencies
-        run: |
-          pip install py2app PySide6 requests urllib3 certifi
+```
+- name: Install Python dependencies
+run: |
+pip install py2app PySide6 requests urllib3 certifi
+
+```text
 
       - name: Install create-dmg
         run: |
