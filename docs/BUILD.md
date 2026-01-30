@@ -529,9 +529,12 @@ brew install create-dmg
 
 ```text
 
-      - name: Build app bundle
-        run: |
-          python3 setup.py py2app
+```
+- name: Build app bundle
+run: |
+python3 setup.py py2app
+
+```text
 
       - name: Sign application
         run: |
