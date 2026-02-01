@@ -1,7 +1,7 @@
 # 🍀 4Charm - 4chan Media Downloader Agent
 
 **Package:** `four_charm`
-**Version:** 6.4.20
+**Version:** 1.26.1
 **Context Level:** LEVEL 3 (Application-Specific)
 
 ---
@@ -71,7 +71,7 @@ RATE_LIMIT_DELAY = 1.0  # Minimum 1 second between requests
 def fetch_thread(self, board: str, thread_id: int):
 try:
 response = requests.get(
-f"<<<<<<<<<<<https://a.4cdn.org/{board}/thread/{thread_id}.json",>>>>>>>>>>>
+f"<<<<<<<<<<<<https://a.4cdn.org/{board}/thread/{thread_id}.json",>>>>>>>>>>>>
 timeout=10
 )
 response.raise_for_status()
@@ -98,8 +98,8 @@ time.sleep(wait_time)
 
 **Limits:**
 - **Global:** 1 request/second to 4chan API
-- **Thread Fetching:** Use CDN URLs (`<<<<<<<<<<<https://a.4cdn.org/>>>>>>>>>>>`)
-- **Media Downloads:** Use media CDN (`<<<<<<<<<<<https://i.4cdn.org/>>>>>>>>>>>`)
+- **Thread Fetching:** Use CDN URLs (`<<<<<<<<<<<<https://a.4cdn.org/>>>>>>>>>>>>`)
+- **Media Downloads:** Use media CDN (`<<<<<<<<<<<<https://i.4cdn.org/>>>>>>>>>>>>`)
 
 ### 3. Download Queue Architecture (BaseWorker Required)
 
@@ -156,9 +156,12 @@ self._download_file(post)
 
 ```text
 
-                # Update progress
-                progress_pct = int((i + 1) / total_files * 100)
-                self.progress.emit(progress_pct, f"Downloaded {i+1}/{total_files}")
+```
+# Update progress
+progress_pct = int((i + 1) / total_files * 100)
+self.progress.emit(progress_pct, f"Downloaded {i+1}/{total_files}")
+
+```text
 
             # Signal completion
             self.finished.emit()

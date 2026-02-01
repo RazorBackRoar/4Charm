@@ -543,9 +543,12 @@ codesign --force --deep --sign - dist/4Charm.app
 
 ```text
 
-      - name: Extract version from tag
-        id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+```
+- name: Extract version from tag
+id: get_version
+run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+```text
 
       - name: Create DMG
         run: |
