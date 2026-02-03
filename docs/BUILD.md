@@ -951,9 +951,14 @@ App bundle is over 300 MB
 
 ```python
    'excludes': [
-       'PyQt6', 'PyQt5', 'tkinter',
-       'test', 'unittest', 'email',
-       'xml', 'pydoc', 'doctest',
+
+```
+'PyQt6', 'PyQt5', 'tkinter',
+'test', 'unittest', 'email',
+'xml', 'pydoc', 'doctest',
+
+```text
+
    ]
 ```
 
