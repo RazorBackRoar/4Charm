@@ -966,9 +966,14 @@ App bundle is over 300 MB
 
 ```python
    OPTIONS = {
-       'optimize': 2,
-       'compressed': True,
-       # ... other options
+
+```
+'optimize': 2,
+'compressed': True,
+# ... other options
+
+```text
+
    }
 ```
 
