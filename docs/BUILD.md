@@ -550,19 +550,22 @@ run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
 ```text
 
-      - name: Create DMG
-        run: |
-          create-dmg \
-            --volname "4Charm ${{ steps.get_version.outputs.VERSION }}" \
-            --volicon "resources/4Charm.icns" \
-            --window-size 600 400 \
-            --icon-size 100 \
-            --icon "4Charm.app" 175 120 \
-            --app-drop-link 425 120 \
-            --eula LICENSE.rtf \
-            --codesign "-" \
-            "4Charm_${{ steps.get_version.outputs.VERSION }}.dmg" \
-            "dist/4Charm.app"
+```
+- name: Create DMG
+run: |
+create-dmg \
+--volname "4Charm ${{ steps.get_version.outputs.VERSION }}" \
+--volicon "resources/4Charm.icns" \
+--window-size 600 400 \
+--icon-size 100 \
+--icon "4Charm.app" 175 120 \
+--app-drop-link 425 120 \
+--eula LICENSE.rtf \
+--codesign "-" \
+"4Charm_${{ steps.get_version.outputs.VERSION }}.dmg" \
+"dist/4Charm.app"
+
+```text
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
