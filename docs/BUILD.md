@@ -567,14 +567,18 @@ create-dmg \
 
 ```text
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: 4Charm_*.dmg
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+- name: Create GitHub Release
+uses: softprops/action-gh-release@v1
+with:
+files: 4Charm_*.dmg
+draft: false
+prerelease: false
+env:
+GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+```text
+
 ```
 
 ### Triggering a Release
