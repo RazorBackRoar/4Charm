@@ -1,12 +1,13 @@
-import time
 import logging
+import time
 import traceback
-from typing import Dict, List
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
 from PySide6.QtCore import QObject, Signal
 
 from four_charm.config import Config
 from four_charm.core.scraper import FourChanScraper
+
 
 logger = logging.getLogger("4Charm")
 
@@ -19,7 +20,7 @@ class DownloadWorker(QObject):
     finished = Signal(dict)
     speed_update = Signal(float)
 
-    def __init__(self, scraper: FourChanScraper, parsed_url: Dict):
+    def __init__(self, scraper: FourChanScraper, parsed_url: dict):
         super().__init__()
         self.scraper = scraper
         self.parsed_url = parsed_url
@@ -150,7 +151,7 @@ class MultiUrlDownloadWorker(QObject):
     finished = Signal(dict)
     speed_update = Signal(float)
 
-    def __init__(self, scraper: FourChanScraper, parsed_urls: List[Dict]):
+    def __init__(self, scraper: FourChanScraper, parsed_urls: list[dict]):
         super().__init__()
         self.scraper = scraper
         self.parsed_urls = parsed_urls

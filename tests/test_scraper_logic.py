@@ -1,7 +1,8 @@
 
-import pytest
 from unittest.mock import Mock, patch
+
 from four_charm.core.scraper import FourChanScraper
+
 
 def test_scraper_initialization():
     scraper = FourChanScraper()

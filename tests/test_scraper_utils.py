@@ -1,7 +1,7 @@
 """Logic tests for FourChanScraper utilities."""
 
-from four_charm.core.scraper import FourChanScraper
 from four_charm.config import Config
+from four_charm.core.scraper import FourChanScraper
 
 
 def test_parse_url_thread_and_catalog():

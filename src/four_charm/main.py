@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
-"""
-4Charm - Advanced 4chan Media Downloader
+"""4Charm - Advanced 4chan Media Downloader
 A high-performance GUI application for bulk downloading media from 4chan threads and boards.
 """
 
 import sys
 from pathlib import Path
-from PySide6.QtWidgets import QApplication
-from PySide6.QtGui import QIcon
 
-from four_charm.utils.logging_setup import setup_logging
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QApplication
+
 from four_charm.gui.main_window import MainWindow
+from four_charm.utils.logging_setup import setup_logging
+
 
 # Setup logging
 logger = setup_logging()

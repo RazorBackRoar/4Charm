@@ -48,14 +48,13 @@
 #
 # ---
 
+import logging
 import re
 import subprocess
-import logging
-from pathlib import Path
-from datetime import datetime
-from typing import Dict, Optional
 import sys
-import os
+from datetime import datetime
+from pathlib import Path
+
 
 # Add src to path to allow direct execution
 current_file = Path(__file__).resolve()
@@ -63,37 +62,36 @@ src_path = current_file.parents[2] # gui -> four_charm -> src
 if str(src_path) not in sys.path:
     sys.path.insert(0, str(src_path))
 
-from PySide6.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QWidget,
-    QVBoxLayout,
-    QSizePolicy,
-    QHBoxLayout,
-    QLabel,
-    QPlainTextEdit,
-    QTextEdit,
-    QPushButton,
-    QGroupBox,
-    QFrame,
-    QProgressBar,
-    QMessageBox,
-    QStatusBar,
-    QSizePolicy,
-    QFileDialog,
-)
 from PySide6.QtCore import Qt, QThread, QTimer
 from PySide6.QtGui import (
     QDragEnterEvent,
     QDropEvent,
-    QTextCursor,
-    QTextBlockFormat,
     QKeySequence,
     QShortcut,
+    QTextBlockFormat,
+    QTextCursor,
+)
+from PySide6.QtWidgets import (
+    QApplication,
+    QFileDialog,
+    QFrame,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QMainWindow,
+    QMessageBox,
+    QPlainTextEdit,
+    QProgressBar,
+    QPushButton,
+    QStatusBar,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
 )
 
 from four_charm.core.scraper import FourChanScraper
 from four_charm.gui.workers import MultiUrlDownloadWorker
+
 
 logger = logging.getLogger("4Charm")
 
@@ -226,8 +224,8 @@ class MainWindow(QMainWindow):
         default_dir.mkdir(parents=True, exist_ok=True)
         self.scraper.download_dir = default_dir
 
-        self.download_thread: Optional[QThread] = None
-        self.download_worker: Optional["MultiUrlDownloadWorker"] = None
+        self.download_thread: QThread | None = None
+        self.download_worker: MultiUrlDownloadWorker | None = None
         self.is_paused = False
 
         self.setup_ui()
@@ -463,7 +461,7 @@ class MainWindow(QMainWindow):
         self.line_numbers.verticalScrollBar().setValue(current_scroll)
 
     def validate_urls(self):
-        """Validate URLs in real-time and update line numbers"""
+        """Validate URLs in real-time and update line numbers."""
         if getattr(self, "_validating", False):
             return
 
@@ -619,7 +617,7 @@ class MainWindow(QMainWindow):
             self.add_log_message("🛑 Cancelling download...")
             self.start_cancel_btn.setEnabled(False)
 
-    def download_finished(self, stats: Dict):
+    def download_finished(self, stats: dict):
         """Handle download completion. This should ONLY update the UI."""
         self._update_ui_for_state("idle")
 
@@ -774,7 +772,7 @@ class MainWindow(QMainWindow):
             logger.warning(f"Could not update download stats: {e}")
 
     def paste_from_clipboard(self):
-        """Paste URLs from clipboard with auto-formatting"""
+        """Paste URLs from clipboard with auto-formatting."""
         clipboard = QApplication.clipboard()
         text = clipboard.text()
 

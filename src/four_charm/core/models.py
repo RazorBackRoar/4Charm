@@ -1,15 +1,16 @@
 import hashlib
+import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
-import logging
+
 from four_charm.config import Config
+
 
 logger = logging.getLogger("4Charm")
 
 
 class DownloadQueue:
-    """Manage download queue without UI changes"""
+    """Manage download queue without UI changes."""
 
     def __init__(self):
         self.queue = []
@@ -19,26 +20,26 @@ class DownloadQueue:
         self.failed = []
 
     def add_url(self, url: str) -> None:
-        """Add URL to download queue"""
+        """Add URL to download queue."""
         if url not in self.queue and url not in self.active_downloads:
             self.queue.append(url)
             logger.info(f"Added URL to queue: {url}")
 
     def remove_url(self, index: int) -> None:
-        """Remove URL from queue by index"""
+        """Remove URL from queue by index."""
         if 0 <= index < len(self.queue):
             removed_url = self.queue.pop(index)
             logger.info(f"Removed URL from queue: {removed_url}")
 
     def start_download(self, url: str) -> None:
-        """Move URL from queue to active downloads"""
+        """Move URL from queue to active downloads."""
         if url in self.queue:
             self.queue.remove(url)
         if url not in self.active_downloads:
             self.active_downloads.append(url)
 
     def complete_download(self, url: str) -> None:
-        """Mark URL as completed"""
+        """Mark URL as completed."""
         if url in self.active_downloads:
             self.active_downloads.remove(url)
         if url not in self.completed:
@@ -47,8 +48,8 @@ class DownloadQueue:
                 {"url": url, "completed_at": datetime.now(), "status": "completed"}
             )
 
-    def fail_download(self, url: str, error: Optional[Exception] = None) -> None:
-        """Mark URL as failed"""
+    def fail_download(self, url: str, error: Exception | None = None) -> None:
+        """Mark URL as failed."""
         if url in self.active_downloads:
             self.active_downloads.remove(url)
         if url not in self.failed:
@@ -63,7 +64,7 @@ class DownloadQueue:
             )
 
     def get_stats(self) -> dict[str, int]:
-        """Get queue statistics"""
+        """Get queue statistics."""
         return {
             "queued": len(self.queue),
             "active": len(self.active_downloads),
@@ -76,12 +77,12 @@ class DownloadQueue:
         }
 
     def clear_completed(self) -> None:
-        """Clear completed and failed lists"""
+        """Clear completed and failed lists."""
         self.completed.clear()
         self.failed.clear()
 
     def clear_all(self) -> None:
-        """Clear all queues"""
+        """Clear all queues."""
         self.queue.clear()
         self.active_downloads.clear()
         self.completed.clear()
@@ -100,8 +101,8 @@ class MediaFile:
         self.size = 0
         self.downloaded = False
         self.download_speed = 0.0
-        self.start_time: Optional[float] = None
-        self.hash: Optional[str] = None
+        self.start_time: float | None = None
+        self.hash: str | None = None
 
     def calculate_hash(self, file_path: Path) -> str:
         """Calculate SHA256 hash of file for duplicate detection."""

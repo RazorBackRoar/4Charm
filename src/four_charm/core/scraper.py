@@ -1,17 +1,18 @@
+import logging
 import os
 import re
-import time
 import shutil
-import logging
-import requests
+import time
 from pathlib import Path
-from typing import List, Dict, Optional, Tuple
 from urllib.parse import urlparse
-from requests.adapters import HTTPAdapter
+
+import requests
 from PySide6.QtCore import QMutex
+from requests.adapters import HTTPAdapter
 
 from four_charm.config import Config
 from four_charm.core.models import DownloadQueue, MediaFile
+
 
 logger = logging.getLogger("4Charm")
 
@@ -21,7 +22,7 @@ class FourChanScraper:
 
     def __init__(self):
         # Don't set a default folder - let user choose on first download
-        self.download_dir: Optional[Path] = None
+        self.download_dir: Path | None = None
         self.session = requests.Session()
         adapter = HTTPAdapter(
             pool_connections=Config.MAX_WORKERS * 2,
@@ -63,7 +64,7 @@ class FourChanScraper:
         self.download_queue = DownloadQueue()
 
     def adaptive_delay(self, success=True):
-        """Adaptive rate limiting based on success/failure"""
+        """Adaptive rate limiting based on success/failure."""
         if success:
             self.current_delay = max(Config.BASE_DELAY, self.current_delay / 1.1)
         else:
@@ -73,7 +74,7 @@ class FourChanScraper:
         time.sleep(self.current_delay)
 
     def handle_network_error(self, error, url, context=""):
-        """Handle different types of network errors with appropriate responses"""
+        """Handle different types of network errors with appropriate responses."""
         error_info = {
             "type": type(error).__name__,
             "message": str(error),
@@ -175,7 +176,7 @@ class FourChanScraper:
         sanitized = re.sub(r"\s+", " ", sanitized).strip()
         return sanitized
 
-    def build_session_base_name(self, parsed_url: Dict) -> str:
+    def build_session_base_name(self, parsed_url: dict) -> str:
         board = parsed_url.get("board", "").strip()
         url_type = parsed_url.get("type")
         thread_id = parsed_url.get("thread_id")
@@ -192,20 +193,20 @@ class FourChanScraper:
         return base_name or "session"
 
     def build_thread_folder_name(
-        self, thread_title: Optional[str], thread_id: str, board: str
+        self, thread_title: str | None, thread_id: str, board: str
     ) -> str:
         """Build folder name for thread using title. Falls back to board-thread_id if no title."""
         if thread_title and thread_title.strip():
             # Sanitize the thread title for folder name
             folder_name = self._sanitize_folder_component(thread_title)
-            
+
             # Truncate if too long (keep all words, just shorten if needed)
             if len(folder_name) > Config.MAX_FOLDER_NAME_LENGTH:
                 folder_name = folder_name[: Config.MAX_FOLDER_NAME_LENGTH].rstrip("-_ ")
             # Only return if we have a valid title
             if folder_name:
                 return folder_name
-        
+
         # Fallback: use board-thread_id format if no title available
         return f"{board}-{thread_id}"
 
@@ -221,7 +222,7 @@ class FourChanScraper:
             logger.warning(f"Could not check disk space: {e}")
             return True
 
-    def parse_url(self, url: str) -> Optional[Dict]:
+    def parse_url(self, url: str) -> dict | None:
         """Parse 4chan URL to extract board and thread info."""
         try:
             url = url.strip()
@@ -247,7 +248,7 @@ class FourChanScraper:
             logger.error(f"URL parsing error: {e}")
             return None
 
-    def get_thread_data(self, board: str, thread_id: str) -> Optional[Dict]:
+    def get_thread_data(self, board: str, thread_id: str) -> dict | None:
         """Fetch thread JSON data from 4chan API with adaptive rate limiting."""
         self.adaptive_delay()  # Adaptive rate limiting
         api_url = f"https://a.4cdn.org/{board}/thread/{thread_id}.json"
@@ -309,7 +310,7 @@ class FourChanScraper:
                     return None
             return None
 
-    def get_catalog_data(self, board: str) -> Optional[List]:
+    def get_catalog_data(self, board: str) -> list | None:
         """Fetch catalog data from 4chan API with adaptive rate limiting."""
         self.adaptive_delay()  # Adaptive rate limiting
         api_url = f"https://a.4cdn.org/{board}/catalog.json"
@@ -334,8 +335,8 @@ class FourChanScraper:
             return None
 
     def extract_media_from_posts(
-        self, posts: List[Dict], board: str, thread_id: str = ""
-    ) -> List[MediaFile]:
+        self, posts: list[dict], board: str, thread_id: str = ""
+    ) -> list[MediaFile]:
         """Extract media files from posts. Downloads original, full-quality files from i.4cdn.org."""
         media_files = []
         for post in posts:
@@ -361,7 +362,7 @@ class FourChanScraper:
 
     def scrape_thread(
         self, board: str, thread_id: str
-    ) -> Tuple[List[MediaFile], Optional[str]]:
+    ) -> tuple[list[MediaFile], str | None]:
         """Get all media files from a specific thread."""
         logger.info(f"Scraping thread /{board}/{thread_id}")
         thread_data = self.get_thread_data(board, thread_id)
@@ -372,7 +373,7 @@ class FourChanScraper:
         media_files = self.extract_media_from_posts(posts, board, thread_id)
         return media_files, thread_title
 
-    def scrape_catalog(self, board: str, max_threads: int = 10) -> List[MediaFile]:
+    def scrape_catalog(self, board: str, max_threads: int = 10) -> list[MediaFile]:
         """Get media files from recent threads in catalog."""
         logger.info(f"Scraping catalog /{board}/ (max {max_threads} threads)")
         catalog_data = self.get_catalog_data(board)
@@ -397,7 +398,7 @@ class FourChanScraper:
     def download_file(
         self,
         media_file: MediaFile,
-        url_folder_name: Optional[str] = None,
+        url_folder_name: str | None = None,
         progress_callback=None,
     ) -> bool:
         """Enhanced download with progress tracking, duplicate detection, and resume capability."""

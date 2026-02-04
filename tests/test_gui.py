@@ -1,5 +1,4 @@
-"""
-GUI tests placeholder - 4Charm MainWindow.
+"""GUI tests placeholder - 4Charm MainWindow.
 
 PyQt GUI tests require a display and are slow to run.
 Core application logic is tested in test_scraper_utils.py.
