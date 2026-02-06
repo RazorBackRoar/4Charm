@@ -73,7 +73,7 @@ RATE_LIMIT_DELAY = 1.0  # Minimum 1 second between requests
 def fetch_thread(self, board: str, thread_id: int):
 try:
 response = requests.get(
-f"<<<<<<<<<<<<<<<<<<<<https://a.4cdn.org/{board}/thread/{thread_id}.json",>>>>>>>>>>>>>>>>>>>>
+f"<<<<<<<<<<<<<<<<<<<<<https://a.4cdn.org/{board}/thread/{thread_id}.json",>>>>>>>>>>>>>>>>>>>>>
 timeout=10
 )
 response.raise_for_status()
@@ -100,8 +100,8 @@ time.sleep(wait_time)
 
 **Limits:**
 - **Global:** 1 request/second to 4chan API
-- **Thread Fetching:** Use CDN URLs (`<<<<<<<<<<<<<<<<<<<<https://a.4cdn.org/>>>>>>>>>>>>>>>>>>>>`)
-- **Media Downloads:** Use media CDN (`<<<<<<<<<<<<<<<<<<<<https://i.4cdn.org/>>>>>>>>>>>>>>>>>>>>`)
+- **Thread Fetching:** Use CDN URLs (`<<<<<<<<<<<<<<<<<<<<<https://a.4cdn.org/>>>>>>>>>>>>>>>>>>>>>`)
+- **Media Downloads:** Use media CDN (`<<<<<<<<<<<<<<<<<<<<<https://i.4cdn.org/>>>>>>>>>>>>>>>>>>>>>`)
 
 ### 3. Download Queue Architecture (BaseWorker Required)
 
@@ -293,6 +293,7 @@ razorcheck
 - Build via `4charmtest` / `4charmbuild` or `razorbuild 4Charm`. **Never** run `universal-build.sh` directly.
 - Use `razoragents` to sync `AGENTS.md` tables (usually run by `razorpush`).
 - If you change `.razorcore` CLI commands or `pyproject.toml`, run `pip install -e ../.razorcore/`.
+- **Always run the app after making changes** (`python -m four_charm.main`) to visually verify updates before considering any task complete. This is mandatory—do not skip this step.
 
 ---
 
@@ -335,10 +336,15 @@ pip install -e .razorcore/
 
 ```python
 hiddenimports=[
-    'razorcore.styling',
-    'razorcore.threading',
-    'razorcore.appinfo',
-    'razorcore.filesystem',
+
+```
+'razorcore.styling',
+'razorcore.threading',
+'razorcore.appinfo',
+'razorcore.filesystem',
+
+```text
+
 ]
 ```
 
