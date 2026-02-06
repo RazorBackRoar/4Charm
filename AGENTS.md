@@ -73,7 +73,7 @@ RATE_LIMIT_DELAY = 1.0  # Minimum 1 second between requests
 def fetch_thread(self, board: str, thread_id: int):
 try:
 response = requests.get(
-f"<<<<<<<<<<<<<<<<<<https://a.4cdn.org/{board}/thread/{thread_id}.json",>>>>>>>>>>>>>>>>>>
+f"<<<<<<<<<<<<<<<<<<<https://a.4cdn.org/{board}/thread/{thread_id}.json",>>>>>>>>>>>>>>>>>>>
 timeout=10
 )
 response.raise_for_status()
@@ -100,8 +100,8 @@ time.sleep(wait_time)
 
 **Limits:**
 - **Global:** 1 request/second to 4chan API
-- **Thread Fetching:** Use CDN URLs (`<<<<<<<<<<<<<<<<<<https://a.4cdn.org/>>>>>>>>>>>>>>>>>>`)
-- **Media Downloads:** Use media CDN (`<<<<<<<<<<<<<<<<<<https://i.4cdn.org/>>>>>>>>>>>>>>>>>>`)
+- **Thread Fetching:** Use CDN URLs (`<<<<<<<<<<<<<<<<<<<https://a.4cdn.org/>>>>>>>>>>>>>>>>>>>`)
+- **Media Downloads:** Use media CDN (`<<<<<<<<<<<<<<<<<<<https://i.4cdn.org/>>>>>>>>>>>>>>>>>>>`)
 
 ### 3. Download Queue Architecture (BaseWorker Required)
 
@@ -217,9 +217,12 @@ return cursor.fetchone()[0] > 0
 
 ```text
 
-    def mark_downloaded(self, file_path: Path):
-        """Store file hash to prevent future duplicates."""
-        file_hash = compute_file_hash(file_path)
+```
+def mark_downloaded(self, file_path: Path):
+"""Store file hash to prevent future duplicates."""
+file_hash = compute_file_hash(file_path)
+
+```text
 
         with sqlite3.connect(self.db_path) as conn:
             conn.execute(
