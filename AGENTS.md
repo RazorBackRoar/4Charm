@@ -3,7 +3,7 @@ Level 2 Document: Refer to /Users/home/Workspace/Apps/AGENTS.md (Level 1) for gl
 # 🍀 4Charm - 4chan Media Downloader Agent
 
 **Package:** `four_charm`
-**Version:** 1.26.1
+**Version:** 1.0.0
 **Context Level:** LEVEL 3 (Application-Specific)
 
 ---
@@ -73,7 +73,7 @@ RATE_LIMIT_DELAY = 1.0  # Minimum 1 second between requests
 def fetch_thread(self, board: str, thread_id: int):
 try:
 response = requests.get(
-f"<<<<<<<<<<<<<<<<<<<<<<https://a.4cdn.org/{board}/thread/{thread_id}.json",>>>>>>>>>>>>>>>>>>>>>>
+f"<<<<<<<<<<<<<<<<<<<<<<<https://a.4cdn.org/{board}/thread/{thread_id}.json",>>>>>>>>>>>>>>>>>>>>>>>
 timeout=10
 )
 response.raise_for_status()
@@ -100,8 +100,8 @@ time.sleep(wait_time)
 
 **Limits:**
 - **Global:** 1 request/second to 4chan API
-- **Thread Fetching:** Use CDN URLs (`<<<<<<<<<<<<<<<<<<<<<<https://a.4cdn.org/>>>>>>>>>>>>>>>>>>>>>>`)
-- **Media Downloads:** Use media CDN (`<<<<<<<<<<<<<<<<<<<<<<https://i.4cdn.org/>>>>>>>>>>>>>>>>>>>>>>`)
+- **Thread Fetching:** Use CDN URLs (`<<<<<<<<<<<<<<<<<<<<<<<https://a.4cdn.org/>>>>>>>>>>>>>>>>>>>>>>>`)
+- **Media Downloads:** Use media CDN (`<<<<<<<<<<<<<<<<<<<<<<<https://i.4cdn.org/>>>>>>>>>>>>>>>>>>>>>>>`)
 
 ### 3. Download Queue Architecture (BaseWorker Required)
 
@@ -389,5 +389,9 @@ pytest tests/test_scraper.py::test_rate_limiting -v
 | Process thread titles | **ALWAYS** use `sanitize_filename()` |
 | Long-running operation | Inherit from `BaseWorker` |
 | Check for duplicates | Use SHA-256 hash lookup before download |
+
+## RazorCore Usage
+
+See `/Users/home/Workspace/Apps/.razorcore/AGENTS.md` for the complete public API and safety rules.
 
 <!-- verification check Tue Jan 27 23:52:04 MST 2026 -->

@@ -37,7 +37,7 @@ def get_version() -> str:
         except Exception as e:
             logger.warning("Could not read version from Info.plist: %s", e)
         # Frozen apps should have version in plist; if not, return hardcoded
-        return "6.4.2"
+        return "1.0.0"
 
     # 2. Development: read from pyproject.toml
     try:
