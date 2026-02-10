@@ -220,8 +220,8 @@ class MainWindow(QMainWindow):
 
         self.scraper = FourChanScraper()
         # Set default download directory to ~/Downloads/4Charm
+        # NOTE: Do not create the folder until a download starts.
         default_dir = Path.home() / "Downloads" / "4Charm"
-        default_dir.mkdir(parents=True, exist_ok=True)
         self.scraper.download_dir = default_dir
 
         self.download_thread: QThread | None = None
