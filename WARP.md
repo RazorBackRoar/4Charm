@@ -1,6 +1,7 @@
 # WARP.md — 4Charm
 
-> **⭐ MASTER GUIDE (SSOT):** [/Users/home/Workspace/Apps/workspace_guide.md](file:///Users/home/Workspace/Apps/workspace_guide.md)
+> **⭐ CODEGRAPHCONTEXT:** [/Users/home/Workspace/Apps/.code-analysis/monorepo-analysis.md](file:///Users/home/Workspace/Apps/.code-analysis/monorepo-analysis.md)
+> **⭐ QUERIES:** [/Users/home/Workspace/Apps/.code-analysis/essential-queries.md](file:///Users/home/Workspace/Apps/.code-analysis/essential-queries.md)
 > **Agent Context:** [/Users/home/Workspace/Apps/4Charm/AGENTS.md](file:///Users/home/Workspace/Apps/4Charm/AGENTS.md)
 
 ## ⚡ Quick Commands

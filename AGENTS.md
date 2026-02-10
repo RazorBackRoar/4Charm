@@ -11,7 +11,8 @@ Level 2 Document: Refer to /Users/home/Workspace/Apps/AGENTS.md (Level 1) for gl
 ## 🏁 GLOBAL AUTHORITY
 
 All standard patterns must follow:
-👉 **`/Users/home/Workspace/Apps/workspace_guide.md`**
+👉 **`/Users/home/Workspace/Apps/.code-analysis/monorepo-analysis.md`**
+👉 **`/Users/home/Workspace/Apps/.code-analysis/essential-queries.md`**
 
 This file contains **4Charm-specific** overrides and critical implementation details.
 
@@ -73,7 +74,7 @@ RATE_LIMIT_DELAY = 1.0  # Minimum 1 second between requests
 def fetch_thread(self, board: str, thread_id: int):
 try:
 response = requests.get(
-f"<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://a.4cdn.org/{board}/thread/{thread_id}.json",>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+f"<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://a.4cdn.org/{board}/thread/{thread_id}.json",>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 timeout=10
 )
 response.raise_for_status()
@@ -100,8 +101,8 @@ time.sleep(wait_time)
 
 **Limits:**
 - **Global:** 1 request/second to 4chan API
-- **Thread Fetching:** Use CDN URLs (`<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://a.4cdn.org/>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>`)
-- **Media Downloads:** Use media CDN (`<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://i.4cdn.org/>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>`)
+- **Thread Fetching:** Use CDN URLs (`<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://a.4cdn.org/>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>`)
+- **Media Downloads:** Use media CDN (`<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://i.4cdn.org/>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>`)
 
 ### 3. Download Queue Architecture (BaseWorker Required)
 
@@ -370,7 +371,8 @@ pytest tests/test_scraper.py::test_rate_limiting -v
 
 ## 📚 Related Documentation
 
-- **Master Guide:** `/Users/home/Workspace/Apps/workspace_guide.md`
+- **CodeGraphContext Docs:** `/Users/home/Workspace/Apps/.code-analysis/monorepo-analysis.md`
+- **CodeGraphContext Queries:** `/Users/home/Workspace/Apps/.code-analysis/essential-queries.md`
 - **CLI Commands:** `/Users/home/Workspace/Apps/Guides/cli_commands.md`
 - **4Charm Manual:** `/Users/home/Workspace/Apps/Guides/4charm_manual.md`
 - **Engineering Hub:** `/Users/home/Workspace/Apps/AGENTS.md` (LEVEL 2)
