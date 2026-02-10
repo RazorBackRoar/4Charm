@@ -444,7 +444,15 @@ class MainWindow(QMainWindow):
 
     def choose_download_folder(self):
         """Open folder chooser dialog to select download location."""
-        current_dir = str(self.scraper.download_dir)
+        download_dir = self.scraper.download_dir
+        if download_dir is None:
+            fallback_dir = Path.home() / "Downloads"
+            current_dir = str(fallback_dir if fallback_dir.exists() else Path.home())
+        elif download_dir.exists():
+            current_dir = str(download_dir)
+        else:
+            parent_dir = download_dir.parent
+            current_dir = str(parent_dir if parent_dir.exists() else Path.home())
         folder = QFileDialog.getExistingDirectory(
             self, "Choose Download Folder", current_dir, QFileDialog.Option.ShowDirsOnly
         )
