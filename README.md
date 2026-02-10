@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/RazorBackRoar/4Charm/actions/workflows/ci.yml/badge.svg)](https://github.com/RazorBackRoar/4Charm/actions/workflows/ci.yml)
 [![Ruff](https://github.com/RazorBackRoar/4Charm/actions/workflows/ruff.yml/badge.svg)](https://github.com/RazorBackRoar/4Charm/actions/workflows/ruff.yml)
-[![Version](https://img.shields.io/badge/version-6.4.1-blue.svg)](pyproject.toml)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Apple
 Silicon](https://img.shields.io/badge/Apple%20Silicon-Native-brightgreen.svg)](https://support.apple.com/en-us/HT211814)
@@ -77,7 +77,7 @@ This project uses `.razorcore` for build tooling.
 ### Setup
 
 ```bash
-git clone <<<<<<<<<<<<<<<<<<<<<<<https://github.com/RazorBackRoar/4Charm.git>>>>>>>>>>>>>>>>>>>>>>>
+git clone <<<<<<<<<<<<<<<<<<<<<<<<https://github.com/RazorBackRoar/4Charm.git>>>>>>>>>>>>>>>>>>>>>>>>
 cd 4Charm
 pip install -r requirements.txt
 pip install -e ../.razorcore  # Install build tools
