@@ -12,6 +12,7 @@ def test_parse_thread_url_valid():
     url = "https://boards.4chan.org/g/thread/12345678"
     scraper = FourChanScraper()
     result = scraper.parse_url(url)
+    assert result is not None
     assert result["board"] == "g"
     assert result["thread_id"] == "12345678"
     assert result["type"] == "thread"
@@ -30,4 +31,5 @@ def test_fetch_thread_data_success(mock_get):
 
     scraper = FourChanScraper()
     data = scraper.get_thread_data("g", "123")
+    assert data is not None
     assert data["posts"][0]["no"] == 123

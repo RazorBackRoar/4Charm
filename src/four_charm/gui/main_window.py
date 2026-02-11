@@ -54,13 +54,7 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
-
-
-# Add src to path to allow direct execution
-current_file = Path(__file__).resolve()
-src_path = current_file.parents[2] # gui -> four_charm -> src
-if str(src_path) not in sys.path:
-    sys.path.insert(0, str(src_path))
+from typing import override
 
 from PySide6.QtCore import Qt, QThread, QTimer
 from PySide6.QtGui import (
@@ -396,7 +390,8 @@ class MainWindow(QMainWindow):
         for lbl in [self.folders_label, self.files_label, self.size_label]:
             lbl.setStyleSheet("font-size: 10px; font-weight: 800; color: #555555;")
             stats_layout.addWidget(lbl)
-            if lbl != self.size_label: stats_layout.addSpacing(15)
+            if lbl != self.size_label:
+                stats_layout.addSpacing(15)
         stats_layout.addStretch()
         log_layout.addLayout(stats_layout)
         main_layout.addWidget(log_group)
@@ -458,8 +453,9 @@ class MainWindow(QMainWindow):
         )
 
         if folder:
-            self.scraper.download_dir = Path(folder)
-            self.scraper.download_dir.mkdir(parents=True, exist_ok=True)
+            selected_dir = Path(folder)
+            selected_dir.mkdir(parents=True, exist_ok=True)
+            self.scraper.download_dir = selected_dir
             self.add_log_message(f"📁 Download folder changed to: {folder}")
             self.status_bar.showMessage(f"Download folder: {folder}")
 
@@ -576,8 +572,9 @@ class MainWindow(QMainWindow):
                 self.add_log_message("❌ Download cancelled - no folder selected")
                 return
 
-            self.scraper.download_dir = Path(folder)
-            self.scraper.download_dir.mkdir(parents=True, exist_ok=True)
+            selected_dir = Path(folder)
+            selected_dir.mkdir(parents=True, exist_ok=True)
+            self.scraper.download_dir = selected_dir
             self.add_log_message(f"📁 Download folder set to: {folder}")
             self.status_bar.showMessage(f"Download folder: {folder}")
 
@@ -596,8 +593,13 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Error", "No valid URLs found")
             return
 
+        download_dir = self.scraper.download_dir
+        if download_dir is None:
+            self.add_log_message("❌ Download cancelled - no folder selected")
+            return
+
         # Ensure download directory exists before starting
-        self.scraper.download_dir.mkdir(parents=True, exist_ok=True)
+        download_dir.mkdir(parents=True, exist_ok=True)
 
         self.download_thread = QThread()
         self.download_worker = MultiUrlDownloadWorker(self.scraper, parsed_urls)
@@ -824,11 +826,13 @@ class MainWindow(QMainWindow):
         else:
             self.close()
 
-    def dragEnterEvent(self, event: QDragEnterEvent):
+    @override
+    def dragEnterEvent(self, event: QDragEnterEvent) -> None:
         if event.mimeData().hasText():
             event.acceptProposedAction()
 
-    def dropEvent(self, event: QDropEvent):
+    @override
+    def dropEvent(self, event: QDropEvent) -> None:
         text = event.mimeData().text().strip()
         urls = re.findall(r"https?://[^\s]+", text)
         valid_urls = [

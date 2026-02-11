@@ -4,6 +4,7 @@ import re
 import shutil
 import time
 from pathlib import Path
+from typing import TypedDict
 from urllib.parse import urlparse
 
 import requests
@@ -15,6 +16,18 @@ from four_charm.core.models import DownloadQueue, MediaFile
 
 
 logger = logging.getLogger("4Charm")
+
+
+class ScraperStats(TypedDict):
+    total: int
+    downloaded: int
+    failed: int
+    skipped: int
+    size_mb: float
+    download_speed: float
+    start_time: float | None
+    duplicates: int
+    current_speed: float
 
 
 class FourChanScraper:
@@ -45,7 +58,7 @@ class FourChanScraper:
                 "Upgrade-Insecure-Requests": "1",
             }
         )
-        self.stats = {
+        self.stats: ScraperStats = {
             "total": 0,
             "downloaded": 0,
             "failed": 0,
@@ -267,13 +280,13 @@ class FourChanScraper:
                 # Fallback to first part of comment if no subject
                 elif "com" in op and op["com"]:
                     # Extract text from HTML comment, take first 60 chars
-                    text = re.sub(r"<[^>]+>", "", op["com"])  # type: ignore[reportUnboundVariable] # Remove HTML tags
+                    text = re.sub(r"<[^>]+>", "", op["com"])  # Remove HTML tags
                     text = text.strip()
                     if text:
                         # Use first 60 characters as title
                         thread_title = text[:60].strip()
                         # Remove newlines and extra spaces
-                        thread_title = re.sub(r"\s+", " ", thread_title)  # type: ignore[reportUnboundVariable]
+                        thread_title = re.sub(r"\s+", " ", thread_title)
             thread_data["_thread_title"] = thread_title
             self.adaptive_delay(success=True)  # Success, reduce delay
             return thread_data

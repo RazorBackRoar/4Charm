@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""4Charm - Advanced 4chan Media Downloader
+"""4Charm - Advanced 4chan Media Downloader.
+
 A high-performance GUI application for bulk downloading media from 4chan threads and boards.
 """
 
@@ -55,7 +56,7 @@ def get_version() -> str:
         return "0.0.0"
 
 
-def main():
+def main() -> None:
     """Main application entry point."""
     app = QApplication(sys.argv)
     app.setApplicationName("4Charm")
@@ -64,7 +65,7 @@ def main():
     # Set application icon (assets/icons/ is at project root)
     icon_path: Path
     if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
-        icon_path = Path(sys._MEIPASS) / "assets" / "icons" / "4Charm.icns"  # type: ignore[attr-defined]
+        icon_path = Path(sys._MEIPASS) / "assets" / "icons" / "4Charm.icns"
     else:
         icon_path = (
             Path(__file__).parent.parent.parent.parent
