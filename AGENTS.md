@@ -3,7 +3,7 @@ Level 2 Document: Refer to /Users/home/Workspace/Apps/AGENTS.md (Level 1) for gl
 # 🍀 4Charm - 4chan Media Downloader Agent
 
 **Package:** `four_charm`
-**Version:** 4.0.1
+**Version:** 4.0.2
 **Context Level:** LEVEL 3 (Application-Specific)
 
 ---
@@ -11,10 +11,18 @@ Level 2 Document: Refer to /Users/home/Workspace/Apps/AGENTS.md (Level 1) for gl
 ## 🏁 GLOBAL AUTHORITY
 
 All standard patterns must follow:
+👉 **`/Users/home/Workspace/Apps/MCP.md`**
 👉 **`/Users/home/Workspace/Apps/.code-analysis/monorepo-analysis.md`**
 👉 **`/Users/home/Workspace/Apps/.code-analysis/essential-queries.md`**
+👉 **`/Users/home/Workspace/Apps/.code-analysis/AGENTS.md`**
 
 This file contains **4Charm-specific** overrides and critical implementation details.
+
+When opening this project/workspace, load context in this order:
+1. `/Users/home/Workspace/Apps/MCP.md`
+2. `/Users/home/Workspace/Apps/.code-analysis/monorepo-analysis.md`
+3. `/Users/home/Workspace/Apps/.code-analysis/essential-queries.md`
+4. `/Users/home/Workspace/Apps/.code-analysis/AGENTS.md`
 
 ---
 
@@ -23,7 +31,7 @@ This file contains **4Charm-specific** overrides and critical implementation det
 - **Purpose:** High-performance native macOS 4chan media downloader
 - **Primary Tech:** PySide6, requests, razorcore
 - **Key Modules:** `scraper.py`, `downloader.py`, `workers.py`
-- **Build Commands:** `4charmtest` (fast), `4charmbuild` (release)
+- **Build Commands:** `4charmbuild` or `razorbuild 4Charm`
 
 ---
 
@@ -269,11 +277,11 @@ conn.execute(
 ## 🔧 Build & Deploy Commands
 
 ```bash
-# Fast dev iteration (app bundle only, ~45s)
-4charmtest
-
 # Full release build (app + DMG + Git tag, ~3min)
 4charmbuild
+
+# Canonical build entry
+razorbuild 4Charm
 
 # Push changes (auto-commit, auto-version, auto-tag)
 razorpush 4Charm
@@ -291,7 +299,7 @@ razorcheck
 
 - Run `razorcheck` before committing or opening a PR.
 - Use `razorpush 4Charm` (or `4charmpush`) for commit, version bump, tag, and push. Do not edit versions manually.
-- Build via `4charmtest` / `4charmbuild` or `razorbuild 4Charm`. **Never** run `universal-build.sh` directly.
+- Build via `4charmbuild` or `razorbuild 4Charm`. **Never** run `universal-build.sh` directly.
 - Use `razoragents` to sync `AGENTS.md` tables (usually run by `razorpush`).
 - If you change `.razorcore` CLI commands or `pyproject.toml`, run `pip install -e ../.razorcore/`.
 - **Always run the app after making changes** (`python -m four_charm.main`) to visually verify updates before considering any task complete. This is mandatory—do not skip this step.
@@ -373,7 +381,9 @@ pytest tests/test_scraper.py::test_rate_limiting -v
 
 - **CodeGraphContext Docs:** `/Users/home/Workspace/Apps/.code-analysis/monorepo-analysis.md`
 - **CodeGraphContext Queries:** `/Users/home/Workspace/Apps/.code-analysis/essential-queries.md`
+- **Code Analysis Agent Rules:** `/Users/home/Workspace/Apps/.code-analysis/AGENTS.md`
 - **CLI Commands:** `/Users/home/Workspace/Apps/Guides/cli_commands.md`
+- **CLI Inventory (Full):** `/Users/home/Workspace/Apps/Guides/cli_inventory.md`
 - **4Charm Manual:** `/Users/home/Workspace/Apps/Guides/4charm_manual.md`
 - **Engineering Hub:** `/Users/home/Workspace/Apps/AGENTS.md` (LEVEL 2)
 
@@ -384,7 +394,7 @@ pytest tests/test_scraper.py::test_rate_limiting -v
 | Scenario | Command/Pattern |
 | --- | --- |
 | Testing new download feature | `python src/four_charm/main.py` |
-| Quick .app build for testing | `4charmtest` |
+| Quick .app build for testing | `razorbuild 4Charm` |
 | Release to production | `4charmbuild` |
 | Save work with version bump | `razorpush 4Charm` |
 | Add new API endpoint | Check `scraper.py`, add rate limiting |
