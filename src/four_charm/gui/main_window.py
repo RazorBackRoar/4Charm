@@ -281,9 +281,13 @@ class MainWindow(QMainWindow):
         self.line_numbers = QPlainTextEdit()
         self.line_numbers.setReadOnly(True)
         self.line_numbers.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.line_numbers.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
+        self.line_numbers.setTextInteractionFlags(
+            Qt.TextInteractionFlag.NoTextInteraction
+        )
         self.line_numbers.setFrameStyle(QFrame.Shape.NoFrame)
-        self.line_numbers.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.line_numbers.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
         self.line_numbers.setFixedWidth(40)
         self.line_numbers.document().setDocumentMargin(0)
         self.line_numbers.setStyleSheet(
@@ -296,7 +300,9 @@ class MainWindow(QMainWindow):
 
         fmt = QTextBlockFormat()
         fmt.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        fmt.setLineHeight(140.0, QTextBlockFormat.LineHeightTypes.ProportionalHeight.value)
+        fmt.setLineHeight(
+            140.0, QTextBlockFormat.LineHeightTypes.ProportionalHeight.value
+        )
         cursor = self.line_numbers.textCursor()
         cursor.select(QTextCursor.SelectionType.Document)
         cursor.setBlockFormat(fmt)
@@ -343,7 +349,9 @@ class MainWindow(QMainWindow):
         meta_layout = QHBoxLayout()
         meta_layout.setContentsMargins(15, 0, 15, 12)
         self.url_count_label = QLabel("QUEUE: 0")
-        self.url_count_label.setStyleSheet("color: #666666; font-size: 10px; font-weight: 800;")
+        self.url_count_label.setStyleSheet(
+            "color: #666666; font-size: 10px; font-weight: 800;"
+        )
         meta_layout.addWidget(self.url_count_label)
         meta_layout.addStretch()
         url_master_layout.addLayout(meta_layout)
@@ -363,7 +371,9 @@ class MainWindow(QMainWindow):
         self.progress_label = QLabel("Ready to download...")
         self.progress_label.setStyleSheet("font-size: 12px; color: #888888;")
         self.speed_label = QLabel("0.0 MB/s")
-        self.speed_label.setStyleSheet("font-size: 13px; font-weight: 700; color: #76e648;")
+        self.speed_label.setStyleSheet(
+            "font-size: 13px; font-weight: 700; color: #76e648;"
+        )
         progress_info.addWidget(self.progress_label)
         progress_info.addStretch()
         progress_info.addWidget(self.speed_label)
@@ -411,7 +421,9 @@ class MainWindow(QMainWindow):
             self.line_numbers.verticalScrollBar().setValue
         )
         self.url_input.verticalScrollBar().rangeChanged.connect(
-            lambda min_val, max_val: self.line_numbers.verticalScrollBar().setValue(self.url_input.verticalScrollBar().value())
+            lambda min_val, max_val: self.line_numbers.verticalScrollBar().setValue(
+                self.url_input.verticalScrollBar().value()
+            )
         )
         self.start_cancel_btn.clicked.connect(self.handle_start_cancel_click)
         self.pause_resume_btn.clicked.connect(self.toggle_pause_resume)
@@ -487,7 +499,9 @@ class MainWindow(QMainWindow):
             cursor.select(QTextCursor.SelectionType.Document)
             fmt = QTextBlockFormat()
             fmt.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            fmt.setLineHeight(140.0, QTextBlockFormat.LineHeightTypes.ProportionalHeight.value)
+            fmt.setLineHeight(
+                140.0, QTextBlockFormat.LineHeightTypes.ProportionalHeight.value
+            )
             cursor.setBlockFormat(fmt)
             # Clear selection to prevent highlighting
             cursor.clearSelection()
@@ -842,6 +856,7 @@ class MainWindow(QMainWindow):
             # Just add URLs, no numbering
             self.url_input.setPlainText("\n".join(valid_urls))
             self.validate_urls()
+
 
 if __name__ == "__main__":
     # Setup basic logging for standalone run

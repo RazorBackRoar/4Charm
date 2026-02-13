@@ -11,7 +11,6 @@ def setup_logging():
 
     log_file = log_dir / "4charm.log"
 
-
     # Create formatters
     file_formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

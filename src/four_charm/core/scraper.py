@@ -430,7 +430,9 @@ class FourChanScraper:
         while self.paused:
             time.sleep(0.1)
             if self.cancelled:
-                self.download_queue.fail_download(media_file.url, Exception("Cancelled"))
+                self.download_queue.fail_download(
+                    media_file.url, Exception("Cancelled")
+                )
                 return False
 
         for attempt in range(Config.MAX_RETRIES):
@@ -590,7 +592,9 @@ class FourChanScraper:
                 time.sleep(2**attempt)
 
         # If we exit the loop without success, mark as failed
-        self.download_queue.fail_download(media_file.url, Exception("Max retries exceeded"))
+        self.download_queue.fail_download(
+            media_file.url, Exception("Max retries exceeded")
+        )
         return False
 
     def pause_downloads(self):

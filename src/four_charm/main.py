@@ -24,6 +24,7 @@ def get_version() -> str:
     if getattr(sys, "frozen", False):
         try:
             import plistlib
+
             exe_path = Path(sys.executable)
             for parent in exe_path.parents:
                 if parent.suffix == ".app":
@@ -31,7 +32,9 @@ def get_version() -> str:
                     if info_plist.exists():
                         with info_plist.open("rb") as f:
                             data = plistlib.load(f)
-                        version = data.get("CFBundleShortVersionString") or data.get("CFBundleVersion")
+                        version = data.get("CFBundleShortVersionString") or data.get(
+                            "CFBundleVersion"
+                        )
                         if version:
                             return str(version)
                     break
