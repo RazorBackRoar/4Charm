@@ -3,7 +3,7 @@ Level 2 Document: Refer to /Users/home/Workspace/Apps/AGENTS.md (Level 1) for gl
 # 🍀 4Charm - 4chan Media Downloader Agent
 
 **Package:** `four_charm`
-**Version:** 4.3.0
+**Version:** 4.4.0
 **Context Level:** LEVEL 3 (Application-Specific)
 
 ---
