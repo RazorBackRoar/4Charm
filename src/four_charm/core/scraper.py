@@ -76,6 +76,77 @@ class FourChanScraper:
         self.current_delay = Config.BASE_DELAY
         self.download_queue = DownloadQueue()
 
+    def _prepare_download_path(
+        self, media_file: MediaFile, url_folder_name: str | None
+    ) -> tuple[Path, Path]:
+        """Prepare download directory and file path."""
+        if self.download_dir is None:
+            raise ValueError("Download directory not set")
+
+        if url_folder_name:
+            thread_dir = self.download_dir / url_folder_name
+        else:
+            thread_dir = self.download_dir / "misc"
+        thread_dir.mkdir(parents=True, exist_ok=True)
+
+        if media_file.filename.lower().endswith(".webm"):
+            save_dir = thread_dir / "WEBM"
+            save_dir.mkdir(parents=True, exist_ok=True)
+        else:
+            save_dir = thread_dir
+
+        file_path = save_dir / media_file.filename
+        return file_path, save_dir
+
+    def _check_existing_file(self, file_path: Path, media_file: MediaFile) -> bool:
+        """Check for existing complete file and handle duplicates."""
+        if not file_path.exists() or file_path.stat().st_size == 0:
+            return False
+
+        try:
+            file_hash = media_file.calculate_hash(file_path)
+            if file_hash in self.downloaded_hashes:
+                self.stats_mutex.lock()
+                self.stats["duplicates"] += 1
+                self.stats_mutex.unlock()
+                self.download_queue.complete_download(media_file.url)
+                return True
+            self.downloaded_hashes.add(file_hash)
+        except Exception:
+            pass
+
+        self.stats_mutex.lock()
+        self.stats["skipped"] += 1
+        self.stats_mutex.unlock()
+        media_file.downloaded = True
+        self.download_queue.complete_download(media_file.url)
+        return True
+
+    def _handle_download_response(
+        self, response: requests.Response, file_path: Path, existing_size: int
+    ) -> tuple[str, int]:
+        """Handle HTTP response for download, return (file mode, total size)."""
+        if response.status_code == 206:
+            return "ab", int(response.headers.get("content-length", 0)) + existing_size
+        elif response.status_code == 200:
+            if file_path.exists():
+                file_path.unlink()
+            return "wb", int(response.headers.get("content-length", 0))
+        else:
+            response.raise_for_status()
+            return "wb", int(response.headers.get("content-length", 0))
+
+    def _update_stats_on_success(self, file_path: Path, media_file: MediaFile):
+        """Update stats after successful download."""
+        file_size = file_path.stat().st_size
+        media_file.size = file_size
+        media_file.downloaded = True
+        self.stats_mutex.lock()
+        self.stats["downloaded"] += 1
+        self.stats["size_mb"] += file_size / (1024 * 1024)
+        self.stats["current_speed"] = media_file.download_speed
+        self.stats_mutex.unlock()
+
     def adaptive_delay(self, success=True):
         """Adaptive rate limiting based on success/failure."""
         if success:
@@ -415,12 +486,10 @@ class FourChanScraper:
         progress_callback=None,
     ) -> bool:
         """Enhanced download with progress tracking, duplicate detection, and resume capability."""
-        # Ensure download directory is set
         if self.download_dir is None:
             logger.error("Download directory not set")
             return False
 
-        # Track download in queue
         self.download_queue.start_download(media_file.url)
 
         if self.cancelled:
@@ -437,43 +506,11 @@ class FourChanScraper:
 
         for attempt in range(Config.MAX_RETRIES):
             try:
-                # Create thread-specific folder
-                if url_folder_name:
-                    thread_dir = self.download_dir / url_folder_name
-                else:
-                    thread_dir = self.download_dir / "misc"
-                thread_dir.mkdir(parents=True, exist_ok=True)
+                file_path, save_dir = self._prepare_download_path(
+                    media_file, url_folder_name
+                )
 
-                # Determine save directory based on file extension
-                if media_file.filename.lower().endswith(".webm"):
-                    # Create WEBM subfolder for .webm files
-                    save_dir = thread_dir / "WEBM"
-                    save_dir.mkdir(parents=True, exist_ok=True)
-                else:
-                    # All other files go to main thread folder
-                    save_dir = thread_dir
-
-                file_path = save_dir / media_file.filename
-
-                # Check for existing complete file
-                if file_path.exists() and file_path.stat().st_size > 0:
-                    try:
-                        file_hash = media_file.calculate_hash(file_path)
-                        if file_hash in self.downloaded_hashes:
-                            self.stats_mutex.lock()
-                            self.stats["duplicates"] += 1
-                            self.stats_mutex.unlock()
-                            self.download_queue.complete_download(media_file.url)
-                            return True
-                        self.downloaded_hashes.add(file_hash)
-                    except Exception:
-                        pass
-
-                    self.stats_mutex.lock()
-                    self.stats["skipped"] += 1
-                    self.stats_mutex.unlock()
-                    media_file.downloaded = True
-                    self.download_queue.complete_download(media_file.url)
+                if self._check_existing_file(file_path, media_file):
                     return True
 
                 if not self.check_disk_space():
@@ -486,7 +523,6 @@ class FourChanScraper:
                     )
                     return False
 
-                # Check for partial download and attempt resume
                 headers = {}
                 existing_size = 0
                 if file_path.exists():
@@ -500,29 +536,15 @@ class FourChanScraper:
                 media_file.start_time = time.time()
                 response = self.session.get(
                     media_file.url,
-                    headers=headers,  # Add resume headers
+                    headers=headers,
                     stream=True,
                     timeout=Config.DOWNLOAD_TIMEOUT,
                     allow_redirects=True,
                 )
 
-                # Handle resume response
-                if response.status_code == 206:  # Partial content
-                    mode = "ab"  # Append to existing file
-                    logger.info(f"Resuming download of {media_file.filename}")
-                elif response.status_code == 200:  # Full content
-                    mode = "wb"  # Overwrite file
-                    existing_size = 0
-                    if file_path.exists():
-                        file_path.unlink()  # Remove partial file
-                else:
-                    response.raise_for_status()
-                    # Fallback to overwrite if status is success but not 200/206
-                    mode = "wb"
-
-                total_size = int(response.headers.get("content-length", 0))
-                if existing_size > 0 and total_size > 0:
-                    total_size += existing_size
+                mode, total_size = self._handle_download_response(
+                    response, file_path, existing_size
+                )
 
                 downloaded_size = existing_size
 
@@ -563,15 +585,7 @@ class FourChanScraper:
                         f"Could not calculate hash for {media_file.filename}: {e}"
                     )
 
-                media_file.size = file_size
-                media_file.downloaded = True
-                self.stats_mutex.lock()
-                self.stats["downloaded"] += 1
-                self.stats["size_mb"] += file_size / (1024 * 1024)
-                self.stats["current_speed"] = media_file.download_speed
-                self.stats_mutex.unlock()
-
-                # Mark as completed in queue
+                self._update_stats_on_success(file_path, media_file)
                 self.download_queue.complete_download(media_file.url)
                 return True
 
@@ -586,12 +600,10 @@ class FourChanScraper:
                     self.stats_mutex.lock()
                     self.stats["failed"] += 1
                     self.stats_mutex.unlock()
-                    # Mark as failed in queue
                     self.download_queue.fail_download(media_file.url, e)
                     return False
                 time.sleep(2**attempt)
 
-        # If we exit the loop without success, mark as failed
         self.download_queue.fail_download(
             media_file.url, Exception("Max retries exceeded")
         )
