@@ -105,15 +105,23 @@ class FourChanScraper:
 
         try:
             file_hash = media_file.calculate_hash(file_path)
-            if file_hash in self.downloaded_hashes:
-                self.stats_mutex.lock()
-                self.stats["duplicates"] += 1
+
+            # Protect hash set access with mutex to prevent race conditions
+            self.stats_mutex.lock()
+            try:
+                if file_hash in self.downloaded_hashes:
+                    self.stats["duplicates"] += 1
+                    self.stats_mutex.unlock()
+                    self.download_queue.complete_download(media_file.url)
+                    return True
+                self.downloaded_hashes.add(file_hash)
+            finally:
                 self.stats_mutex.unlock()
-                self.download_queue.complete_download(media_file.url)
-                return True
-            self.downloaded_hashes.add(file_hash)
-        except Exception:
-            pass
+
+        except (OSError, PermissionError) as e:
+            logger.warning(f"Hash calculation failed for {file_path}: {e}")
+            # Continue with download instead of treating as existing file
+            return False
 
         self.stats_mutex.lock()
         self.stats["skipped"] += 1
@@ -133,8 +141,10 @@ class FourChanScraper:
                 file_path.unlink()
             return "wb", int(response.headers.get("content-length", 0))
         else:
+            # This will raise an exception and not return
             response.raise_for_status()
-            return "wb", int(response.headers.get("content-length", 0))
+            # Add a fallback to satisfy type checker (though this should never be reached)
+            return "wb", 0
 
     def _update_stats_on_success(self, file_path: Path, media_file: MediaFile):
         """Update stats after successful download."""
@@ -551,11 +561,25 @@ class FourChanScraper:
                 with open(file_path, mode) as f:
                     for chunk in response.iter_content(chunk_size=Config.CHUNK_SIZE):
                         if self.cancelled:
+                            # Clean up partial file on cancellation
+                            f.close()
+                            if file_path.exists():
+                                file_path.unlink(missing_ok=True)
+                            self.download_queue.fail_download(
+                                media_file.url, Exception("Cancelled")
+                            )
                             return False
 
                         while self.paused:
                             time.sleep(0.1)
                             if self.cancelled:
+                                # Clean up partial file on cancellation during pause
+                                f.close()
+                                if file_path.exists():
+                                    file_path.unlink(missing_ok=True)
+                                self.download_queue.fail_download(
+                                    media_file.url, Exception("Cancelled")
+                                )
                                 return False
 
                         if chunk:
@@ -591,11 +615,13 @@ class FourChanScraper:
 
             except Exception as e:
                 logger.warning(
-                    f"Download attempt {attempt + 1}/{Config.MAX_RETRIES} failed for {media_file.filename}: {e}"
+                    f"Download attempt {attempt + 1}/{Config.MAX_RETRIES} failed for {media_file.filename} "
+                    f"(URL: {media_file.url}): {e}"
                 )
                 if attempt == Config.MAX_RETRIES - 1:
                     logger.error(
-                        f"Download failed permanently for {media_file.filename}: {e}"
+                        f"Download failed permanently for {media_file.filename} "
+                        f"(URL: {media_file.url}): {e}"
                     )
                     self.stats_mutex.lock()
                     self.stats["failed"] += 1
