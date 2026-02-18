@@ -1,5 +1,7 @@
 # Building DMG for 4Charm
 
+> Workspace context source: `/Users/home/Workspace/Apps/.code-analysis/` (`AGENTS.md`, `monorepo-analysis.md`, `essential-queries.md`).
+
 ## Quick Start
 
 ```bash
