@@ -17,6 +17,14 @@ def test_parse_url_thread_and_catalog():
     assert invalid is None
 
 
+def test_parse_url_rejects_hostname_substring_spoof():
+    """Reject hosts that only contain 4chan.org as a substring."""
+    scraper = FourChanScraper()
+
+    spoofed = scraper.parse_url("https://not4chan.org/boards.4chan.org/g/thread/123")
+    assert spoofed is None
+
+
 def test_build_session_base_name_limits_length_and_sanitizes():
     """Ensure session base names are sanitized and length-limited."""
     scraper = FourChanScraper()

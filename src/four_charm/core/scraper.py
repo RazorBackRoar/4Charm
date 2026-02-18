@@ -111,7 +111,6 @@ class FourChanScraper:
             try:
                 if file_hash in self.downloaded_hashes:
                     self.stats["duplicates"] += 1
-                    self.stats_mutex.unlock()
                     self.download_queue.complete_download(media_file.url)
                     return True
                 self.downloaded_hashes.add(file_hash)
@@ -124,8 +123,10 @@ class FourChanScraper:
             return False
 
         self.stats_mutex.lock()
-        self.stats["skipped"] += 1
-        self.stats_mutex.unlock()
+        try:
+            self.stats["skipped"] += 1
+        finally:
+            self.stats_mutex.unlock()
         media_file.downloaded = True
         self.download_queue.complete_download(media_file.url)
         return True
@@ -152,10 +153,12 @@ class FourChanScraper:
         media_file.size = file_size
         media_file.downloaded = True
         self.stats_mutex.lock()
-        self.stats["downloaded"] += 1
-        self.stats["size_mb"] += file_size / (1024 * 1024)
-        self.stats["current_speed"] = media_file.download_speed
-        self.stats_mutex.unlock()
+        try:
+            self.stats["downloaded"] += 1
+            self.stats["size_mb"] += file_size / (1024 * 1024)
+            self.stats["current_speed"] = media_file.download_speed
+        finally:
+            self.stats_mutex.unlock()
 
     def _mark_download_cancelled(self, media_url: str, file_path: Path | None = None) -> bool:
         """Handle cancellation by cleaning up and marking queue item failed."""
@@ -193,8 +196,10 @@ class FourChanScraper:
     def _record_failed_download(self, media_url: str, error: Exception) -> None:
         """Record failed download state and update failed stats."""
         self.stats_mutex.lock()
-        self.stats["failed"] += 1
-        self.stats_mutex.unlock()
+        try:
+            self.stats["failed"] += 1
+        finally:
+            self.stats_mutex.unlock()
         self.download_queue.fail_download(media_url, error)
 
     def _handle_download_retry(
@@ -385,9 +390,10 @@ class FourChanScraper:
             url = url.strip()
             if not url.startswith("http"):
                 url = "https://" + url
-            if "boards.4chan.org" not in url and "4chan.org" not in url:
-                return None
             parsed = urlparse(url)
+            hostname = (parsed.hostname or "").lower()
+            if hostname != "4chan.org" and not hostname.endswith(".4chan.org"):
+                return None
             path_parts = [p for p in parsed.path.split("/") if p]
             if not path_parts:
                 return None
