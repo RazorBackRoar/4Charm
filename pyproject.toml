@@ -176,6 +176,12 @@ source = ["four_charm"]
 show_missing = true
 skip_covered = true
 
+[tool.ty.src]
+exclude = [
+    ".agent/**",
+    ".shared/**",
+]
+
 [tool.ty.environment]
 extra-paths = [
     "src",
