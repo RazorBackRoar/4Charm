@@ -160,7 +160,9 @@ class FourChanScraper:
         finally:
             self.stats_mutex.unlock()
 
-    def _mark_download_cancelled(self, media_url: str, file_path: Path | None = None) -> bool:
+    def _mark_download_cancelled(
+        self, media_url: str, file_path: Path | None = None
+    ) -> bool:
         """Handle cancellation by cleaning up and marking queue item failed."""
         if file_path and file_path.exists():
             file_path.unlink(missing_ok=True)
@@ -576,7 +578,9 @@ class FourChanScraper:
 
         for attempt in range(Config.MAX_RETRIES):
             try:
-                file_path, _save_dir = self._prepare_download_path(media_file, url_folder_name)
+                file_path, _save_dir = self._prepare_download_path(
+                    media_file, url_folder_name
+                )
 
                 if self._check_existing_file(file_path, media_file):
                     return True
@@ -620,7 +624,9 @@ class FourChanScraper:
 
                         elapsed = time.time() - media_file.start_time
                         if elapsed > 0:
-                            media_file.download_speed = downloaded_size / elapsed / 1024 / 1024
+                            media_file.download_speed = (
+                                downloaded_size / elapsed / 1024 / 1024
+                            )
 
                         if progress_callback and total_size > 0:
                             progress = (downloaded_size / total_size) * 100
