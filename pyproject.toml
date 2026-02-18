@@ -10,7 +10,7 @@
 name = "four-charm"
 version = "4.6.0"
 description = "4Charm desktop app for bulk 4chan media downloads"
-requires-python = ">=3.13,<3.14"
+requires-python = "==3.13.*"
 # WHY: Python 3.13.x is locked per IDE_CONTEXT.md requirements
 
 dependencies = [
