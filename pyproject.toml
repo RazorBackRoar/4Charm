@@ -168,6 +168,14 @@ line-ending = "lf"
 pythonpath = ["src"]
 testpaths = ["tests"]
 
+[tool.coverage.run]
+branch = true
+source = ["four_charm"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+
 [tool.ty.environment]
 extra-paths = [
     "src",

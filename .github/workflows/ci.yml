@@ -30,4 +30,4 @@ jobs:
       - name: Run tests
         env:
           PYTHONPATH: ${{ github.workspace }}/src
-        run: pytest
+        run: pytest --cov=four_charm --cov-report=term-missing --cov-report=xml
