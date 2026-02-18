@@ -157,6 +157,69 @@ class FourChanScraper:
         self.stats["current_speed"] = media_file.download_speed
         self.stats_mutex.unlock()
 
+    def _mark_download_cancelled(self, media_url: str, file_path: Path | None = None) -> bool:
+        """Handle cancellation by cleaning up and marking queue item failed."""
+        if file_path and file_path.exists():
+            file_path.unlink(missing_ok=True)
+        self.download_queue.fail_download(media_url, Exception("Cancelled"))
+        return False
+
+    def _ensure_active_download(
+        self, media_url: str, file_path: Path | None = None
+    ) -> bool:
+        """Return False when download is canceled while handling pause state."""
+        if self.cancelled:
+            return self._mark_download_cancelled(media_url, file_path)
+
+        while self.paused:
+            time.sleep(0.1)
+            if self.cancelled:
+                return self._mark_download_cancelled(media_url, file_path)
+        return True
+
+    def _build_resume_headers(
+        self, file_path: Path, filename: str
+    ) -> tuple[dict[str, str], int]:
+        """Build HTTP range headers for resumable downloads."""
+        headers: dict[str, str] = {}
+        existing_size = 0
+        if file_path.exists():
+            existing_size = file_path.stat().st_size
+            if existing_size > 0:
+                headers["Range"] = f"bytes={existing_size}-"
+                logger.info(f"Resuming {filename} from byte {existing_size}")
+        return headers, existing_size
+
+    def _record_failed_download(self, media_url: str, error: Exception) -> None:
+        """Record failed download state and update failed stats."""
+        self.stats_mutex.lock()
+        self.stats["failed"] += 1
+        self.stats_mutex.unlock()
+        self.download_queue.fail_download(media_url, error)
+
+    def _handle_download_retry(
+        self,
+        media_file: MediaFile,
+        attempt: int,
+        error: Exception,
+    ) -> bool:
+        """Handle retry bookkeeping. Returns True when a retry should occur."""
+        logger.warning(
+            f"Download attempt {attempt + 1}/{Config.MAX_RETRIES} failed for {media_file.filename} "
+            f"(URL: {media_file.url}): {error}"
+        )
+        is_last_attempt = attempt == Config.MAX_RETRIES - 1
+        if is_last_attempt:
+            logger.error(
+                f"Download failed permanently for {media_file.filename} "
+                f"(URL: {media_file.url}): {error}"
+            )
+            self._record_failed_download(media_file.url, error)
+            return False
+
+        time.sleep(2**attempt)
+        return True
+
     def adaptive_delay(self, success=True):
         """Adaptive rate limiting based on success/failure."""
         if success:
@@ -502,46 +565,26 @@ class FourChanScraper:
 
         self.download_queue.start_download(media_file.url)
 
-        if self.cancelled:
-            self.download_queue.fail_download(media_file.url, Exception("Cancelled"))
+        if not self._ensure_active_download(media_file.url):
             return False
-
-        while self.paused:
-            time.sleep(0.1)
-            if self.cancelled:
-                self.download_queue.fail_download(
-                    media_file.url, Exception("Cancelled")
-                )
-                return False
 
         for attempt in range(Config.MAX_RETRIES):
             try:
-                file_path, save_dir = self._prepare_download_path(
-                    media_file, url_folder_name
-                )
+                file_path, _save_dir = self._prepare_download_path(media_file, url_folder_name)
 
                 if self._check_existing_file(file_path, media_file):
                     return True
 
                 if not self.check_disk_space():
                     logger.error("Insufficient disk space")
-                    self.stats_mutex.lock()
-                    self.stats["failed"] += 1
-                    self.stats_mutex.unlock()
-                    self.download_queue.fail_download(
+                    self._record_failed_download(
                         media_file.url, Exception("Insufficient disk space")
                     )
                     return False
 
-                headers = {}
-                existing_size = 0
-                if file_path.exists():
-                    existing_size = file_path.stat().st_size
-                    if existing_size > 0:
-                        headers["Range"] = f"bytes={existing_size}-"
-                        logger.info(
-                            f"Resuming {media_file.filename} from byte {existing_size}"
-                        )
+                headers, existing_size = self._build_resume_headers(
+                    file_path, media_file.filename
+                )
 
                 media_file.start_time = time.time()
                 response = self.session.get(
@@ -560,41 +603,22 @@ class FourChanScraper:
 
                 with open(file_path, mode) as f:
                     for chunk in response.iter_content(chunk_size=Config.CHUNK_SIZE):
-                        if self.cancelled:
-                            # Clean up partial file on cancellation
-                            f.close()
-                            if file_path.exists():
-                                file_path.unlink(missing_ok=True)
-                            self.download_queue.fail_download(
-                                media_file.url, Exception("Cancelled")
-                            )
+                        if not self._ensure_active_download(media_file.url, file_path):
                             return False
 
-                        while self.paused:
-                            time.sleep(0.1)
-                            if self.cancelled:
-                                # Clean up partial file on cancellation during pause
-                                f.close()
-                                if file_path.exists():
-                                    file_path.unlink(missing_ok=True)
-                                self.download_queue.fail_download(
-                                    media_file.url, Exception("Cancelled")
-                                )
-                                return False
+                        if not chunk:
+                            continue
 
-                        if chunk:
-                            f.write(chunk)
-                            downloaded_size += len(chunk)
+                        f.write(chunk)
+                        downloaded_size += len(chunk)
 
-                            elapsed = time.time() - media_file.start_time
-                            if elapsed > 0:
-                                media_file.download_speed = (
-                                    downloaded_size / elapsed / 1024 / 1024
-                                )
+                        elapsed = time.time() - media_file.start_time
+                        if elapsed > 0:
+                            media_file.download_speed = downloaded_size / elapsed / 1024 / 1024
 
-                            if progress_callback and total_size > 0:
-                                progress = (downloaded_size / total_size) * 100
-                                progress_callback(progress, media_file.download_speed)
+                        if progress_callback and total_size > 0:
+                            progress = (downloaded_size / total_size) * 100
+                            progress_callback(progress, media_file.download_speed)
 
                 file_size = file_path.stat().st_size
                 if file_size == 0:
@@ -614,21 +638,8 @@ class FourChanScraper:
                 return True
 
             except Exception as e:
-                logger.warning(
-                    f"Download attempt {attempt + 1}/{Config.MAX_RETRIES} failed for {media_file.filename} "
-                    f"(URL: {media_file.url}): {e}"
-                )
-                if attempt == Config.MAX_RETRIES - 1:
-                    logger.error(
-                        f"Download failed permanently for {media_file.filename} "
-                        f"(URL: {media_file.url}): {e}"
-                    )
-                    self.stats_mutex.lock()
-                    self.stats["failed"] += 1
-                    self.stats_mutex.unlock()
-                    self.download_queue.fail_download(media_file.url, e)
+                if not self._handle_download_retry(media_file, attempt, e):
                     return False
-                time.sleep(2**attempt)
 
         self.download_queue.fail_download(
             media_file.url, Exception("Max retries exceeded")
