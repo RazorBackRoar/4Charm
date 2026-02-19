@@ -567,13 +567,12 @@ class MainWindow(QMainWindow):
             self.start_cancel_btn.setEnabled(False)
             return
 
-        # Simple string check for speed (avoid creating Scraper object repeatedly in UI thread)
+        # Use the same hostname validation logic as paste/drop handlers.
         valid_count = 0
         invalid_count = 0
 
         for url in raw_lines:
-            # Basic check for 4chan domains
-            if "boards.4chan.org" in url or "4channel.org" in url or "4chan.org" in url:
+            if _is_4chan_host(url):
                 valid_count += 1
             else:
                 invalid_count += 1
@@ -865,9 +864,7 @@ class MainWindow(QMainWindow):
     def dropEvent(self, event: QDropEvent) -> None:
         text = event.mimeData().text().strip()
         urls = re.findall(r"https?://[^\s]+", text)
-        valid_urls = [
-            url for url in urls if "boards.4chan.org" in url or "4chan.org" in url
-        ]
+        valid_urls = [url for url in urls if _is_4chan_host(url)]
         if valid_urls:
             # Just add URLs, no numbering
             self.url_input.setPlainText("\n".join(valid_urls))
