@@ -55,6 +55,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from typing import override
+from urllib.parse import urlparse
 
 from PySide6.QtCore import Qt, QThread, QTimer
 from PySide6.QtGui import (
@@ -88,6 +89,35 @@ from four_charm.gui.workers import MultiUrlDownloadWorker
 
 
 logger = logging.getLogger("4Charm")
+
+
+def _is_4chan_host(url: str) -> bool:
+    """Return True when the URL host matches an allowed 4chan domain."""
+    try:
+        parsed = urlparse(url)
+    except Exception:
+        return False
+
+    host = (parsed.netloc or "").split(":", 1)[0].lower()
+    if host.startswith("www."):
+        host = host[4:]
+    return host in {"boards.4chan.org", "4chan.org", "4channel.org"}
+
+
+def _format_clipboard_paste_text(raw_text: str, position_in_block: int) -> str:
+    """Normalize pasted text for URL input and always end on a new line."""
+    if not raw_text:
+        return ""
+
+    urls = re.findall(r"https?://[^\s]+", raw_text)
+    valid_urls = [url for url in urls if _is_4chan_host(url)]
+
+    paste_text = "\n".join(valid_urls) if valid_urls else raw_text
+    if position_in_block > 0 and not paste_text.startswith("\n"):
+        paste_text = "\n" + paste_text
+    if not paste_text.endswith("\n"):
+        paste_text += "\n"
+    return paste_text
 
 
 class MainWindow(QMainWindow):
@@ -803,27 +833,13 @@ class MainWindow(QMainWindow):
         if not text:
             return
 
-        # Extract URLs using regex
-        urls = re.findall(r"https?://[^\s]+", text)
-        valid_urls = [
-            url for url in urls if "boards.4chan.org" in url or "4chan.org" in url
-        ]
+        cursor = self.url_input.textCursor()
+        paste_text = _format_clipboard_paste_text(text, cursor.positionInBlock())
+        if not paste_text:
+            return
 
-        if valid_urls:
-            # If we found valid URLs, paste them nicely formatted
-            # Join with newlines
-            paste_text = "\n".join(valid_urls) + "\n"
-
-            cursor = self.url_input.textCursor()
-            # If we're not at the start of a line, add a newline first
-            if cursor.positionInBlock() > 0:
-                paste_text = "\n" + paste_text
-
-            cursor.insertText(paste_text)
-            self.url_input.setTextCursor(cursor)
-        else:
-            # Fallback: Normal paste if no valid URLs found
-            self.url_input.paste()
+        cursor.insertText(paste_text)
+        self.url_input.setTextCursor(cursor)
 
         # Ensure everything is visible and validated
         self.url_input.ensureCursorVisible()
