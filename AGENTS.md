@@ -1,1 +1,1 @@
-/Users/home/Workspace/Windsurf Projects/.pythontemplates/agents/4charm.AGENTS.md
+/Users/home/Workspace/Windsurf/.pythontemplates/agents/4charm.AGENTS.md
