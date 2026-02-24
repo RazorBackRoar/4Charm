@@ -1,9 +1,6 @@
 # 4Charm - Required Dependencies
 # Python 3.13+ required
 
-# Development Tools
-ruff>=0.1.0
-
 # GUI Framework
 PySide6>=1.1.0
 

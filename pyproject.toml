@@ -34,10 +34,15 @@ source = ["four_charm"]
 show_missing = true
 skip_covered = true
 
+[tool.ty.analysis]
+respect-type-ignore-comments = true
+allowed-unresolved-imports = []
+
 [tool.ty.src]
 exclude = [
     ".agent/**",
     ".shared/**",
+    ".ui-ux-pro-max/**",
 ]
 
 [tool.ty.environment]
