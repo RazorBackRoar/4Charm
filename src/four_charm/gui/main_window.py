@@ -54,8 +54,13 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import override
 from urllib.parse import urlparse
+
+try:
+    from typing import override
+except ImportError:  # pragma: no cover - Python < 3.12 build compatibility
+    def override(func):
+        return func
 
 from PySide6.QtCore import Qt, QThread, QTimer
 from PySide6.QtGui import (

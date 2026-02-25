@@ -1,0 +1,23 @@
+{
+  "volume_name": "4Charm",
+  "window": {
+    "x": 200,
+    "y": 120,
+    "width": 600,
+    "height": 350
+  },
+  "text_size": 12,
+  "icon_size": 100,
+  "app_icon": {
+    "name": "4Charm.app",
+    "x": 175,
+    "y": 150
+  },
+  "applications_link": {
+    "x": 425,
+    "y": 150
+  },
+  "hide_app_extension": true,
+  "filesystem": "HFS+",
+  "format": "UDZO"
+}

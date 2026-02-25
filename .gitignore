@@ -53,3 +53,4 @@ venv/
 !.env.example
 !.env.sample
 .security
+4Charm.dmg
