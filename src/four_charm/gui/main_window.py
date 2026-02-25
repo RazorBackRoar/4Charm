@@ -104,16 +104,43 @@ def _is_4chan_host(url: str) -> bool:
     return host in {"boards.4chan.org", "4chan.org", "4channel.org"}
 
 
-def _format_clipboard_paste_text(raw_text: str, position_in_block: int) -> str:
+def _extract_valid_4chan_urls(raw_text: str) -> list[str]:
+    """Extract valid 4chan URLs from text while preserving source order."""
+    if not raw_text:
+        return []
+    urls = re.findall(r"https?://[^\s]+", raw_text)
+    return [url for url in urls if _is_4chan_host(url)]
+
+
+def _append_urls_to_input(existing_text: str, incoming_text: str) -> str:
+    """Append valid URLs from incoming text without clearing existing entries."""
+    valid_urls = _extract_valid_4chan_urls(incoming_text)
+    if not valid_urls:
+        return existing_text
+
+    existing = existing_text.rstrip("\n")
+    incoming = "\n".join(valid_urls)
+    if not existing:
+        return incoming
+    return f"{existing}\n{incoming}"
+
+
+def _format_clipboard_paste_text(
+    raw_text: str,
+    position_in_block: int,
+    current_block_text: str = "",
+) -> str:
     """Normalize pasted text for URL input and always end on a new line."""
     if not raw_text:
         return ""
 
-    urls = re.findall(r"https?://[^\s]+", raw_text)
-    valid_urls = [url for url in urls if _is_4chan_host(url)]
-
+    valid_urls = _extract_valid_4chan_urls(raw_text)
     paste_text = "\n".join(valid_urls) if valid_urls else raw_text
-    if position_in_block > 0 and not paste_text.startswith("\n"):
+
+    should_prefix_newline = position_in_block > 0 or (
+        position_in_block == 0 and bool(current_block_text.strip())
+    )
+    if should_prefix_newline and not paste_text.startswith("\n"):
         paste_text = "\n" + paste_text
     if not paste_text.endswith("\n"):
         paste_text += "\n"
@@ -833,7 +860,11 @@ class MainWindow(QMainWindow):
             return
 
         cursor = self.url_input.textCursor()
-        paste_text = _format_clipboard_paste_text(text, cursor.positionInBlock())
+        paste_text = _format_clipboard_paste_text(
+            text,
+            cursor.positionInBlock(),
+            cursor.block().text(),
+        )
         if not paste_text:
             return
 
@@ -862,13 +893,16 @@ class MainWindow(QMainWindow):
 
     @override
     def dropEvent(self, event: QDropEvent) -> None:
-        text = event.mimeData().text().strip()
-        urls = re.findall(r"https?://[^\s]+", text)
-        valid_urls = [url for url in urls if _is_4chan_host(url)]
-        if valid_urls:
-            # Just add URLs, no numbering
-            self.url_input.setPlainText("\n".join(valid_urls))
+        existing_text = self.url_input.toPlainText()
+        merged_text = _append_urls_to_input(existing_text, event.mimeData().text())
+        if merged_text != existing_text:
+            self.url_input.setPlainText(merged_text)
+            cursor = self.url_input.textCursor()
+            cursor.movePosition(QTextCursor.MoveOperation.End)
+            self.url_input.setTextCursor(cursor)
+            self.url_input.ensureCursorVisible()
             self.validate_urls()
+            event.acceptProposedAction()
 
 
 if __name__ == "__main__":

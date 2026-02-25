@@ -79,7 +79,7 @@ This project uses `.razorcore` for build tooling.
 ### Setup
 
 ```bash
-git clone <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://github.com/RazorBackRoar/4Charm.git>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+git clone <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://github.com/RazorBackRoar/4Charm.git>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 cd 4Charm
 pip install -r requirements.txt
 pip install -e ../.razorcore  # Install build tools
