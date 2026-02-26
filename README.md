@@ -15,8 +15,13 @@ Silicon](https://img.shields.io/badge/Apple%20Silicon-Native-brightgreen.svg)](h
 ██║  ██║██╔════╝██║  ██║██╔══██╗██╔══██╗████╗ ████║
 ███████║██║     ███████║███████║██████╔╝██╔████╔██║
 ╚════██║██║     ██╔══██║██╔══██║██╔══██╗██║╚██╔╝██║
-     ██║╚██████╗██║  ██║██║  ██║██║  ██║██║ ╚═╝ ██║
-     ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝
+
+```
+██║╚██████╗██║  ██║██║  ██║██║  ██║██║ ╚═╝ ██║
+╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝
+
+```text
+
 ```
 
 > **High-performance native macOS 4chan media downloader**
@@ -74,7 +79,7 @@ This project uses `.razorcore` for build tooling.
 ### Setup
 
 ```bash
-git clone <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://github.com/RazorBackRoar/4Charm.git>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+git clone <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://github.com/RazorBackRoar/4Charm.git>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 cd 4Charm
 uv venv --python 3.13
 uv sync
