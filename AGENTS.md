@@ -1,6 +1,6 @@
-Level 2 Document: Refer to /Users/home/Workspace/Apps/AGENTS.md (Level 1) for global SSOT standards.
+# 🀀 4Charm - 4chan Media Downloader Agent
 
-# 🍀 4Charm - 4chan Media Downloader Agent
+> Level 2 Document: Refer to /Users/home/Workspace/Apps/AGENTS.md (Level 1) for global SSOT standards.
 
 **Package:** `four_charm`
 **Version:** 4.10.5
@@ -19,6 +19,7 @@ All standard patterns must follow:
 This file contains **4Charm-specific** overrides and critical implementation details.
 
 When opening this project/workspace, load context in this order:
+
 1. `/Users/home/Workspace/Apps/CONTEXT.md`
 2. `/Users/home/Workspace/Apps/.code-analysis/monorepo-analysis.md`
 3. `/Users/home/Workspace/Apps/.code-analysis/essential-queries.md`
@@ -66,51 +67,36 @@ file_path = download_dir / safe_name / image_filename
 import time
 from requests.exceptions import HTTPError
 
+
 class FourChanScraper:
+    """All API interactions MUST implement rate limiting."""
 
-```
-"""All API interactions MUST implement rate limiting."""
+    RATE_LIMIT_DELAY = 1.0  # Minimum 1 second between requests
 
-```text
+    def fetch_thread(self, board: str, thread_id: int):
+        try:
+            response = requests.get(
+                f"https://a.4cdn.org/{board}/thread/{thread_id}.json",
+                timeout=10,
+            )
+            response.raise_for_status()
 
-```
-RATE_LIMIT_DELAY = 1.0  # Minimum 1 second between requests
+            # ⚠️ MANDATORY: Wait before next request
+            time.sleep(self.RATE_LIMIT_DELAY)
 
-```text
-
-```
-def fetch_thread(self, board: str, thread_id: int):
-try:
-response = requests.get(
-f"<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://a.4cdn.org/{board}/thread/{thread_id}.json",>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-timeout=10
-)
-response.raise_for_status()
-
-```text
-
-```
-# ⚠️ MANDATORY: Wait before next request
-time.sleep(self.RATE_LIMIT_DELAY)
-
-```text
-
-```
-return response.json()
-except HTTPError as e:
-if e.response.status_code == 429:  # Too Many Requests
-# Exponential backoff: 2, 4, 8, 16 seconds
-wait_time = 2 ** self._retry_count
-time.sleep(wait_time)
-
-```text
-
+            return response.json()
+        except HTTPError as e:
+            if e.response.status_code == 429:  # Too Many Requests
+                # Exponential backoff: 2, 4, 8, 16 seconds
+                wait_time = 2 ** self._retry_count
+                time.sleep(wait_time)
 ```
 
 **Limits:**
+
 - **Global:** 1 request/second to 4chan API
-- **Thread Fetching:** Use CDN URLs (`<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://a.4cdn.org/>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>`)
-- **Media Downloads:** Use media CDN (`<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<https://i.4cdn.org/>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>`)
+- **Thread Fetching:** Use CDN URLs (`https://a.4cdn.org/`)
+- **Media Downloads:** Use media CDN (`https://i.4cdn.org/`)
 
 ### 3. Download Queue Architecture (BaseWorker Required)
 
@@ -118,75 +104,39 @@ time.sleep(wait_time)
 from razorcore.threading import BaseWorker  # MANDATORY inheritance
 from PySide6.QtCore import Signal
 
+
 class DownloadWorker(BaseWorker):
+    """
+    All long-running downloads MUST inherit from BaseWorker.
+    This ensures thread safety and proper GUI responsiveness.
+    """
+    # BaseWorker provides: progress, finished, error signals
 
-```
-"""
-All long-running downloads MUST inherit from BaseWorker.
-This ensures thread safety and proper GUI responsiveness.
-"""
-# BaseWorker provides: progress, finished, error signals
+    def __init__(self, thread_url: str, output_dir: str):
+        super().__init__()
+        self.thread_url = thread_url
+        self.output_dir = output_dir
 
-```text
+    def run(self):
+        """Main download logic runs in separate thread."""
+        try:
+            self.progress.emit(0, "Fetching thread metadata...")
 
-```
-def **init**(self, thread_url: str, output_dir: str):
-super().**init**()
-self.thread_url = thread_url
-self.output_dir = output_dir
+            thread_data = self.scraper.fetch_thread(board, thread_id)
 
-```text
+            total_files = len(thread_data['posts'])
+            for i, post in enumerate(thread_data['posts']):
+                if self.is_canceled():  # Check for user cancellation
+                    return
 
-```
-def run(self):
-"""Main download logic runs in separate thread."""
-try:
-# Emit progress updates for GUI
-self.progress.emit(0, "Fetching thread metadata...")
+                self._download_file(post)
 
-```text
+                progress_pct = int((i + 1) / total_files * 100)
+                self.progress.emit(progress_pct, f"Downloaded {i+1}/{total_files}")
 
-```
-# Fetch thread JSON
-thread_data = self.scraper.fetch_thread(board, thread_id)
-
-```text
-
-```
-# Download media files
-total_files = len(thread_data['posts'])
-for i, post in enumerate(thread_data['posts']):
-if self.is_canceled():  # Check for user cancellation
-return
-
-```text
-
-```
-# Download file with sanitized name
-self._download_file(post)
-
-```text
-
-```
-# Update progress
-progress_pct = int((i + 1) / total_files * 100)
-self.progress.emit(progress_pct, f"Downloaded {i+1}/{total_files}")
-
-```text
-
-```
-# Signal completion
-self.finished.emit()
-
-```text
-
-```
-except Exception as e:
-# Report errors to GUI
-self.error.emit(f"Download failed: {str(e)}")
-
-```text
-
+            self.finished.emit()
+        except Exception as e:
+            self.error.emit(f"Download failed: {str(e)}")
 ```
 
 ### 4. Duplicate Detection (SHA-256 Hashing)
@@ -195,53 +145,32 @@ self.error.emit(f"Download failed: {str(e)}")
 from razorcore.filesystem import compute_file_hash
 import sqlite3
 
+
 class DuplicateChecker:
+    """Prevents re-downloading the same media files."""
 
-```
-"""Prevents re-downloading the same media files."""
+    def __init__(self, db_path: str = "~/.4charm/hashes.db"):
+        self.db_path = Path(db_path).expanduser()
+        self._init_database()
 
-```text
+    def is_duplicate(self, file_path: Path) -> bool:
+        """Check if file hash already exists in database."""
+        file_hash = compute_file_hash(file_path)
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.execute(
+                "SELECT COUNT(*) FROM files WHERE hash = ?",
+                (file_hash,),
+            )
+            return cursor.fetchone()[0] > 0
 
-```
-def **init**(self, db_path: str = "~/.4charm/hashes.db"):
-self.db_path = Path(db_path).expanduser()
-self._init_database()
-
-```text
-
-```
-def is_duplicate(self, file_path: Path) -> bool:
-"""Check if file hash already exists in database."""
-file_hash = compute_file_hash(file_path)
-
-```text
-
-```
-with sqlite3.connect(self.db_path) as conn:
-cursor = conn.execute(
-"SELECT COUNT(*) FROM files WHERE hash = ?",
-(file_hash,)
-)
-return cursor.fetchone()[0] > 0
-
-```text
-
-```
-def mark_downloaded(self, file_path: Path):
-"""Store file hash to prevent future duplicates."""
-file_hash = compute_file_hash(file_path)
-
-```text
-
-```
-with sqlite3.connect(self.db_path) as conn:
-conn.execute(
-"INSERT OR IGNORE INTO files (hash, path) VALUES (?, ?)",
-(file_hash, str(file_path))
-)
-
-```text
-
+    def mark_downloaded(self, file_path: Path):
+        """Store file hash to prevent future duplicates."""
+        file_hash = compute_file_hash(file_path)
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute(
+                "INSERT OR IGNORE INTO files (hash, path) VALUES (?, ?)",
+                (file_hash, str(file_path)),
+            )
 ```
 
 ---
@@ -287,7 +216,7 @@ razorbuild 4Charm
 razorpush 4Charm
 
 # Run tests
-pytest tests/
+uv run pytest tests/
 
 # Check compliance
 razorcheck
@@ -345,15 +274,10 @@ uv add --editable ../.razorcore
 
 ```python
 hiddenimports=[
-
-```
-'razorcore.styling',
-'razorcore.threading',
-'razorcore.appinfo',
-'razorcore.filesystem',
-
-```text
-
+    'razorcore.styling',
+    'razorcore.threading',
+    'razorcore.appinfo',
+    'razorcore.filesystem',
 ]
 ```
 
@@ -363,16 +287,16 @@ hiddenimports=[
 
 ```bash
 # Run all tests
-pytest tests/
+uv run pytest tests/
 
 # Test with coverage (must meet 80%+ for core modules)
-pytest --cov=src/four_charm --cov-report=html tests/
+uv run pytest --cov=src/four_charm --cov-report=html tests/
 
 # Test specific module
-pytest tests/test_scraper.py -v
+uv run pytest tests/test_scraper.py -v
 
 # Test API rate limiting (slow test)
-pytest tests/test_scraper.py::test_rate_limiting -v
+uv run pytest tests/test_scraper.py::test_rate_limiting -v
 ```
 
 ---
@@ -393,7 +317,7 @@ pytest tests/test_scraper.py::test_rate_limiting -v
 
 | Scenario | Command/Pattern |
 | --- | --- |
-| Testing new download feature | `python src/four_charm/main.py` |
+| Run app locally | `uv run python -m four_charm.main` |
 | Quick .app build for testing | `razorbuild 4Charm` |
 | Release to production | `4charmbuild` |
 | Save work with version bump | `razorpush 4Charm` |
@@ -402,8 +326,10 @@ pytest tests/test_scraper.py::test_rate_limiting -v
 | Long-running operation | Inherit from `BaseWorker` |
 | Check for duplicates | Use SHA-256 hash lookup before download |
 
+---
+
 ## RazorCore Usage
 
 See `/Users/home/Workspace/Apps/.razorcore/AGENTS.md` for the complete public API and safety rules.
 
-<!-- verification check Tue Jan 27 23:52:04 MST 2026 -->
+<!-- verification check Thu Feb 26 04:26:00 MST 2026 -->
