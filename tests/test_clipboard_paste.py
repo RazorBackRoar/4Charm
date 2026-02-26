@@ -67,7 +67,9 @@ def test_paste_format_keeps_raw_text_when_no_urls() -> None:
 
 def test_append_urls_to_input_preserves_existing_and_incoming_order() -> None:
     """Dropping URLs should append, never replace, and preserve drop ordering."""
-    existing = "https://boards.4chan.org/g/thread/300\nhttps://boards.4chan.org/v/thread/100"
+    existing = (
+        "https://boards.4chan.org/g/thread/300\nhttps://boards.4chan.org/v/thread/100"
+    )
     incoming = (
         "random text\nhttps://boards.4chan.org/a/thread/900\n"
         "https://boards.4chan.org/g/thread/200"
