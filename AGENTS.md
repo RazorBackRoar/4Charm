@@ -301,8 +301,8 @@ razorcheck
 - Use `razorpush 4Charm` (or `4charmpush`) for commit, version bump, tag, and push. Do not edit versions manually.
 - Build via `4charmbuild` or `razorbuild 4Charm`. **Never** run `universal-build.sh` directly.
 - Use `razoragents` to sync `AGENTS.md` tables (usually run by `razorpush`).
-- If you change `.razorcore` CLI commands or `pyproject.toml`, run `pip install -e ../.razorcore/`.
-- **Always run the app after making changes** (`python -m four_charm.main`) to visually verify updates before considering any task complete. This is mandatory—do not skip this step.
+- If you change `.razorcore` CLI commands or `pyproject.toml`, run `uv add --editable ../.razorcore`.
+- **Always run the app after making changes** (`uv run python -m four_charm.main`) to visually verify updates before considering any task complete. This is mandatory—do not skip this step.
 
 ---
 
@@ -329,8 +329,8 @@ safe_name = sanitize_filename(thread_title)  # ALWAYS use this
 **Fix:**
 
 ```bash
-cd /Users/home/Workspace/Apps
-pip install -e .razorcore/
+cd /Users/home/Workspace/Apps/4Charm
+uv add --editable ../.razorcore
 ```
 
 ### ❌ Downloads Complete but App Freezes
@@ -382,9 +382,9 @@ pytest tests/test_scraper.py::test_rate_limiting -v
 - **CodeGraphContext Docs:** `/Users/home/Workspace/Apps/.code-analysis/monorepo-analysis.md`
 - **CodeGraphContext Queries:** `/Users/home/Workspace/Apps/.code-analysis/essential-queries.md`
 - **Code Analysis Agent Rules:** `/Users/home/Workspace/Apps/.code-analysis/AGENTS.md`
-- **CLI Commands:** `/Users/home/Workspace/Apps/Guides/cli_commands.md`
-- **CLI Inventory (Full):** `/Users/home/Workspace/Apps/Guides/cli_inventory.md`
-- **4Charm Manual:** `/Users/home/Workspace/Apps/Guides/4charm_manual.md`
+- **CLI Commands:** `/Users/home/Workspace/Apps/Docs/cli_commands.md`
+- **CLI Inventory (Full):** `/Users/home/Workspace/Apps/Docs/cli_inventory.md`
+- **4Charm Manual:** `/Users/home/Workspace/Apps/Docs/4charm_manual.md`
 - **Engineering Hub:** `/Users/home/Workspace/Apps/AGENTS.md` (LEVEL 2)
 
 ---
