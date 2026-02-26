@@ -28,6 +28,7 @@ dependencies = [
     "certifi>=2023.7.22",
     "chardet>=5.0.0",
     "html5lib>=1.1",
+    "razorcore",
 ]
 
 # ============================================================================
@@ -197,3 +198,6 @@ extra-paths = [
     "/Users/home/Library/Python/3.13/lib/python/site-packages",
     "/opt/homebrew/lib/python3.13/site-packages",
 ]
+
+[tool.uv.sources]
+razorcore = { path = "../.razorcore", editable = true }
