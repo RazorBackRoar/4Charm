@@ -60,6 +60,7 @@ exclude = [
     ".pytest_cache",
     ".ruff_cache",
     ".agent",
+    ".ui-ux-pro-max",
     ".shared",
     "build",
     "dist",
