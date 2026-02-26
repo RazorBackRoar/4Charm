@@ -47,7 +47,7 @@ wheels = [
 
 [[package]]
 name = "four-charm"
-version = "4.9.1"
+version = "4.9.2"
 source = { editable = "." }
 dependencies = [
     { name = "certifi" },
