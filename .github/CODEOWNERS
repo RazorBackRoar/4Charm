@@ -1,1 +1,6 @@
+# Security-sensitive ownership map (updated 2026-02-27)
+# Add at least one additional human owner for each sensitive path.
+
+src/four_charm/core/scraper.py @RazorBackRoar
+
 * @RazorBackRoar
