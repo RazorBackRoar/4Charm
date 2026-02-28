@@ -3,7 +3,7 @@
 > Level 2 Document: Refer to /Users/home/Workspace/Apps/AGENTS.md (Level 1) for global SSOT standards.
 
 **Package:** `four_charm`
-**Version:** 4.10.9
+**Version:** 4.10.10
 **Context Level:** LEVEL 3 (Application-Specific)
 
 ---
