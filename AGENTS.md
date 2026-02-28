@@ -95,8 +95,8 @@ class FourChanScraper:
 **Limits:**
 
 - **Global:** 1 request/second to 4chan API
-- **Thread Fetching:** Use CDN URLs (`<<<https://a.4cdn.org/>>>`)
-- **Media Downloads:** Use media CDN (`<<<https://i.4cdn.org/>>>`)
+- **Thread Fetching:** Use CDN URLs (`<<https://a.4cdn.org/>>`)
+- **Media Downloads:** Use media CDN (`<<https://i.4cdn.org/>>`)
 
 ### 3. Download Queue Architecture (BaseWorker Required)
 
@@ -343,11 +343,13 @@ This project follows the RazorBackRoar workspace power-user architecture for mul
 **Control Plane:** AGENTS.md files serve as enforceable execution policies
 
 **Branch Isolation:** One task per branch with naming conventions:
+
 - `feat/task-name` - New features
 - `fix/issue-description` - Bug fixes
 - `refactor/component-name` - Code improvements
 
 **Task Contract:** Standard task structure includes:
+
 - Objective, scope, constraints, commands, deliverables
 - Evidence bundle with diffs, test outputs, benchmarks
 - Demo-like runbook for reproducible execution
@@ -374,6 +376,7 @@ quality_file src/four_charm/main.py
 ```
 
 **Available Scripts:**
+
 - `~/.skills/scripts/quality.sh` - Master script (test + lint + format)
 - `~/.skills/scripts/test.sh` - Pytest execution with coverage
 - `~/.skills/scripts/lint.sh` - Ruff linting + ty type checking
