@@ -95,8 +95,8 @@ class FourChanScraper:
 **Limits:**
 
 - **Global:** 1 request/second to 4chan API
-- **Thread Fetching:** Use CDN URLs (`<<<<https://a.4cdn.org/>>>>`)
-- **Media Downloads:** Use media CDN (`<<<<https://i.4cdn.org/>>>>`)
+- **Thread Fetching:** Use CDN URLs (`<<<<<https://a.4cdn.org/>>>>>`)
+- **Media Downloads:** Use media CDN (`<<<<<https://i.4cdn.org/>>>>>`)
 
 ### 3. Download Queue Architecture (BaseWorker Required)
 
