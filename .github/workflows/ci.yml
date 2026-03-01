@@ -32,4 +32,6 @@ jobs:
         run: uv sync
 
       - name: Run tests
-        run: uv run pytest --cov=four_charm --cov-report=term-missing --cov-report=xml
+        env:
+          PYTHONPATH: ${{ github.workspace }}/src
+        run: uv run --with pytest --with pytest-cov pytest --cov=four_charm --cov-report=term-missing --cov-report=xml

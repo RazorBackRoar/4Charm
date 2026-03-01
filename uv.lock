@@ -56,7 +56,7 @@ wheels = [
 
 [[package]]
 name = "four-charm"
-version = "4.10.13"
+version = "4.11.0"
 source = { editable = "." }
 dependencies = [
     { name = "certifi" },
@@ -239,7 +239,7 @@ wheels = [
 
 [[package]]
 name = "razorcore"
-version = "1.179.0"
+version = "1.183.0"
 source = { editable = "../.razorcore" }
 dependencies = [
     { name = "pyside6" },
