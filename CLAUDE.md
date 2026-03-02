@@ -9,7 +9,11 @@ See workspace policy: `/Users/home/Workspace/CLAUDE.md`
 4. Relevant `~/.skills/` guides
 
 ## Quick reference
+- **Purpose:** High-performance native macOS 4chan media downloader
 - Package: `four_charm` | Entry: `python -m four_charm.main`
 - Launch: `./run_preview.sh`
+- Build: `4charmbuild` or `razorbuild 4Charm` | Push: `4charmpush` or `razorpush 4Charm`
 - Toolchain: `uv sync` → `uv run ruff check .` → `uv run ty check src --python-version 3.13`
 - razorcore: editable dep at `../.razorcore`
+- **⚠️ Always use `sanitize_filename()` from razorcore.filesystem** — 4chan thread titles contain `/`, `:`, `\0` that cause `OSError` on macOS without sanitization
+- **⚠️ Rate limiting mandatory**: 1 req/s to 4chan API (`time.sleep(1)` between all requests); 429s require exponential backoff
