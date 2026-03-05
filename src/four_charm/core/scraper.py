@@ -1,5 +1,4 @@
 import logging
-import os
 import re
 import shutil
 import time
@@ -9,6 +8,7 @@ from urllib.parse import urlparse
 
 import requests
 from PySide6.QtCore import QMutex
+from razorcore.filesystem import sanitize_filename as _rc_sanitize_filename
 from requests.adapters import HTTPAdapter
 
 from four_charm.config import Config
@@ -295,46 +295,6 @@ class FourChanScraper:
             error_info["category"] = "unknown"
             return error_info
 
-    def sanitize_filename(self, filename: str) -> str:
-        """Enhanced filename sanitization with security improvements."""
-        sanitized = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "_", filename)
-        sanitized = re.sub(r"\s+", " ", sanitized).strip()
-
-        reserved_names = {
-            "CON",
-            "PRN",
-            "AUX",
-            "NUL",
-            "COM1",
-            "COM2",
-            "COM3",
-            "COM4",
-            "COM5",
-            "COM6",
-            "COM7",
-            "COM8",
-            "COM9",
-            "LPT1",
-            "LPT2",
-            "LPT3",
-            "LPT4",
-            "LPT5",
-            "LPT6",
-            "LPT7",
-            "LPT8",
-            "LPT9",
-        }
-        name_part = sanitized.split(".")[0].upper()
-        if name_part in reserved_names:
-            sanitized = f"_{sanitized}"
-
-        if len(sanitized) > Config.MAX_FILENAME_LENGTH:
-            name, ext = os.path.splitext(sanitized)
-            max_name_len = Config.MAX_FILENAME_LENGTH - len(ext)
-            sanitized = name[:max_name_len] + ext
-
-        return sanitized or "unnamed_file"
-
     def _sanitize_folder_component(self, name: str) -> str:
         sanitized = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "_", name or "")
         sanitized = re.sub(r"\s+", " ", sanitized).strip()
@@ -413,6 +373,20 @@ class FourChanScraper:
             logger.error(f"URL parsing error: {e}")
             return None
 
+    @staticmethod
+    def _extract_thread_title(posts: list[dict]) -> str | None:
+        """Extract thread title from the OP post. Returns None if no usable title."""
+        if not posts:
+            return None
+        op = posts[0]
+        if "sub" in op and op["sub"]:
+            return op["sub"]
+        if "com" in op and op["com"]:
+            text = re.sub(r"<[^>]+>", "", op["com"]).strip()
+            if text:
+                return re.sub(r"\s+", " ", text[:60]).strip()
+        return None
+
     def get_thread_data(self, board: str, thread_id: str) -> dict | None:
         """Fetch thread JSON data from 4chan API with adaptive rate limiting."""
         self.adaptive_delay()  # Adaptive rate limiting
@@ -421,25 +395,9 @@ class FourChanScraper:
             response = self.session.get(api_url, timeout=Config.API_TIMEOUT)
             response.raise_for_status()
             thread_data = response.json()
-            # Extract thread title from the first post (OP)
-            posts = thread_data.get("posts", [])
-            thread_title = None
-            if posts:
-                op = posts[0]
-                # First try "sub" field (subject/title)
-                if "sub" in op and op["sub"]:
-                    thread_title = op["sub"]
-                # Fallback to first part of comment if no subject
-                elif "com" in op and op["com"]:
-                    # Extract text from HTML comment, take first 60 chars
-                    text = re.sub(r"<[^>]+>", "", op["com"])  # Remove HTML tags
-                    text = text.strip()
-                    if text:
-                        # Use first 60 characters as title
-                        thread_title = text[:60].strip()
-                        # Remove newlines and extra spaces
-                        thread_title = re.sub(r"\s+", " ", thread_title)
-            thread_data["_thread_title"] = thread_title
+            thread_data["_thread_title"] = self._extract_thread_title(
+                thread_data.get("posts", [])
+            )
             self.adaptive_delay(success=True)  # Success, reduce delay
             return thread_data
         except Exception as e:
@@ -451,24 +409,9 @@ class FourChanScraper:
                     response = self.session.get(api_url, timeout=Config.API_TIMEOUT)
                     response.raise_for_status()
                     thread_data = response.json()
-                    posts = thread_data.get("posts", [])
-                    thread_title = None
-                    if posts:
-                        op = posts[0]
-                        # First try "sub" field (subject/title)
-                        if "sub" in op and op["sub"]:
-                            thread_title = op["sub"]
-                        # Fallback to first part of comment if no subject
-                        elif "com" in op and op["com"]:
-                            # Extract text from HTML comment, take first 60 chars
-                            text = re.sub(r"<[^>]+>", "", op["com"])  # Remove HTML tags
-                            text = text.strip()
-                            if text:
-                                # Use first 60 characters as title
-                                thread_title = text[:60].strip()
-                                # Remove newlines and extra spaces
-                                thread_title = re.sub(r"\s+", " ", thread_title)
-                    thread_data["_thread_title"] = thread_title
+                    thread_data["_thread_title"] = self._extract_thread_title(
+                        thread_data.get("posts", [])
+                    )
                     return thread_data
                 except Exception as e2:
                     logger.error(f"Retry failed for {api_url}: {e2}")
@@ -512,7 +455,7 @@ class FourChanScraper:
                     original_name = post.get("filename", "unnamed") + ext
                     # i.4cdn.org serves original, full-quality files (same as browsers download)
                     media_url = f"https://i.4cdn.org/{board}/{filename}"
-                    safe_filename = self.sanitize_filename(original_name)
+                    safe_filename = _rc_sanitize_filename(original_name)
                     media_file = MediaFile(
                         url=media_url,
                         filename=safe_filename,
