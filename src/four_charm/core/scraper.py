@@ -8,11 +8,11 @@ from urllib.parse import urlparse
 
 import requests
 from PySide6.QtCore import QMutex
-from razorcore.filesystem import sanitize_filename as _rc_sanitize_filename
 from requests.adapters import HTTPAdapter
 
 from four_charm.config import Config
 from four_charm.core.models import DownloadQueue, MediaFile
+from razorcore.filesystem import sanitize_filename as _rc_sanitize_filename
 
 
 logger = logging.getLogger("4Charm")
