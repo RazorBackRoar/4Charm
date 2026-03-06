@@ -582,7 +582,11 @@ class FourChanScraper:
 
                 try:
                     media_file.hash = media_file.calculate_hash(file_path)
-                    self.downloaded_hashes.add(media_file.hash)
+                    self.stats_mutex.lock()
+                    try:
+                        self.downloaded_hashes.add(media_file.hash)
+                    finally:
+                        self.stats_mutex.unlock()
                 except Exception as e:
                     logger.warning(
                         f"Could not calculate hash for {media_file.filename}: {e}"
