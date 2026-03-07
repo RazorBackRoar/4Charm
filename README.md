@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/RazorBackRoar/4Charm/actions/workflows/ci.yml/badge.svg)](https://github.com/RazorBackRoar/4Charm/actions/workflows/ci.yml)
 [![Ruff](https://github.com/RazorBackRoar/4Charm/actions/workflows/ruff.yml/badge.svg)](https://github.com/RazorBackRoar/4Charm/actions/workflows/ruff.yml)
-[![Version](https://img.shields.io/badge/version-4.10.2-blue.svg)](pyproject.toml)
+[![Version](https://img.shields.io/badge/version-4.11.5-blue.svg)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Apple
 Silicon](https://img.shields.io/badge/Apple%20Silicon-Native-brightgreen.svg)](https://support.apple.com/en-us/HT211814)
