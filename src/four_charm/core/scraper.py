@@ -8,10 +8,11 @@ from urllib.parse import urlparse
 
 import requests
 from PySide6.QtCore import QMutex
-from requests.adapters import HTTPAdapter
 
 from four_charm.config import Config
+from four_charm.core.dedup import DedupTracker
 from four_charm.core.models import DownloadQueue, MediaFile
+from four_charm.transport.session import create_session
 from razorcore.filesystem import sanitize_filename as _rc_sanitize_filename
 
 
@@ -36,28 +37,7 @@ class FourChanScraper:
     def __init__(self):
         # Don't set a default folder - let user choose on first download
         self.download_dir: Path | None = None
-        self.session = requests.Session()
-        adapter = HTTPAdapter(
-            pool_connections=Config.MAX_WORKERS * 2,
-            pool_maxsize=Config.MAX_WORKERS * 2,
-            max_retries=Config.MAX_RETRIES,
-            pool_block=False,
-        )
-        self.session.mount("http://", adapter)
-        self.session.mount("https://", adapter)
-        self.session.headers.update(
-            {
-                "User-Agent": Config.USER_AGENT,
-                "Accept": "application/json, text/html, */*",
-                "Accept-Encoding": "gzip, deflate",
-                "Accept-Language": "en-US,en;q=0.9",
-                "Cache-Control": "no-cache",
-                "Connection": "keep-alive",
-                "DNT": "1",
-                "Pragma": "no-cache",
-                "Upgrade-Insecure-Requests": "1",
-            }
-        )
+        self.session = create_session()
         self.stats: ScraperStats = {
             "total": 0,
             "downloaded": 0,
@@ -69,7 +49,7 @@ class FourChanScraper:
             "duplicates": 0,
             "current_speed": 0.0,
         }
-        self.downloaded_hashes = set()
+        self.dedup = DedupTracker()
         self.paused = False
         self.cancelled = False
         self.stats_mutex = QMutex()
@@ -106,16 +86,15 @@ class FourChanScraper:
         try:
             file_hash = media_file.calculate_hash(file_path)
 
-            # Protect hash set access with mutex to prevent race conditions
-            self.stats_mutex.lock()
-            try:
-                if file_hash in self.downloaded_hashes:
+            if self.dedup.check_and_register(file_hash):
+                # Hash already seen — duplicate of a file downloaded this session
+                self.stats_mutex.lock()
+                try:
                     self.stats["duplicates"] += 1
-                    self.download_queue.complete_download(media_file.url)
-                    return True
-                self.downloaded_hashes.add(file_hash)
-            finally:
-                self.stats_mutex.unlock()
+                finally:
+                    self.stats_mutex.unlock()
+                self.download_queue.complete_download(media_file.url)
+                return True
 
         except (OSError, PermissionError) as e:
             logger.warning(f"Hash calculation failed for {file_path}: {e}")
@@ -582,11 +561,7 @@ class FourChanScraper:
 
                 try:
                     media_file.hash = media_file.calculate_hash(file_path)
-                    self.stats_mutex.lock()
-                    try:
-                        self.downloaded_hashes.add(media_file.hash)
-                    finally:
-                        self.stats_mutex.unlock()
+                    self.dedup.add(media_file.hash)
                 except Exception as e:
                     logger.warning(
                         f"Could not calculate hash for {media_file.filename}: {e}"

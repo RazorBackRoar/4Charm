@@ -41,33 +41,10 @@ def test_build_session_base_name_limits_length_and_sanitizes():
     assert base  # non-empty
 
 
-def test_download_file_adds_hash_while_mutex_is_held(
+def test_download_file_registers_hash_in_dedup_tracker(
     monkeypatch, tmp_path: Path
 ) -> None:
-    """Successful downloads should add hashes while holding the stats mutex."""
-
-    class RecordingMutex:
-        def __init__(self) -> None:
-            self.depth = 0
-
-        def lock(self) -> None:
-            self.depth += 1
-
-        def unlock(self) -> None:
-            self.depth -= 1
-
-    class RecordingSet:
-        def __init__(self, mutex: RecordingMutex) -> None:
-            self.added_while_locked: list[bool] = []
-            self.values: set[str] = set()
-            self._mutex = mutex
-
-        def add(self, value: str) -> None:
-            self.added_while_locked.append(self._mutex.depth > 0)
-            self.values.add(value)
-
-        def __contains__(self, value: object) -> bool:
-            return value in self.values
+    """Successful downloads should register the file hash in the DedupTracker."""
 
     class FakeResponse:
         status_code = 200
@@ -80,10 +57,6 @@ def test_download_file_adds_hash_while_mutex_is_held(
 
     scraper = FourChanScraper()
     scraper.download_dir = tmp_path
-    mutex = RecordingMutex()
-    hashes = RecordingSet(mutex)
-    scraper.stats_mutex = mutex
-    scraper.downloaded_hashes = hashes
 
     media = MediaFile("https://i.4cdn.org/g/123.jpg", "123.jpg")
     monkeypatch.setattr(scraper, "check_disk_space", lambda required_mb=0: True)
@@ -91,5 +64,5 @@ def test_download_file_adds_hash_while_mutex_is_held(
     monkeypatch.setattr(media, "calculate_hash", lambda _path: "hash-123")
 
     assert scraper.download_file(media, "g-123") is True
-    assert hashes.values == {"hash-123"}
-    assert hashes.added_while_locked == [True]
+    # Hash should now be known to the dedup tracker
+    assert scraper.dedup.check_and_register("hash-123") is True
