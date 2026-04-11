@@ -16,13 +16,13 @@ include = ["four_charm*"]
 
 [project]
 name = "four-charm"
-version = "4.11.8"
+version = "4.12.0"
 description = "4Charm desktop app for bulk 4chan media downloads"
 requires-python = "==3.13.*"
 # WHY: Python 3.13.x is locked per IDE_CONTEXT.md requirements
 
 dependencies = [
-    "PySide6>=6.6.0",
+    "PySide6>=6.6.0,<7.0.0",
     "requests>=2.31.0",
     "urllib3>=2.0.0",
     "certifi>=2023.7.22",
