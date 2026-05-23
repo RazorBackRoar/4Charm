@@ -3,7 +3,7 @@
 # ============================================================================
 # This pyproject.toml follows RazorBackRoar workspace standards
 # Last Updated: 2026-01-28
-# Python Version: 3.13.x (STRICT LOCK - never upgrade to 3.14+)
+# Python Version: 3.14.x (STRICT LOCK - never upgrade)
 # ============================================================================
 
 [build-system]
@@ -18,8 +18,8 @@ include = ["four_charm*"]
 name = "four-charm"
 version = "4.12.0"
 description = "4Charm desktop app for bulk 4chan media downloads"
-requires-python = "==3.13.*"
-# WHY: Python 3.13.x is locked per IDE_CONTEXT.md requirements
+requires-python = "==3.14.*"
+# WHY: Strictly locked to Python 3.14
 
 dependencies = [
     "PySide6>=6.6.0,<7.0.0",
@@ -52,8 +52,6 @@ exclude = [
 [tool.ty.environment]
 extra-paths = [
     "src",
-    "/Users/home/Library/Python/3.13/lib/python/site-packages",
-    "/opt/homebrew/lib/python3.13/site-packages",
 ]
 
 [dependency-groups]

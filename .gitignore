@@ -30,6 +30,32 @@ pip-wheel-metadata/
 !4Charm.spec
 temp-dmg-*
 
+# Build staging and dist
+dist/
+Clean/
+
+# Release binaries — distribute via GitHub Releases
+*.dmg
+
+# Workspace symlinks — machine-local, do not commit
+skills
+.agent/
+.agents/
+
+# Session backups and local task files
+AGENTS.md.backup.*
+INSTRUCTIONS.md
+*task*.txt
+
+# Tooling caches
+.ruff_cache/
+.pytest_cache/
+.ty_cache/
+
+# IDE tool dirs
+.kiro/
+.codex-artifacts/
+
 # Virtual envs
 .venv/
 venv/
@@ -43,3 +69,10 @@ venv/
 !.env.example
 !.env.sample
 .security
+
+# Shared workspace content — machine-local
+.shared/
+
+# Backup files
+**/*.backup
+docs/*.backup

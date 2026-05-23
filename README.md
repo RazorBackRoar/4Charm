@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/RazorBackRoar/4Charm/actions/workflows/ci.yml/badge.svg)](https://github.com/RazorBackRoar/4Charm/actions/workflows/ci.yml)
 [![Ruff](https://github.com/RazorBackRoar/4Charm/actions/workflows/ruff.yml/badge.svg)](https://github.com/RazorBackRoar/4Charm/actions/workflows/ruff.yml)
-[![Version](https://img.shields.io/badge/version-4.11.7-blue.svg)](pyproject.toml)
+[![Version](https://img.shields.io/badge/version-4.12.0-blue.svg)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Apple
 Silicon](https://img.shields.io/badge/Apple%20Silicon-Native-brightgreen.svg)](https://support.apple.com/en-us/HT211814)
@@ -32,7 +32,11 @@ fail-safe resume, and zero duplicates.
 - 📂 **Smart Organization** – Automatic folder structure with WEBM separation
 - 🔄 **Fail-Safe Resume** – Automatically resumes interrupted downloads
 - 🔍 **Duplicate Prevention** – SHA-256 hashing prevents redownloading files
-- 🛡️ **Rate Limiting** – Adaptive throttling prevents IP bans
+- 🛡️ **Rate Limiting** – Adaptive throttling with exponential backoff prevents IP bans
+- ✅ **Download Verification** – MD5 checksum validation ensures file integrity
+- ⚡ **Optimized Performance** – 4x connection pooling for faster concurrent downloads
+- 📊 **Real-Time Progress** – Live bandwidth monitoring with ETA display
+- 💬 **Better Error Messages** – Clear, actionable error messages with suggested fixes
 - 🖥️ **Apple Silicon Native** – Optimized for M1/M2/M3 chips
 
 ---
@@ -68,7 +72,7 @@ This project uses `.razorcore` for build tooling.
 
 ### Prerequisites
 
-- Python 3.13
+- Python 3.14
 - macOS 10.13+
 
 ### Setup
@@ -76,7 +80,7 @@ This project uses `.razorcore` for build tooling.
 ```bash
 git clone https://github.com/RazorBackRoar/4Charm.git
 cd 4Charm
-uv venv --python 3.13
+uv venv --python 3.14
 uv sync
 uv add --editable ../.razorcore
 ```
@@ -84,11 +88,11 @@ uv add --editable ../.razorcore
 ### Build & Release
 
 ```bash
-## Build app and create DMG
+## Build app and create DMG without touching Git
 razorbuild 4Charm
 
-## Create release (auto-commits & tags)
-razorcore save 4Charm
+## Save/release only after explicit Git approval
+RAZORCORE_ALLOW_GIT_MUTATION=1 razorcore save 4Charm
 ```
 
 ---

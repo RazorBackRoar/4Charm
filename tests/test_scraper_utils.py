@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from four_charm.config import Config
+import four_charm.config as config
 from four_charm.core.models import MediaFile
 from four_charm.core.scraper import FourChanScraper
 
@@ -31,12 +31,12 @@ def test_parse_url_rejects_hostname_substring_spoof():
 def test_build_session_base_name_limits_length_and_sanitizes():
     """Ensure session base names are sanitized and length-limited."""
     scraper = FourChanScraper()
-    long_board = "a" * (Config.MAX_FOLDER_NAME_LENGTH + 10)
+    long_board = "a" * (config.MAX_FOLDER_NAME_LENGTH + 10)
     base = scraper.build_session_base_name(
         {"board": long_board, "type": "board", "thread_id": None}
     )
 
-    assert len(base) <= Config.MAX_FOLDER_NAME_LENGTH
+    assert len(base) <= config.MAX_FOLDER_NAME_LENGTH
     assert "/" not in base and "\\" not in base
     assert base  # non-empty
 

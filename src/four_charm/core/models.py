@@ -3,7 +3,7 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
-from four_charm.config import Config
+import four_charm.config as config
 
 
 logger = logging.getLogger("4Charm")
@@ -103,11 +103,14 @@ class MediaFile:
         self.download_speed = 0.0
         self.start_time: float | None = None
         self.hash: str | None = None
+        # MD5 verification fields
+        self.expected_md5: str | None = None  # From 4chan API 'md5' field
+        self.verified: bool = False  # Checksum verification status
 
     def calculate_hash(self, file_path: Path) -> str:
         """Calculate SHA256 hash of file for duplicate detection."""
         hash_sha256 = hashlib.sha256()
         with open(file_path, "rb") as f:
-            for chunk in iter(lambda: f.read(Config.CHUNK_SIZE), b""):
+            for chunk in iter(lambda: f.read(config.CHUNK_SIZE), b""):
                 hash_sha256.update(chunk)
         return hash_sha256.hexdigest()

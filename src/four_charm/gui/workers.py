@@ -6,7 +6,7 @@ from typing import Any
 
 from PySide6.QtCore import QObject, Signal
 
-from four_charm.config import Config
+import four_charm.config as config
 from four_charm.core.scraper import FourChanScraper
 
 
@@ -16,7 +16,7 @@ logger = logging.getLogger("4Charm")
 class _BaseDownloadWorker(QObject):
     """Shared download worker behavior for single and multi-URL flows."""
 
-    progress = Signal(int, int, str, float, str, int)
+    progress = Signal(int, int, str, float, str, int, float)  # Added ETA as 7th param
     log_message = Signal(str)
     finished = Signal(dict)
     speed_update = Signal(float)
@@ -74,7 +74,7 @@ class _BaseDownloadWorker(QObject):
     ) -> None:
         """Submit and process all download futures for this worker."""
         completed = 0
-        with ThreadPoolExecutor(max_workers=Config.MAX_WORKERS) as executor:
+        with ThreadPoolExecutor(max_workers=config.MAX_WORKERS) as executor:
             future_to_file = {
                 executor.submit(self.scraper.download_file, media_file, folder_name): (
                     media_file,
@@ -114,6 +114,17 @@ class _BaseDownloadWorker(QObject):
                     )
 
                 avg_speed = self._calculate_average_speed()
+
+                # Calculate ETA based on remaining files and current speed
+                remaining_files = total_files - completed
+                # Rough estimate: assume average file size based on downloaded so far
+                if completed > 0 and avg_speed > 0:
+                    avg_file_size_mb = self.scraper.stats["size_mb"] / completed
+                    remaining_mb = remaining_files * avg_file_size_mb
+                    eta = remaining_mb / avg_speed if avg_speed > 0 else 0.0
+                else:
+                    eta = 0.0
+
                 self.progress.emit(
                     completed,
                     total_files,
@@ -121,6 +132,7 @@ class _BaseDownloadWorker(QObject):
                     avg_speed,
                     thread_title,
                     thread_index,
+                    eta,
                 )
                 self.speed_update.emit(avg_speed)
 

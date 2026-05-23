@@ -56,8 +56,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import override
 
-from PySide6.QtCore import Qt, QThread, QTimer
+from PySide6.QtCore import QMimeData, Qt, QThread, QTimer
 from PySide6.QtGui import (
+    QCloseEvent,
     QDragEnterEvent,
     QDropEvent,
     QKeySequence,
@@ -77,6 +78,7 @@ from PySide6.QtWidgets import (
     QPlainTextEdit,
     QProgressBar,
     QPushButton,
+    QSizePolicy,
     QStatusBar,
     QTextEdit,
     QVBoxLayout,
@@ -88,6 +90,60 @@ from four_charm.gui.workers import MultiUrlDownloadWorker
 
 
 logger = logging.getLogger("4Charm")
+
+
+_URL_PATTERN = re.compile(r"https?://[^\s<>'\"]+")
+
+
+def _is_supported_4chan_url(url: str) -> bool:
+    return "boards.4chan.org" in url or "4channel.org" in url or "4chan.org" in url
+
+
+def _extract_supported_urls(text: str) -> list[str]:
+    """Return supported 4chan URLs from pasted or dropped text."""
+    urls = []
+    for match in _URL_PATTERN.findall(text):
+        url = match.rstrip(".,;:)]}")
+        if _is_supported_4chan_url(url):
+            urls.append(url)
+    return urls
+
+
+def _build_url_paste_text(
+    text_before_cursor: str, text_after_cursor: str, urls: list[str]
+) -> str:
+    paste_text = "\n".join(urls)
+    if text_before_cursor and not text_before_cursor.endswith("\n"):
+        paste_text = "\n" + paste_text
+    if text_after_cursor and not text_after_cursor.startswith("\n"):
+        paste_text += "\n"
+    return paste_text
+
+
+def _insert_url_lines(editor: QPlainTextEdit, urls: list[str]) -> None:
+    cursor = editor.textCursor()
+    existing_text = editor.toPlainText()
+    start = cursor.selectionStart()
+    end = cursor.selectionEnd()
+    paste_text = _build_url_paste_text(existing_text[:start], existing_text[end:], urls)
+    cursor.insertText(paste_text)
+    editor.setTextCursor(cursor)
+    editor.ensureCursorVisible()
+    QTimer.singleShot(0, editor.ensureCursorVisible)
+
+
+class UrlInputEdit(QPlainTextEdit):
+    """URL editor that normalizes pasted thread lists before insertion."""
+
+    @override
+    def insertFromMimeData(self, source: QMimeData) -> None:
+        if source.hasText():
+            urls = _extract_supported_urls(source.text())
+            if urls:
+                _insert_url_lines(self, urls)
+                return
+
+        super().insertFromMimeData(source)
 
 
 class MainWindow(QMainWindow):
@@ -114,9 +170,15 @@ class MainWindow(QMainWindow):
             /* Card Containers */
             QFrame#urlMasterContainer, QGroupBox {
                 border: 1px solid rgba(118, 230, 72, 0.2);
-                border-radius: 12px;
+                border-radius: 10px;
                 background-color: rgba(30, 30, 30, 0.4);
                 margin-top: 10px;
+            }
+
+            QFrame#editorSurface {
+                background-color: rgba(0, 0, 0, 0.24);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                border-radius: 8px;
             }
 
             QGroupBox::title {
@@ -148,9 +210,71 @@ class MainWindow(QMainWindow):
                 selection-background-color: rgba(118, 230, 72, 0.4);
             }
 
+            QPlainTextEdit#urlInput {
+                color: #f3f6f0;
+                padding: 10px 6px 10px 0px;
+            }
+
+            QPlainTextEdit#lineNumberGutter {
+                color: rgba(118, 230, 72, 0.62);
+                padding: 10px 0px;
+                selection-background-color: transparent;
+                selection-color: rgba(118, 230, 72, 0.62);
+            }
+
             QTextEdit#logView {
                 background-color: rgba(0, 0, 0, 0.2);
                 border-radius: 6px;
+            }
+
+            QScrollBar:vertical {
+                background: rgba(255, 255, 255, 0.04);
+                border: none;
+                border-radius: 5px;
+                width: 10px;
+                margin: 4px 2px 4px 0px;
+            }
+
+            QScrollBar::handle:vertical {
+                background: rgba(118, 230, 72, 0.42);
+                border-radius: 5px;
+                min-height: 28px;
+            }
+
+            QScrollBar::handle:vertical:hover {
+                background: rgba(118, 230, 72, 0.62);
+            }
+
+            QScrollBar::add-line:vertical,
+            QScrollBar::sub-line:vertical,
+            QScrollBar::add-page:vertical,
+            QScrollBar::sub-page:vertical {
+                background: transparent;
+                border: none;
+                height: 0px;
+            }
+
+            QScrollBar:horizontal {
+                background: rgba(255, 255, 255, 0.04);
+                border: none;
+                border-radius: 5px;
+                height: 10px;
+                margin: 0px 4px 2px 0px;
+            }
+
+            QScrollBar::handle:horizontal {
+                background: rgba(118, 230, 72, 0.36);
+                border-radius: 5px;
+                min-width: 28px;
+            }
+
+            QScrollBar::add-line:horizontal,
+            QScrollBar::sub-line:horizontal,
+            QScrollBar::add-page:horizontal,
+            QScrollBar::sub-page:horizontal {
+                background: transparent;
+                border: none;
+                width: 0px;
             }
 
             /* Progress Bar */
@@ -173,6 +297,7 @@ class MainWindow(QMainWindow):
                 font-size: 13px;
                 padding: 8px 16px;
                 border-radius: 8px;
+                min-height: 38px;
                 background-color: rgba(255, 255, 255, 0.05);
                 color: #ffffff;
                 font-weight: 600;
@@ -272,13 +397,15 @@ class MainWindow(QMainWindow):
         url_master_layout.addWidget(url_title)
 
         # Editor Area
-        editor_container = QWidget()
+        editor_container = QFrame()
+        editor_container.setObjectName("editorSurface")
         editor_layout = QHBoxLayout(editor_container)
-        editor_layout.setContentsMargins(15, 0, 15, 10)
-        editor_layout.setSpacing(10)
+        editor_layout.setContentsMargins(12, 8, 8, 8)
+        editor_layout.setSpacing(8)
 
         # Line numbers
         self.line_numbers = QPlainTextEdit()
+        self.line_numbers.setObjectName("lineNumberGutter")
         self.line_numbers.setReadOnly(True)
         self.line_numbers.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.line_numbers.setTextInteractionFlags(
@@ -288,14 +415,9 @@ class MainWindow(QMainWindow):
         self.line_numbers.setVerticalScrollBarPolicy(
             Qt.ScrollBarPolicy.ScrollBarAlwaysOff
         )
-        self.line_numbers.setFixedWidth(40)
+        self.line_numbers.setFixedWidth(42)
+        self.line_numbers.setMinimumHeight(280)
         self.line_numbers.document().setDocumentMargin(0)
-        self.line_numbers.setStyleSheet(
-            "color: rgba(118, 230, 72, 0.5); "
-            "padding: 12px 0px; "
-            "selection-background-color: transparent; "
-            "selection-color: rgba(118, 230, 72, 0.5);"
-        )
         self.line_numbers.setPlainText("1")
 
         fmt = QTextBlockFormat()
@@ -310,13 +432,22 @@ class MainWindow(QMainWindow):
         editor_layout.addWidget(self.line_numbers)
 
         # URL input
-        self.url_input = QPlainTextEdit()
+        self.url_input = UrlInputEdit()
+        self.url_input.setObjectName("urlInput")
         self.url_input.setFrameStyle(QFrame.Shape.NoFrame)
         self.url_input.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
+        self.url_input.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOn
+        )
+        self.url_input.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
+        )
         self.url_input.setPlaceholderText("Paste thread URLs here...")
-        self.url_input.setFixedHeight(120)
-        self.url_input.document().setDocumentMargin(0)
-        self.url_input.setStyleSheet("padding: 12px 0px;")
+        self.url_input.setMinimumHeight(280)
+        self.url_input.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+        )
+        self.url_input.document().setDocumentMargin(2)
 
         # Match line height with line_numbers
         cursor = self.url_input.textCursor()
@@ -425,6 +556,7 @@ class MainWindow(QMainWindow):
                 self.url_input.verticalScrollBar().value()
             )
         )
+        self.url_input.cursorPositionChanged.connect(self._schedule_url_cursor_follow)
         self.start_cancel_btn.clicked.connect(self.handle_start_cancel_click)
         self.pause_resume_btn.clicked.connect(self.toggle_pause_resume)
         self.clear_btn.clicked.connect(self.clear_urls)
@@ -476,6 +608,14 @@ class MainWindow(QMainWindow):
         current_scroll = self.url_input.verticalScrollBar().value()
         self.line_numbers.verticalScrollBar().setValue(current_scroll)
 
+    def _keep_url_cursor_visible(self):
+        """Keep the URL editor scrolled to the active cursor after layout updates."""
+        self.url_input.ensureCursorVisible()
+        self._sync_scroll_bars()
+
+    def _schedule_url_cursor_follow(self):
+        QTimer.singleShot(0, self._keep_url_cursor_visible)
+
     def validate_urls(self):
         """Validate URLs in real-time and update line numbers."""
         if getattr(self, "_validating", False):
@@ -509,12 +649,8 @@ class MainWindow(QMainWindow):
             self.line_numbers.setTextCursor(cursor)
 
         # 3. Keeping Everything Synchronized
-        # Ensure the cursor is always visible (especially when adding lines)
-        self.url_input.ensureCursorVisible()
-
-        # We use a 0ms timer to defer scroll sync until the widget has processed the text update.
-        # This prevents the scrollbar from being 'capped' at the old maximum range when adding lines.
-        QTimer.singleShot(0, self._sync_scroll_bars)
+        # Defer cursor-follow until the editor has processed line and scroll range changes.
+        self._schedule_url_cursor_follow()
 
         # --- END OF SYNC LOGIC ---
 
@@ -718,16 +854,30 @@ class MainWindow(QMainWindow):
         speed: float,
         thread_name: str = "",
         thread_index: int = 0,
+        eta: float = 0.0,
     ):
         if total > 0:
             self.progress_bar.setValue(int((current / total) * 100))
+
+            # Format ETA if available
+            eta_str = ""
+            if eta > 0:
+                if eta < 60:
+                    eta_str = f" - ETA: {int(eta)}s"
+                elif eta < 3600:
+                    eta_str = f" - ETA: {int(eta / 60)}m {int(eta % 60)}s"
+                else:
+                    hours = int(eta / 3600)
+                    minutes = int((eta % 3600) / 60)
+                    eta_str = f" - ETA: {hours}h {minutes}m"
+
             if thread_name and thread_index > 0:
                 self.progress_label.setText(
-                    f"Progress: {current}/{total} files - [{thread_index}] {thread_name} - {filename}"
+                    f"Progress: {current}/{total} files - [{thread_index}] {thread_name} - {filename}{eta_str}"
                 )
             else:
                 self.progress_label.setText(
-                    f"Progress: {current}/{total} files - {filename}"
+                    f"Progress: {current}/{total} files - {filename}{eta_str}"
                 )
 
     def update_speed(self, speed: float):
@@ -803,42 +953,51 @@ class MainWindow(QMainWindow):
         if not text:
             return
 
-        # Extract URLs using regex
-        urls = re.findall(r"https?://[^\s]+", text)
-        valid_urls = [
-            url for url in urls if "boards.4chan.org" in url or "4chan.org" in url
-        ]
+        valid_urls = _extract_supported_urls(text)
 
         if valid_urls:
-            # If we found valid URLs, paste them nicely formatted
-            # Join with newlines
-            paste_text = "\n".join(valid_urls) + "\n"
-
-            cursor = self.url_input.textCursor()
-            # If we're not at the start of a line, add a newline first
-            if cursor.positionInBlock() > 0:
-                paste_text = "\n" + paste_text
-
-            cursor.insertText(paste_text)
-            self.url_input.setTextCursor(cursor)
+            _insert_url_lines(self.url_input, valid_urls)
         else:
             # Fallback: Normal paste if no valid URLs found
             self.url_input.paste()
 
         # Ensure everything is visible and validated
-        self.url_input.ensureCursorVisible()
+        self._schedule_url_cursor_follow()
         self.validate_urls()
-
-        # Scroll to bottom to show new entries
-        scrollbar = self.url_input.verticalScrollBar()
-        if scrollbar:
-            scrollbar.setValue(scrollbar.maximum())
 
     def cancel_or_close(self):
         if self.download_thread and self.download_thread.isRunning():
             self.cancel_download()
         else:
             self.close()
+
+    @override
+    def closeEvent(self, event: QCloseEvent) -> None:
+        """Ensure complete cleanup when window is closed."""
+        logger.info("MainWindow closing - performing complete cleanup")
+
+        # Cancel any active downloads
+        if self.download_thread and self.download_thread.isRunning():
+            logger.info("Cancelling active downloads")
+            self.cancel_download()
+
+        # Wait for thread to finish (with timeout)
+        if self.download_thread:
+            logger.info("Waiting for download thread to finish")
+            self.download_thread.quit()
+            if not self.download_thread.wait(3000):  # 3 second timeout
+                logger.warning("Thread did not finish gracefully, terminating")
+                self.download_thread.terminate()
+                self.download_thread.wait(1000)  # Final wait for termination
+
+        # Force garbage collection
+        import gc
+
+        gc.collect()
+
+        # Accept the close event
+        event.accept()
+        logger.info("MainWindow cleanup complete")
 
     @override
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:
@@ -848,14 +1007,11 @@ class MainWindow(QMainWindow):
     @override
     def dropEvent(self, event: QDropEvent) -> None:
         text = event.mimeData().text().strip()
-        urls = re.findall(r"https?://[^\s]+", text)
-        valid_urls = [
-            url for url in urls if "boards.4chan.org" in url or "4chan.org" in url
-        ]
+        valid_urls = _extract_supported_urls(text)
         if valid_urls:
-            # Just add URLs, no numbering
-            self.url_input.setPlainText("\n".join(valid_urls))
+            _insert_url_lines(self.url_input, valid_urls)
             self.validate_urls()
+            self._schedule_url_cursor_follow()
 
 
 if __name__ == "__main__":

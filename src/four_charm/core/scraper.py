@@ -9,7 +9,8 @@ from urllib.parse import urlparse
 import requests
 from PySide6.QtCore import QMutex
 
-from four_charm.config import Config
+import four_charm.config as config
+from four_charm.core.bandwidth import BandwidthMonitor
 from four_charm.core.dedup import DedupTracker
 from four_charm.core.models import DownloadQueue, MediaFile
 from four_charm.transport.session import create_session
@@ -53,8 +54,9 @@ class FourChanScraper:
         self.paused = False
         self.cancelled = False
         self.stats_mutex = QMutex()
-        self.current_delay = Config.BASE_DELAY
+        self.current_delay = config.BASE_DELAY
         self.download_queue = DownloadQueue()
+        self.bandwidth_monitor = BandwidthMonitor(config.BANDWIDTH_WINDOW_SECONDS)
 
     def _prepare_download_path(
         self, media_file: MediaFile, url_folder_name: str | None
@@ -191,10 +193,10 @@ class FourChanScraper:
     ) -> bool:
         """Handle retry bookkeeping. Returns True when a retry should occur."""
         logger.warning(
-            f"Download attempt {attempt + 1}/{Config.MAX_RETRIES} failed for {media_file.filename} "
+            f"Download attempt {attempt + 1}/{config.MAX_RETRIES} failed for {media_file.filename} "
             f"(URL: {media_file.url}): {error}"
         )
-        is_last_attempt = attempt == Config.MAX_RETRIES - 1
+        is_last_attempt = attempt == config.MAX_RETRIES - 1
         if is_last_attempt:
             logger.error(
                 f"Download failed permanently for {media_file.filename} "
@@ -203,21 +205,175 @@ class FourChanScraper:
             self._record_failed_download(media_file.url, error)
             return False
 
-        time.sleep(2**attempt)
+        # Use exponential backoff with jitter
+        delay = self.calculate_retry_delay(attempt)
+        logger.info(f"Retrying {media_file.filename} after {delay:.1f}s delay")
+        time.sleep(delay)
         return True
 
     def adaptive_delay(self, success=True):
         """Adaptive rate limiting based on success/failure."""
         if success:
-            self.current_delay = max(Config.BASE_DELAY, self.current_delay / 1.1)
+            self.current_delay = max(config.BASE_DELAY, self.current_delay / 1.1)
         else:
             self.current_delay = min(
-                Config.MAX_DELAY, self.current_delay * Config.BACKOFF_MULTIPLIER
+                config.MAX_DELAY, self.current_delay * config.BACKOFF_MULTIPLIER
             )
         time.sleep(self.current_delay)
 
-    def handle_network_error(self, error, url, context=""):
-        """Handle different types of network errors with appropriate responses."""
+    def calculate_retry_delay(
+        self, attempt: int, base_delay: float | None = None
+    ) -> float:
+        """Calculate exponential backoff delay with jitter.
+
+        Args:
+            attempt: Retry attempt number (0-indexed)
+            base_delay: Base delay in seconds (defaults to config.BASE_RETRY_DELAY)
+
+        Returns:
+            Delay in seconds with jitter applied
+        """
+        import random
+
+        if base_delay is None:
+            base_delay = config.BASE_RETRY_DELAY
+
+        # Exponential: 2^attempt * base_delay
+        exponential_delay = (2**attempt) * base_delay
+
+        # Cap at maximum
+        capped_delay = min(exponential_delay, config.MAX_RETRY_DELAY)
+
+        # Add jitter: 0 to 1 second to prevent thundering herd
+        jitter = random.uniform(0, 1)
+
+        return capped_delay + jitter
+
+    def select_chunk_size(self, file_size: int) -> int:
+        """Select optimal chunk size based on file size.
+
+        Args:
+            file_size: Total file size in bytes
+
+        Returns:
+            Chunk size in bytes (8KB, 64KB, or 256KB)
+        """
+        threshold_10mb, threshold_100mb = config.ADAPTIVE_CHUNK_THRESHOLDS
+        chunk_8kb, chunk_64kb, chunk_256kb = config.CHUNK_SIZES
+
+        if file_size < threshold_10mb:  # < 10MB
+            return chunk_8kb  # 8KB
+        elif file_size < threshold_100mb:  # < 100MB
+            return chunk_64kb  # 64KB
+        else:  # >= 100MB
+            return chunk_256kb  # 256KB
+
+    def format_error_message(self, error: Exception, context: dict) -> str:
+        """Format user-friendly error message with suggested fixes.
+
+        Args:
+            error: The exception that occurred
+            context: Dict with 'url', 'filename', 'timeout', 'path', etc.
+
+        Returns:
+            Formatted error message with actionable guidance
+        """
+        context.get("url", "unknown")
+        filename = context.get("filename", "file")
+
+        if isinstance(error, requests.exceptions.ConnectionError):
+            return f"Connection failed for {filename}. Check your internet connection."
+
+        elif isinstance(error, requests.exceptions.Timeout):
+            timeout = context.get("timeout", "unknown")
+            return f"Download timed out after {timeout}s for {filename}. The server may be slow or unresponsive."
+
+        elif isinstance(error, requests.exceptions.HTTPError):
+            status = getattr(error.response, "status_code", 0)
+
+            if status == 403:
+                return f"Access denied for {filename}. The file may have been deleted or is no longer available."
+            elif status == 404:
+                return f"File not found: {filename}. The thread may have been archived or deleted."
+            elif status == 429:
+                delay = context.get("retry_delay", "unknown")
+                return f"Rate limited by server for {filename}. Waiting {delay}s before retry."
+            else:
+                return f"HTTP {status} error for {filename}. {str(error)}"
+
+        elif isinstance(error, OSError):
+            error_str = str(error)
+            if "No space left" in error_str or "Disk quota exceeded" in error_str:
+                required = context.get("required_mb", "unknown")
+                available = context.get("available_mb", "unknown")
+                return f"Insufficient disk space. Need {required}MB, have {available}MB free."
+            elif "Permission denied" in error_str:
+                path = context.get("path", "unknown")
+                return f"Cannot write to {path}. Check folder permissions."
+            else:
+                return f"File system error for {filename}: {str(error)}"
+
+        else:
+            return f"Error downloading {filename}: {str(error)}"
+
+    def verify_download(self, file_path: Path, media_file: MediaFile) -> bool:
+        """Verify downloaded file integrity using MD5 checksum and size.
+
+        Args:
+            file_path: Path to downloaded file
+            media_file: MediaFile with expected checksums
+
+        Returns:
+            True if verification passed, False otherwise
+        """
+        import hashlib
+
+        # Check file exists and has content
+        if not file_path.exists() or file_path.stat().st_size == 0:
+            logger.error(f"Verification failed: {file_path} is empty or missing")
+            return False
+
+        # Verify size if available
+        if media_file.size and media_file.size > 0:
+            actual_size = file_path.stat().st_size
+            if actual_size != media_file.size:
+                logger.error(
+                    f"Size mismatch for {media_file.filename}: "
+                    f"expected {media_file.size}, got {actual_size}"
+                )
+                return False
+
+        # Verify MD5 if available
+        if media_file.expected_md5:
+            md5_hash = hashlib.md5()
+            with open(file_path, "rb") as f:
+                for chunk in iter(lambda: f.read(65536), b""):
+                    md5_hash.update(chunk)
+
+            actual_md5 = md5_hash.hexdigest()
+            # 4chan API returns base64-encoded MD5, we need to decode it
+            import base64
+
+            try:
+                expected_md5_hex = base64.b64decode(media_file.expected_md5).hex()
+            except Exception:
+                # If decoding fails, assume it's already hex
+                expected_md5_hex = media_file.expected_md5
+
+            if actual_md5 != expected_md5_hex:
+                logger.error(
+                    f"MD5 mismatch for {media_file.filename}: "
+                    f"expected {expected_md5_hex}, got {actual_md5}"
+                )
+                return False
+
+            logger.info(f"MD5 verified for {media_file.filename}")
+
+        media_file.verified = True
+        return True
+
+    def handle_network_error(self, error, url, context="", filename=""):
+        """Handle different types of network errors with user-friendly messages."""
         error_info = {
             "type": type(error).__name__,
             "message": str(error),
@@ -225,16 +381,30 @@ class FourChanScraper:
             "context": context,
         }
 
+        # Build context for error formatting
+        error_context = {
+            "url": url,
+            "filename": filename or url.split("/")[-1],
+            "timeout": config.DOWNLOAD_TIMEOUT[1]
+            if isinstance(error, requests.exceptions.Timeout)
+            else None,
+        }
+
+        # Get user-friendly message
+        friendly_message = self.format_error_message(error, error_context)
+
         if isinstance(error, requests.exceptions.ConnectionError):
-            logger.error(f"Connection error {context} for {url}: {str(error)}")
+            logger.error(friendly_message)
             self.adaptive_delay(success=False)
             error_info["category"] = "connection"
+            error_info["friendly_message"] = friendly_message
             return error_info
 
         elif isinstance(error, requests.exceptions.Timeout):
-            logger.error(f"Timeout error {context} for {url}: {str(error)}")
+            logger.error(friendly_message)
             self.adaptive_delay(success=False)
             error_info["category"] = "timeout"
+            error_info["friendly_message"] = friendly_message
             return error_info
 
         elif isinstance(error, requests.exceptions.HTTPError):
@@ -242,24 +412,27 @@ class FourChanScraper:
             error_info["status_code"] = status_code
 
             if status_code == 429:  # Rate limited
-                logger.warning(f"Rate limited by server for {url}, increasing delay")
-                self.current_delay = min(Config.MAX_DELAY, self.current_delay * 2)
+                error_context["retry_delay"] = f"{self.current_delay * 2:.1f}"
+                friendly_message = self.format_error_message(error, error_context)
+                logger.warning(friendly_message)
+                self.current_delay = min(config.MAX_DELAY, self.current_delay * 2)
                 time.sleep(self.current_delay)
                 error_info["category"] = "rate_limited"
+                error_info["friendly_message"] = friendly_message
                 return error_info
 
             elif status_code in [403, 404]:
-                logger.error(f"Access denied or not found for {url}: {status_code}")
+                logger.error(friendly_message)
                 self.adaptive_delay(success=False)
                 error_info["category"] = "access"
+                error_info["friendly_message"] = friendly_message
                 return error_info
 
             else:
-                logger.error(
-                    f"HTTP error {status_code} {context} for {url}: {str(error)}"
-                )
+                logger.error(friendly_message)
                 self.adaptive_delay(success=False)
                 error_info["category"] = "http"
+                error_info["friendly_message"] = friendly_message
                 return error_info
 
         elif isinstance(error, requests.exceptions.TooManyRedirects):
@@ -290,8 +463,8 @@ class FourChanScraper:
         else:
             base_name = board or "4chan"
         base_name = self._sanitize_folder_component(base_name)
-        if len(base_name) > Config.MAX_FOLDER_NAME_LENGTH:
-            base_name = base_name[: Config.MAX_FOLDER_NAME_LENGTH]
+        if len(base_name) > config.MAX_FOLDER_NAME_LENGTH:
+            base_name = base_name[: config.MAX_FOLDER_NAME_LENGTH]
         base_name = base_name.rstrip("-_ ")
         return base_name or "session"
 
@@ -304,8 +477,8 @@ class FourChanScraper:
             folder_name = self._sanitize_folder_component(thread_title)
 
             # Truncate if too long (keep all words, just shorten if needed)
-            if len(folder_name) > Config.MAX_FOLDER_NAME_LENGTH:
-                folder_name = folder_name[: Config.MAX_FOLDER_NAME_LENGTH].rstrip("-_ ")
+            if len(folder_name) > config.MAX_FOLDER_NAME_LENGTH:
+                folder_name = folder_name[: config.MAX_FOLDER_NAME_LENGTH].rstrip("-_ ")
             # Only return if we have a valid title
             if folder_name:
                 return folder_name
@@ -320,7 +493,7 @@ class FourChanScraper:
         try:
             free_space_bytes = shutil.disk_usage(self.download_dir).free
             free_space_mb = free_space_bytes / (1024 * 1024)
-            return free_space_mb > (Config.MIN_FREE_SPACE_MB + required_mb)
+            return free_space_mb > (config.MIN_FREE_SPACE_MB + required_mb)
         except Exception as e:
             logger.warning(f"Could not check disk space: {e}")
             return True
@@ -371,7 +544,7 @@ class FourChanScraper:
         self.adaptive_delay()  # Adaptive rate limiting
         api_url = f"https://a.4cdn.org/{board}/thread/{thread_id}.json"
         try:
-            response = self.session.get(api_url, timeout=Config.API_TIMEOUT)
+            response = self.session.get(api_url, timeout=config.API_TIMEOUT)
             response.raise_for_status()
             thread_data = response.json()
             thread_data["_thread_title"] = self._extract_thread_title(
@@ -384,8 +557,8 @@ class FourChanScraper:
             if error_info.get("category") == "rate_limited":
                 # Retry once after rate limit handling
                 try:
-                    time.sleep(Config.RETRY_DELAY)
-                    response = self.session.get(api_url, timeout=Config.API_TIMEOUT)
+                    time.sleep(config.RETRY_DELAY)
+                    response = self.session.get(api_url, timeout=config.API_TIMEOUT)
                     response.raise_for_status()
                     thread_data = response.json()
                     thread_data["_thread_title"] = self._extract_thread_title(
@@ -402,7 +575,7 @@ class FourChanScraper:
         self.adaptive_delay()  # Adaptive rate limiting
         api_url = f"https://a.4cdn.org/{board}/catalog.json"
         try:
-            response = self.session.get(api_url, timeout=Config.API_TIMEOUT)
+            response = self.session.get(api_url, timeout=config.API_TIMEOUT)
             response.raise_for_status()
             catalog_data = response.json()
             self.adaptive_delay(success=True)  # Success, reduce delay
@@ -412,8 +585,8 @@ class FourChanScraper:
             if error_info.get("category") == "rate_limited":
                 # Retry once after rate limit handling
                 try:
-                    time.sleep(Config.RETRY_DELAY)
-                    response = self.session.get(api_url, timeout=Config.API_TIMEOUT)
+                    time.sleep(config.RETRY_DELAY)
+                    response = self.session.get(api_url, timeout=config.API_TIMEOUT)
                     response.raise_for_status()
                     return response.json()
                 except Exception as e2:
@@ -429,7 +602,7 @@ class FourChanScraper:
         for post in posts:
             if "tim" in post and "ext" in post:
                 ext = post["ext"].lower()
-                if ext in Config.MEDIA_EXTENSIONS:
+                if ext in config.MEDIA_EXTENSIONS:
                     filename = f"{post['tim']}{ext}"
                     original_name = post.get("filename", "unnamed") + ext
                     # i.4cdn.org serves original, full-quality files (same as browsers download)
@@ -444,6 +617,9 @@ class FourChanScraper:
                     # Store file size from API if available (for quality verification)
                     if "fsize" in post:
                         media_file.size = post["fsize"]
+                    # Store MD5 checksum from API if available (for integrity verification)
+                    if "md5" in post:
+                        media_file.expected_md5 = post["md5"]
                     media_files.append(media_file)
         return media_files
 
@@ -479,7 +655,7 @@ class FourChanScraper:
                     thread_media, _thread_title = self.scrape_thread(board, thread_id)
                     media_files.extend(thread_media)
                     threads_processed += 1
-                    time.sleep(Config.CATALOG_SCRAPE_DELAY)
+                    time.sleep(config.CATALOG_SCRAPE_DELAY)
         return media_files
 
     def download_file(
@@ -498,7 +674,7 @@ class FourChanScraper:
         if not self._ensure_active_download(media_file.url):
             return False
 
-        for attempt in range(Config.MAX_RETRIES):
+        for attempt in range(config.MAX_RETRIES):
             try:
                 file_path, _save_dir = self._prepare_download_path(
                     media_file, url_folder_name
@@ -523,7 +699,7 @@ class FourChanScraper:
                     media_file.url,
                     headers=headers,
                     stream=True,
-                    timeout=Config.DOWNLOAD_TIMEOUT,
+                    timeout=config.DOWNLOAD_TIMEOUT,
                     allow_redirects=True,
                 )
 
@@ -531,10 +707,16 @@ class FourChanScraper:
                     response, file_path, existing_size
                 )
 
+                # Select optimal chunk size based on file size
+                chunk_size = self.select_chunk_size(total_size)
+                logger.debug(
+                    f"Using {chunk_size} byte chunks for {media_file.filename} ({total_size} bytes)"
+                )
+
                 downloaded_size = existing_size
 
                 with open(file_path, mode) as f:
-                    for chunk in response.iter_content(chunk_size=Config.CHUNK_SIZE):
+                    for chunk in response.iter_content(chunk_size=chunk_size):
                         if not self._ensure_active_download(media_file.url, file_path):
                             return False
 
@@ -542,7 +724,11 @@ class FourChanScraper:
                             continue
 
                         f.write(chunk)
-                        downloaded_size += len(chunk)
+                        chunk_len = len(chunk)
+                        downloaded_size += chunk_len
+
+                        # Record bandwidth progress
+                        self.bandwidth_monitor.record_progress(chunk_len)
 
                         elapsed = time.time() - media_file.start_time
                         if elapsed > 0:
@@ -552,12 +738,28 @@ class FourChanScraper:
 
                         if progress_callback and total_size > 0:
                             progress = (downloaded_size / total_size) * 100
-                            progress_callback(progress, media_file.download_speed)
+                            current_speed = self.bandwidth_monitor.get_current_speed()
+                            bytes_remaining = total_size - downloaded_size
+                            eta = self.bandwidth_monitor.calculate_eta(bytes_remaining)
+                            # Call with backward-compatible signature (speed only, eta as optional 3rd param)
+                            try:
+                                progress_callback(progress, current_speed, eta)
+                            except TypeError:
+                                # Fallback for old signature (progress, speed)
+                                progress_callback(progress, current_speed)
 
                 file_size = file_path.stat().st_size
                 if file_size == 0:
                     file_path.unlink(missing_ok=True)
                     raise Exception("Downloaded file is empty")
+
+                # Verify download integrity (MD5 and size check)
+                if not self.verify_download(file_path, media_file):
+                    logger.warning(
+                        f"Verification failed for {media_file.filename}, deleting and retrying"
+                    )
+                    file_path.unlink(missing_ok=True)
+                    raise Exception("Download verification failed")
 
                 try:
                     media_file.hash = media_file.calculate_hash(file_path)

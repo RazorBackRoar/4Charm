@@ -81,7 +81,19 @@ def main() -> None:
 
     window = MainWindow()
     window.show()
-    sys.exit(app.exec())
+
+    # Ensure complete cleanup on exit
+    exit_code = app.exec()
+
+    # Force cleanup of all resources
+    app.deleteLater()
+
+    # Force garbage collection
+    import gc
+
+    gc.collect()
+
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":

@@ -5,6 +5,9 @@
 We follow a strict feature branch workflow to ensure the stability of the `main`
 branch.
 
+Agent note: automated agents must not create branches, commit, push, open PRs,
+or delete branches unless the user explicitly asks for that Git action.
+
 ### The `main` Branch
 
 - **Status:** Protected.
