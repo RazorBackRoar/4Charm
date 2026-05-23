@@ -1,13 +1,9 @@
 # 4Charm
 
-> Workspace context source: `/Users/home/Workspace/Apps/.code-analysis/` (`AGENTS.md`, `monorepo-analysis.md`, `essential-queries.md`).
-
 [![CI](https://github.com/RazorBackRoar/4Charm/actions/workflows/ci.yml/badge.svg)](https://github.com/RazorBackRoar/4Charm/actions/workflows/ci.yml)
-[![Ruff](https://github.com/RazorBackRoar/4Charm/actions/workflows/ruff.yml/badge.svg)](https://github.com/RazorBackRoar/4Charm/actions/workflows/ruff.yml)
 [![Version](https://img.shields.io/badge/version-4.12.0-blue.svg)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Apple
-Silicon](https://img.shields.io/badge/Apple%20Silicon-Native-brightgreen.svg)](https://support.apple.com/en-us/HT211814)
+[![Apple Silicon](https://img.shields.io/badge/Apple%20Silicon-arm64-brightgreen.svg)](https://support.apple.com/en-us/HT211814)
 [![PySide6](https://img.shields.io/badge/PySide6-Qt6-orange.svg)](https://doc.qt.io/qtforpython/)
 
 ```text
@@ -15,89 +11,80 @@ Silicon](https://img.shields.io/badge/Apple%20Silicon-Native-brightgreen.svg)](h
 ██║  ██║██╔════╝██║  ██║██╔══██╗██╔══██╗████╗ ████║
 ███████║██║     ███████║███████║██████╔╝██╔████╔██║
 ╚════██║██║     ██╔══██║██╔══██║██╔══██╗██║╚██╔╝██║
-██║╚██████╗██║  ██║██║  ██║██║  ██║██║ ╚═╝ ██║
-╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝
+     ██║╚██████╗██║  ██║██║  ██║██║  ██║██║ ╚═╝ ██║
+     ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝
 ```
 
-> **High-performance native macOS 4chan media downloader**
-> Download entire threads, catalogs, or boards with intelligent organization,
-fail-safe resume, and zero duplicates.
+> **High-performance native macOS 4chan media downloader.**
+> Download entire threads, catalogs, or boards with intelligent organization, fail-safe resume, and zero duplicates.
 
 ---
 
-## ✨ Features
+## Features
 
-- 🚀 **Performance** – Native macOS app built with PySide6 (Qt6)
-- 🧵 **Bulk Downloading** – Queue up to 20 threads/catalogs simultaneously
-- 📂 **Smart Organization** – Automatic folder structure with WEBM separation
-- 🔄 **Fail-Safe Resume** – Automatically resumes interrupted downloads
-- 🔍 **Duplicate Prevention** – SHA-256 hashing prevents redownloading files
-- 🛡️ **Rate Limiting** – Adaptive throttling with exponential backoff prevents IP bans
-- ✅ **Download Verification** – MD5 checksum validation ensures file integrity
-- ⚡ **Optimized Performance** – 4x connection pooling for faster concurrent downloads
-- 📊 **Real-Time Progress** – Live bandwidth monitoring with ETA display
-- 💬 **Better Error Messages** – Clear, actionable error messages with suggested fixes
-- 🖥️ **Apple Silicon Native** – Optimized for M1/M2/M3 chips
+- **Bulk Downloading** — queue up to 20 threads or catalogs simultaneously
+- **Smart Organization** — automatic folder structure with WEBM separation
+- **Fail-Safe Resume** — automatically resumes interrupted downloads
+- **Duplicate Prevention** — SHA-256 hashing prevents re-downloading files
+- **Rate Limiting** — adaptive throttling with exponential backoff prevents IP bans
+- **Download Verification** — MD5 checksum validation ensures file integrity
+- **Connection Pooling** — 4× connection pooling for faster concurrent downloads
+- **Real-Time Progress** — live bandwidth monitoring with ETA display
+- **Apple Silicon Native** — arm64 build optimized for M1/M2/M3/M4 chips
 
 ---
 
-## 🚀 Quick Start
+## Installation
 
-### Installation
-
-1. Download the latest `4Charm.dmg` from
-
-   [Releases](https://github.com/RazorBackRoar/4Charm/releases)
-
-2. Drag `4Charm.app` to `/Applications`
-3. **First Launch**:
-
-```bash
-   # If prompted with "App is damaged":
-   sudo xattr -cr /Applications/4Charm.app
-```
-
-### Usage
-
-1. **Launch App**: Open 4Charm from Applications
-2. **Add URLs**: Paste 4chan thread or catalog URLs
-3. **Download**: Click "Start Download" and watch the live log
-4. **Enjoy**: Files are saved to your chosen download location
+1. Download the latest `4Charm.dmg` from [Releases](https://github.com/RazorBackRoar/4Charm/releases)
+2. Open the DMG and drag `4Charm.app` to `/Applications`
+3. First launch — right-click the app → **Open** to bypass Gatekeeper on the ad-hoc signed build
 
 ---
 
-## 🛠️ Development
+## Usage
 
-This project uses `.razorcore` for build tooling.
+1. **Add URLs** — paste any 4chan thread, catalog, or board URL
+2. **Start** — click Download and watch the live progress log
+3. **Enjoy** — files are saved to your chosen download folder with automatic organization
 
-### Prerequisites
+---
+
+## Development
+
+### Requirements
 
 - Python 3.14
-- macOS 10.13+
+- macOS 12.0+
+- [uv](https://github.com/astral-sh/uv)
 
 ### Setup
 
 ```bash
 git clone https://github.com/RazorBackRoar/4Charm.git
 cd 4Charm
-uv venv --python 3.14
 uv sync
-uv add --editable ../.razorcore
+uv run python -m four_charm.main
 ```
 
-### Build & Release
+### Build
 
 ```bash
-## Build app and create DMG without touching Git
 razorbuild 4Charm
+# Output: dist/4Charm.dmg
+```
 
-## Save/release only after explicit Git approval
-RAZORCORE_ALLOW_GIT_MUTATION=1 razorcore save 4Charm
+### Lint & Test
+
+```bash
+uv run ruff check .
+uv run ty check src --python-version 3.14
+uv run pytest tests/ -q
 ```
 
 ---
 
-## 📜 License
+## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+MIT License — see [LICENSE](LICENSE) for details.
 Copyright © 2026 RazorBackRoar
