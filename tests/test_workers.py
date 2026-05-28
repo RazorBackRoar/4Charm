@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from typing import cast
+
+from four_charm.core.scraper import FourChanScraper
 from four_charm.gui import workers
 
 
@@ -39,9 +42,10 @@ def test_workers_share_speed_calculation_and_controls(monkeypatch) -> None:
     """Both workers should delegate controls and compute speed consistently."""
     monkeypatch.setattr(workers.time, "time", lambda: 110.0)
     scraper = _FakeScraper()
+    typed_scraper = cast(FourChanScraper, scraper)
 
-    single = workers.DownloadWorker(scraper, {"board": "g", "type": "catalog"})
-    multi = workers.MultiUrlDownloadWorker(scraper, [])
+    single = workers.DownloadWorker(typed_scraper, {"board": "g", "type": "catalog"})
+    multi = workers.MultiUrlDownloadWorker(typed_scraper, [])
 
     assert single._calculate_average_speed() == 2.0
     assert multi._calculate_average_speed() == 2.0

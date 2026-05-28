@@ -14,7 +14,16 @@ from four_charm.core.bandwidth import BandwidthMonitor
 from four_charm.core.dedup import DedupTracker
 from four_charm.core.models import DownloadQueue, MediaFile
 from four_charm.transport.session import create_session
-from razorcore.filesystem import sanitize_filename as _rc_sanitize_filename
+
+
+try:
+    from razorcore.filesystem import sanitize_filename as _rc_sanitize_filename
+except Exception:
+    # Keep standalone installs working when razorcore tooling is not present.
+    def _rc_sanitize_filename(name: str, replacement: str = "_") -> str:
+        safe = re.sub(r'[^\\w\\-. ]', replacement, name.strip())
+        safe = safe.strip(" .")
+        return safe or "unnamed_file"
 
 
 logger = logging.getLogger("4Charm")

@@ -3,17 +3,26 @@
 from __future__ import annotations
 
 import os
+from typing import cast
+
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QApplication
+
+
+def _app() -> QApplication:
+    existing = QApplication.instance()
+    if existing is None:
+        return QApplication([])
+    return cast(QApplication, existing)
 
 
 def test_paste_urls_one_per_line_without_hidden_blank_line() -> None:
     """Pasted thread URLs should produce visible 1..N line numbering."""
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-    from PySide6.QtWidgets import QApplication
-
     from four_charm.gui.main_window import MainWindow
 
-    app = QApplication.instance() or QApplication([])
+    app = _app()
     window = MainWindow()
     urls = [
         "https://boards.4chan.org/g/thread/1",
@@ -37,12 +46,9 @@ def test_url_input_scrolls_to_newest_line_after_large_plain_text_paste() -> None
     """The URL box should behave like a normal scrolling editor for 20 lines."""
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-    from PySide6.QtCore import Qt
-    from PySide6.QtWidgets import QApplication
-
     from four_charm.gui.main_window import MainWindow
 
-    app = QApplication.instance() or QApplication([])
+    app = _app()
     window = MainWindow()
     window.resize(1100, 700)
     window.show()

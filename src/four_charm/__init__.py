@@ -1,3 +1,3 @@
 """4Charm - Advanced 4chan Media Downloader."""
 
-__version__ = "4.11.8"
+__version__ = "2.0.0"

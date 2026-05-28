@@ -3,7 +3,7 @@
 # ============================================================================
 # This pyproject.toml follows RazorBackRoar workspace standards
 # Last Updated: 2026-01-28
-# Python Version: 3.14.x (STRICT LOCK - never upgrade)
+# Python Version: 3.14 primary (best-effort source compatibility 3.12-3.14)
 # ============================================================================
 
 [build-system]
@@ -16,10 +16,10 @@ include = ["four_charm*"]
 
 [project]
 name = "four-charm"
-version = "4.12.0"
+version = "2.0.0"
 description = "4Charm desktop app for bulk 4chan media downloads"
-requires-python = "==3.14.*"
-# WHY: Strictly locked to Python 3.14
+requires-python = ">=3.12,<3.15"
+# WHY: Native dev/build target is 3.14, with source compatibility for 3.12-3.14.
 
 dependencies = [
     "PySide6>=6.6.0,<7.0.0",
@@ -54,6 +54,9 @@ extra-paths = [
     "src",
 ]
 
+[tool.uv.sources]
+razorcore = { path = "../.razorcore", editable = true }
+
 [dependency-groups]
 dev = [
     "pyinstaller>=6.0",
@@ -61,6 +64,3 @@ dev = [
     "ruff>=0.15.4",
     "ty>=0.0.20",
 ]
-
-[tool.uv.sources]
-razorcore = { path = "../.razorcore", editable = true }
