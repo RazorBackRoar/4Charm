@@ -1,7 +1,7 @@
 # 4Charm AGENTS
 
 **Package:** `four_charm`
-**Version:** 4.12.0
+**Version:** 2.0.0
 
 Use this file with `../AGENTS.md`. It only records 4Charm-specific context.
 
