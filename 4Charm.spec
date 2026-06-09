@@ -34,7 +34,10 @@ a = Analysis(
     [str(MAIN_SCRIPT)],
     pathex=[str(PROJECT_ROOT / "src")],
     binaries=[],
-    datas=[(str(PROJECT_ROOT / "assets"), "assets")],
+    datas=[
+        (str(PROJECT_ROOT / "assets"), "assets"),
+        (str(PROJECT_ROOT / "src" / "four_charm" / "gui" / "style.qss"), "four_charm/gui"),
+    ],
     hiddenimports=[
         "shiboken6",
         "PySide6.QtCore",

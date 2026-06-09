@@ -183,7 +183,7 @@ def test_format_error_message_http_404():
         status_code = 404
 
     error = requests.exceptions.HTTPError("404 Not Found")
-    error.response = MockResponse()
+    error.response = MockResponse()  # ty: ignore[invalid-assignment]
     context = {'filename': 'test.jpg'}
 
     message = scraper.format_error_message(error, context)
@@ -202,7 +202,7 @@ def test_format_error_message_http_403():
         status_code = 403
 
     error = requests.exceptions.HTTPError("403 Forbidden")
-    error.response = MockResponse()
+    error.response = MockResponse()  # ty: ignore[invalid-assignment]
     context = {'filename': 'test.jpg'}
 
     message = scraper.format_error_message(error, context)

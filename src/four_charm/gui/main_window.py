@@ -50,42 +50,44 @@
 
 import logging
 import re
-import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
 from typing import override
 
-from PySide6.QtCore import QMimeData, Qt, QThread, QTimer
+from PySide6.QtCore import Qt, QThread, QTimer
 from PySide6.QtGui import (
     QCloseEvent,
     QDragEnterEvent,
     QDropEvent,
     QKeySequence,
     QShortcut,
-    QTextBlockFormat,
     QTextCursor,
 )
 from PySide6.QtWidgets import (
     QApplication,
     QFileDialog,
-    QFrame,
-    QGroupBox,
     QHBoxLayout,
     QLabel,
     QMainWindow,
     QMessageBox,
     QPlainTextEdit,
     QProgressBar,
-    QPushButton,
     QSizePolicy,
     QStatusBar,
-    QTextEdit,
     QVBoxLayout,
     QWidget,
 )
 
 from four_charm.core.scraper import FourChanScraper
+from four_charm.gui.widgets import (
+    ActivityLog,
+    LineNumberTextEdit,
+    NeonButton,
+    NeonPanel,
+    StatCard,
+    apply_neon_glow,
+)
 from four_charm.gui.workers import MultiUrlDownloadWorker
 
 
@@ -132,431 +134,200 @@ def _insert_url_lines(editor: QPlainTextEdit, urls: list[str]) -> None:
     QTimer.singleShot(0, editor.ensureCursorVisible)
 
 
-class UrlInputEdit(QPlainTextEdit):
-    """URL editor that normalizes pasted thread lists before insertion."""
-
-    @override
-    def insertFromMimeData(self, source: QMimeData) -> None:
-        if source.hasText():
-            urls = _extract_supported_urls(source.text())
-            if urls:
-                _insert_url_lines(self, urls)
-                return
-
-        super().insertFromMimeData(source)
-
-
 class MainWindow(QMainWindow):
     """Main application window."""
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("")
-        self.setMinimumSize(1100, 700)
-        self.resize(1100, 700)
+        self.setWindowTitle("4Charm")
+        self.setMinimumSize(920, 720)
+        self.resize(960, 740)
         self.setAcceptDrops(True)
 
-        self.setStyleSheet(
-            """
-            QMainWindow {
-                background-color: #0f0f0f;
-                color: #e0e0e0;
-                font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
-            }
-            QWidget#centralWidget {
-                border-top: 1px solid rgba(118, 230, 72, 0.2);
-            }
-
-            /* Card Containers */
-            QFrame#urlMasterContainer, QGroupBox {
-                border: 1px solid rgba(118, 230, 72, 0.2);
-                border-radius: 10px;
-                background-color: rgba(30, 30, 30, 0.4);
-                margin-top: 10px;
-            }
-
-            QFrame#editorSurface {
-                background-color: rgba(0, 0, 0, 0.24);
-                border: 1px solid rgba(255, 255, 255, 0.08);
-                border-radius: 8px;
-            }
-
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 15px;
-                padding: 0 8px;
-                color: #76e648;
-                font-size: 11px;
-                font-weight: 800;
-                background-color: transparent;
-                letter-spacing: 1px;
-            }
-
-            QLabel#urlSectionTitle {
-                color: #76e648;
-                font-size: 11px;
-                font-weight: 800;
-                padding: 12px 15px;
-                letter-spacing: 1px;
-            }
-
-            /* Input Fields */
-            QPlainTextEdit, QTextEdit {
-                background-color: transparent;
-                color: #ffffff;
-                border: none;
-                font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
-                font-size: 13px;
-                selection-background-color: rgba(118, 230, 72, 0.4);
-            }
-
-            QPlainTextEdit#urlInput {
-                color: #f3f6f0;
-                padding: 10px 6px 10px 0px;
-            }
-
-            QPlainTextEdit#lineNumberGutter {
-                color: rgba(118, 230, 72, 0.62);
-                padding: 10px 0px;
-                selection-background-color: transparent;
-                selection-color: rgba(118, 230, 72, 0.62);
-            }
-
-            QTextEdit#logView {
-                background-color: rgba(0, 0, 0, 0.2);
-                border-radius: 6px;
-            }
-
-            QScrollBar:vertical {
-                background: rgba(255, 255, 255, 0.04);
-                border: none;
-                border-radius: 5px;
-                width: 10px;
-                margin: 4px 2px 4px 0px;
-            }
-
-            QScrollBar::handle:vertical {
-                background: rgba(118, 230, 72, 0.42);
-                border-radius: 5px;
-                min-height: 28px;
-            }
-
-            QScrollBar::handle:vertical:hover {
-                background: rgba(118, 230, 72, 0.62);
-            }
-
-            QScrollBar::add-line:vertical,
-            QScrollBar::sub-line:vertical,
-            QScrollBar::add-page:vertical,
-            QScrollBar::sub-page:vertical {
-                background: transparent;
-                border: none;
-                height: 0px;
-            }
-
-            QScrollBar:horizontal {
-                background: rgba(255, 255, 255, 0.04);
-                border: none;
-                border-radius: 5px;
-                height: 10px;
-                margin: 0px 4px 2px 0px;
-            }
-
-            QScrollBar::handle:horizontal {
-                background: rgba(118, 230, 72, 0.36);
-                border-radius: 5px;
-                min-width: 28px;
-            }
-
-            QScrollBar::add-line:horizontal,
-            QScrollBar::sub-line:horizontal,
-            QScrollBar::add-page:horizontal,
-            QScrollBar::sub-page:horizontal {
-                background: transparent;
-                border: none;
-                width: 0px;
-            }
-
-            /* Progress Bar */
-            QProgressBar {
-                border: none;
-                border-radius: 6px;
-                text-align: center;
-                background-color: rgba(255, 255, 255, 0.05);
-                height: 8px;
-                font-size: 1px;
-                color: transparent;
-            }
-            QProgressBar::chunk {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #76e648, stop:1 #5da13a);
-                border-radius: 6px;
-            }
-
-            /* Buttons */
-            QPushButton {
-                font-size: 13px;
-                padding: 8px 16px;
-                border-radius: 8px;
-                min-height: 38px;
-                background-color: rgba(255, 255, 255, 0.05);
-                color: #ffffff;
-                font-weight: 600;
-                border: 1px solid rgba(255, 255, 255, 0.1);
-            }
-            QPushButton:hover {
-                background-color: rgba(255, 255, 255, 0.08);
-                border: 1px solid rgba(255, 255, 255, 0.2);
-            }
-
-            QPushButton#startBtn {
-                background-color: rgba(118, 230, 72, 0.1);
-                border: 1px solid rgba(118, 230, 72, 0.3);
-                color: #76e648;
-            }
-            QPushButton#startBtn:hover {
-                background-color: rgba(118, 230, 72, 0.2);
-            }
-
-            QPushButton#cancelBtn {
-                background-color: rgba(255, 71, 87, 0.1);
-                border: 1px solid rgba(255, 71, 87, 0.3);
-                color: #ff4757;
-            }
-
-            QPushButton#pauseBtn {
-                background-color: rgba(255, 165, 2, 0.1);
-                border: 1px solid rgba(255, 165, 2, 0.3);
-                color: #ffa502;
-            }
-
-            QStatusBar {
-                background-color: transparent;
-                color: #666666;
-                font-size: 11px;
-            }
-        """
-        )
-
         self.scraper = FourChanScraper()
-        # Set default download directory to ~/Downloads/4Charm
-        # NOTE: Do not create the folder until a download starts.
         default_dir = Path.home() / "Downloads" / "4Charm"
         self.scraper.download_dir = default_dir
 
         self.download_thread: QThread | None = None
         self.download_worker: MultiUrlDownloadWorker | None = None
         self.is_paused = False
+        self.session_folders: set[str] = set()
 
-        self.setup_ui()
+        self._load_styles()
+        self._build_ui()
         self.setup_connections()
         self._update_ui_for_state("idle")
-        # Initialize download stats
         self.update_download_stats()
-        # Show default download directory in status bar
-        if self.scraper.download_dir:
-            self.status_bar.showMessage(f"Download folder: {self.scraper.download_dir}")
 
-    def setup_ui(self):
-        """Setup the user interface."""
-        central = QWidget()
-        central.setObjectName("centralWidget")
-        self.setCentralWidget(central)
-        main_layout = QVBoxLayout(central)
-        main_layout.setContentsMargins(25, 20, 25, 20)
-        main_layout.setSpacing(15)
+    def _load_styles(self) -> None:
+        import sys
+        if getattr(sys, "frozen", False):
+            # _MEIPASS only exists in PyInstaller-frozen builds (guarded above)
+            base_path = Path(sys._MEIPASS)  # ty: ignore[unresolved-attribute]
+            qss_path = base_path / "four_charm" / "gui" / "style.qss"
+        else:
+            qss_path = Path(__file__).parent / "style.qss"
 
-        # Header Section
-        header_container = QVBoxLayout()
-        header_container.setSpacing(4)
+        if qss_path.exists():
+            logger.info(f"Loading stylesheet from: {qss_path}")
+            self.setStyleSheet(qss_path.read_text(encoding="utf-8"))
+        else:
+            fallback_path = Path(__file__).parent / "style.qss"
+            if fallback_path.exists():
+                logger.info(f"Loading stylesheet from fallback: {fallback_path}")
+                self.setStyleSheet(fallback_path.read_text(encoding="utf-8"))
+            else:
+                logger.error(f"CRITICAL: style.qss not found! Looked in {qss_path} and {fallback_path}")
 
-        header = QLabel("4Charm")
-        header.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        header.setStyleSheet(
-            "font-size: 42px; font-weight: 800; color: #76e648; letter-spacing: -1px; margin-top: 10px;"
-        )
-        header_container.addWidget(header)
+    def _build_ui(self) -> None:
+        root = QWidget()
+        root.setObjectName("Root")
+        self.setCentralWidget(root)
+        main_layout = QVBoxLayout(root)
+        main_layout.setContentsMargins(24, 20, 24, 16)
+        main_layout.setSpacing(14)
 
-        slogan = QLabel("HIGH PERFORMANCE 4CHAN MEDIA DOWNLOADER")
-        slogan.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        slogan.setStyleSheet(
-            "font-size: 11px; font-weight: 700; color: #666666; letter-spacing: 2px; margin-bottom: 20px;"
-        )
-        header_container.addWidget(slogan)
-        main_layout.addLayout(header_container)
+        header = self._build_header()
+        url_panel = self._build_url_panel()
+        progress_panel = self._build_progress_panel()
+        lower_area = self._build_lower_area()
+        stat_row = self._build_stat_row()
+        footer = self._build_footer()
 
-        # URL Input Card
-        url_master = QFrame()
-        url_master.setObjectName("urlMasterContainer")
-        # Removed fixed height to prevent overlap!
-        url_master_layout = QVBoxLayout(url_master)
-        url_master_layout.setContentsMargins(0, 0, 0, 0)
-        url_master_layout.setSpacing(0)
-
-        url_title = QLabel("  URLs TO DOWNLOAD")
-        url_title.setObjectName("urlSectionTitle")
-        url_master_layout.addWidget(url_title)
-
-        # Editor Area
-        editor_container = QFrame()
-        editor_container.setObjectName("editorSurface")
-        editor_layout = QHBoxLayout(editor_container)
-        editor_layout.setContentsMargins(12, 8, 8, 8)
-        editor_layout.setSpacing(8)
-
-        # Line numbers
-        self.line_numbers = QPlainTextEdit()
-        self.line_numbers.setObjectName("lineNumberGutter")
-        self.line_numbers.setReadOnly(True)
-        self.line_numbers.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.line_numbers.setTextInteractionFlags(
-            Qt.TextInteractionFlag.NoTextInteraction
-        )
-        self.line_numbers.setFrameStyle(QFrame.Shape.NoFrame)
-        self.line_numbers.setVerticalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
-        )
-        self.line_numbers.setFixedWidth(42)
-        self.line_numbers.setMinimumHeight(280)
-        self.line_numbers.document().setDocumentMargin(0)
-        self.line_numbers.setPlainText("1")
-
-        fmt = QTextBlockFormat()
-        fmt.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        fmt.setLineHeight(
-            140.0, QTextBlockFormat.LineHeightTypes.ProportionalHeight.value
-        )
-        cursor = self.line_numbers.textCursor()
-        cursor.select(QTextCursor.SelectionType.Document)
-        cursor.setBlockFormat(fmt)
-
-        editor_layout.addWidget(self.line_numbers)
-
-        # URL input
-        self.url_input = UrlInputEdit()
-        self.url_input.setObjectName("urlInput")
-        self.url_input.setFrameStyle(QFrame.Shape.NoFrame)
-        self.url_input.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
-        self.url_input.setVerticalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAlwaysOn
-        )
-        self.url_input.setHorizontalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAsNeeded
-        )
-        self.url_input.setPlaceholderText("Paste thread URLs here...")
-        self.url_input.setMinimumHeight(280)
-        self.url_input.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
-        )
-        self.url_input.document().setDocumentMargin(2)
-
-        # Match line height with line_numbers
-        cursor = self.url_input.textCursor()
-        cursor.select(QTextCursor.SelectionType.Document)
-        cursor.setBlockFormat(fmt)
-
-        editor_layout.addWidget(self.url_input)
-        url_master_layout.addWidget(editor_container)
-
-        # Action Buttons
-        buttons_container = QWidget()
-        buttons_layout = QHBoxLayout(buttons_container)
-        buttons_layout.setContentsMargins(15, 0, 15, 15)
-        buttons_layout.setSpacing(12)
-
-        self.folder_btn = QPushButton("📁 Folder")
-        self.start_cancel_btn = QPushButton("🚀 Start")
-        self.start_cancel_btn.setObjectName("startBtn")
-        self.clear_btn = QPushButton("Clear")
-        self.pause_resume_btn = QPushButton("⏸️ Pause")
-        self.pause_resume_btn.setObjectName("pauseBtn")
-
-        buttons_layout.addWidget(self.start_cancel_btn)
-        buttons_layout.addWidget(self.clear_btn)
-        buttons_layout.addWidget(self.folder_btn)
-        buttons_layout.addWidget(self.pause_resume_btn)
-        url_master_layout.addWidget(buttons_container)
-
-        # Meta Info
-        meta_layout = QHBoxLayout()
-        meta_layout.setContentsMargins(15, 0, 15, 12)
-        self.url_count_label = QLabel("QUEUE: 0")
-        self.url_count_label.setStyleSheet(
-            "color: #666666; font-size: 10px; font-weight: 800;"
-        )
-        meta_layout.addWidget(self.url_count_label)
-        meta_layout.addStretch()
-        url_master_layout.addLayout(meta_layout)
-
-        main_layout.addWidget(url_master)
-
-        # Progress Section
-        progress_group = QGroupBox("DOWNLOAD PROGRESS")
-        progress_layout = QVBoxLayout(progress_group)
-        progress_layout.setContentsMargins(15, 20, 15, 15)
-        progress_layout.setSpacing(10)
-
-        self.progress_bar = QProgressBar()
-        progress_layout.addWidget(self.progress_bar)
-
-        progress_info = QHBoxLayout()
-        self.progress_label = QLabel("Ready to download...")
-        self.progress_label.setStyleSheet("font-size: 12px; color: #888888;")
-        self.speed_label = QLabel("0.0 MB/s")
-        self.speed_label.setStyleSheet(
-            "font-size: 13px; font-weight: 700; color: #76e648;"
-        )
-        progress_info.addWidget(self.progress_label)
-        progress_info.addStretch()
-        progress_info.addWidget(self.speed_label)
-        progress_layout.addLayout(progress_info)
-        main_layout.addWidget(progress_group)
-
-        # Activity Log
-        log_group = QGroupBox("ACTIVITY LOG")
-        log_layout = QVBoxLayout(log_group)
-        log_layout.setContentsMargins(15, 20, 15, 15)
-
-        self.log_text = QTextEdit()
-        self.log_text.setObjectName("logView")
-        self.log_text.setReadOnly(True)
-        self.log_text.setMinimumHeight(120)
-        log_layout.addWidget(self.log_text)
-
-        # Stats Section
-        stats_layout = QHBoxLayout()
-        stats_layout.setContentsMargins(0, 5, 0, 0)
-        self.folders_label = QLabel("FOLDERS: 0")
-        self.files_label = QLabel("FILES: 0")
-        self.size_label = QLabel("STORAGE: 0 MB")
-        for lbl in [self.folders_label, self.files_label, self.size_label]:
-            lbl.setStyleSheet("font-size: 10px; font-weight: 800; color: #555555;")
-            stats_layout.addWidget(lbl)
-            if lbl != self.size_label:
-                stats_layout.addSpacing(15)
-        stats_layout.addStretch()
-        log_layout.addLayout(stats_layout)
-        main_layout.addWidget(log_group)
-
-        main_layout.addStretch()
+        main_layout.addWidget(header)
+        main_layout.addWidget(url_panel)
+        main_layout.addWidget(progress_panel)
+        main_layout.addWidget(lower_area, stretch=1)
+        main_layout.addWidget(stat_row)
+        main_layout.addWidget(footer)
 
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
         self.status_bar.showMessage("Engine Status: Ready")
+        self.status_bar.setSizeGripEnabled(False)
+
+    def _build_header(self) -> QWidget:
+        panel = QWidget()
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(0, 15, 0, 15)
+        layout.setSpacing(6)
+        title = QLabel("4Charm")
+        title.setObjectName("AppTitle")
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        apply_neon_glow(title, "#3fe469", 25)
+        subtitle = QLabel("HIGH PERFORMANCE 4CHAN MEDIA DOWNLOADER")
+        subtitle.setObjectName("AppSubtitle")
+        subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(title)
+        layout.addWidget(subtitle)
+        return panel
+
+    def _build_url_panel(self) -> NeonPanel:
+        panel = NeonPanel("UrlPanel")
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(12, 10, 12, 10)
+        layout.setSpacing(6)
+        label = QLabel("URLS TO DOWNLOAD")
+        label.setObjectName("SectionLabel")
+
+        self.url_input_frame = LineNumberTextEdit(panel)
+        self.url_input_frame.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
+        self.url_input = self.url_input_frame.editor
+        self.line_numbers = self.url_input_frame.line_numbers
+
+        button_row = QHBoxLayout()
+        button_row.setSpacing(14)
+        self.start_cancel_btn = NeonButton("🚀  Start Download")
+        self.start_cancel_btn.setObjectName("startBtn")
+        self.clear_btn = NeonButton("🗑  Clear")
+        self.folder_btn = NeonButton("📁  Folder")
+        self.pause_resume_btn = NeonButton("⏸️  Pause")
+        self.pause_resume_btn.setObjectName("pauseBtn")
+
+        button_row.addWidget(self.start_cancel_btn)
+        button_row.addWidget(self.pause_resume_btn)
+        button_row.addWidget(self.clear_btn)
+        button_row.addWidget(self.folder_btn)
+
+        self.url_count_label = QLabel("QUEUE: 0")
+        self.url_count_label.setObjectName("QueueLabel")
+
+        layout.addWidget(label)
+        layout.addWidget(self.url_input_frame, stretch=1)
+        layout.addLayout(button_row)
+        layout.addWidget(self.url_count_label)
+        return panel
+
+    def _build_progress_panel(self) -> NeonPanel:
+        panel = NeonPanel("ProgressPanel")
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(12, 10, 12, 10)
+        layout.setSpacing(8)
+        label = QLabel("DOWNLOAD PROGRESS")
+        label.setObjectName("SectionLabel")
+
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setObjectName("DownloadProgress")
+        self.progress_bar.setRange(0, 100)
+        self.progress_bar.setValue(0)
+        self.progress_bar.setTextVisible(False)
+
+        status_row = QHBoxLayout()
+        self.progress_label = QLabel("Ready to download...")
+        self.progress_label.setObjectName("StatusLabel")
+        self.speed_label = QLabel("0.0 MB/s")
+        self.speed_label.setObjectName("SpeedLabel")
+        self.speed_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+
+        status_row.addWidget(self.progress_label)
+        status_row.addStretch()
+        status_row.addWidget(self.speed_label)
+
+        layout.addWidget(label)
+        layout.addWidget(self.progress_bar)
+        layout.addLayout(status_row)
+        return panel
+
+    def _build_lower_area(self) -> QWidget:
+        log_panel = NeonPanel("LogPanel")
+        log_layout = QVBoxLayout(log_panel)
+        log_layout.setContentsMargins(12, 10, 12, 10)
+        log_layout.setSpacing(8)
+        label = QLabel("ACTIVITY LOG")
+        label.setObjectName("SectionLabel")
+        self.log_text = ActivityLog()
+        self.log_text.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        log_layout.addWidget(label)
+        log_layout.addWidget(self.log_text)
+        return log_panel
+
+    def _build_stat_row(self) -> QWidget:
+        """Horizontal row of stat cards pinned to the bottom."""
+        wrapper = QWidget()
+        layout = QHBoxLayout(wrapper)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(12)
+
+        self.folders_card = StatCard("Folders:", "0", "📂")
+        self.files_card = StatCard("Files:", "0", "📄")
+        self.storage_card = StatCard("Storage:", "0.0GB", "💾")
+
+        layout.addWidget(self.folders_card)
+        layout.addWidget(self.files_card)
+        layout.addWidget(self.storage_card)
+        return wrapper
+
+    def _build_footer(self) -> QLabel:
+        footer = QLabel("HIGH PERFORMANCE 4CHAN MEDIA DOWNLOADER")
+        footer.setObjectName("Footer")
+        footer.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        return footer
 
     def setup_connections(self):
         """Connect signals and slots."""
-        self.url_input.textChanged.connect(self.validate_urls)
+        self.url_input_frame.editor.textChanged.connect(self.validate_urls)
 
-        # Sync scrolling: Input Box -> controls -> Line Numbers
-        self.url_input.verticalScrollBar().valueChanged.connect(
-            self.line_numbers.verticalScrollBar().setValue
-        )
-        self.url_input.verticalScrollBar().rangeChanged.connect(
-            lambda min_val, max_val: self.line_numbers.verticalScrollBar().setValue(
-                self.url_input.verticalScrollBar().value()
-            )
-        )
-        self.url_input.cursorPositionChanged.connect(self._schedule_url_cursor_follow)
         self.start_cancel_btn.clicked.connect(self.handle_start_cancel_click)
         self.pause_resume_btn.clicked.connect(self.toggle_pause_resume)
         self.clear_btn.clicked.connect(self.clear_urls)
@@ -577,9 +348,27 @@ class MainWindow(QMainWindow):
         self.escape_shortcut.activated.connect(self.cancel_or_close)
 
     def clear_urls(self):
-        """Clear all URLs from the input field."""
+        """Clear all URLs and reset UI state."""
         self.url_input.clear()
         self.validate_urls()
+
+        # Reset progress
+        self.progress_bar.setValue(0)
+        self.progress_label.setText("Ready to download...")
+        self.speed_label.setText("0.0 MB/s")
+
+        # Clear log
+        self.log_text.clear()
+
+        # Reset session counters
+        self.session_folders.clear()
+        self.folders_card.set_value("0")
+        self.files_card.set_value("0")
+        self.storage_card.set_value("0.0GB")
+
+        # Reset scraper stats
+        self.scraper.stats["downloaded"] = 0
+        self.scraper.stats["size_mb"] = 0.0
 
     def choose_download_folder(self):
         """Open folder chooser dialog to select download location."""
@@ -608,58 +397,14 @@ class MainWindow(QMainWindow):
         current_scroll = self.url_input.verticalScrollBar().value()
         self.line_numbers.verticalScrollBar().setValue(current_scroll)
 
-    def _keep_url_cursor_visible(self):
-        """Keep the URL editor scrolled to the active cursor after layout updates."""
-        self.url_input.ensureCursorVisible()
-        self._sync_scroll_bars()
-
-    def _schedule_url_cursor_follow(self):
-        QTimer.singleShot(0, self._keep_url_cursor_visible)
-
     def validate_urls(self):
         """Validate URLs in real-time and update line numbers."""
-        if getattr(self, "_validating", False):
-            return
-
-        # --- THE THREE-STEP PROCESS ---
-
-        # 1. Counting the Lines
-        # Use document().blockCount() - it's the most reliable way to track lines in real-time
-        line_count = max(1, self.url_input.document().blockCount())
-
-        # 2. Generating the Number Sequence
-        # Create a sequence like "1\n2\n3\n4\n5\n6\n7"
-        line_nums = "\n".join(str(i) for i in range(1, line_count + 1))
-
-        if self.line_numbers.toPlainText() != line_nums:
-            # Update the line numbers display
-            self.line_numbers.setPlainText(line_nums)
-            # Maintain perfect pixel alignment
-            cursor = self.line_numbers.textCursor()
-            cursor.select(QTextCursor.SelectionType.Document)
-            fmt = QTextBlockFormat()
-            fmt.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            fmt.setLineHeight(
-                140.0, QTextBlockFormat.LineHeightTypes.ProportionalHeight.value
-            )
-            cursor.setBlockFormat(fmt)
-            # Clear selection to prevent highlighting
-            cursor.clearSelection()
-            cursor.movePosition(QTextCursor.MoveOperation.End)
-            self.line_numbers.setTextCursor(cursor)
-
-        # 3. Keeping Everything Synchronized
-        # Defer cursor-follow until the editor has processed line and scroll range changes.
-        self._schedule_url_cursor_follow()
-
-        # --- END OF SYNC LOGIC ---
-
         raw_text = self.url_input.toPlainText()
         all_lines = raw_text.split("\n")
         raw_lines = [ln.strip() for ln in all_lines if ln.strip()]
 
         # Update the URL counter label
-        self.url_count_label.setText(f"QUEUE: {len(raw_lines)}")
+        self.url_count_label.setText(f"QUEUE: {len(self.url_input_frame.urls())}")
 
         # Validate URL count (maximum 20)
         if len(raw_lines) > 20:
@@ -859,6 +604,16 @@ class MainWindow(QMainWindow):
         if total > 0:
             self.progress_bar.setValue(int((current / total) * 100))
 
+            # Update session counters
+            self.files_card.set_value(str(current))
+            if thread_name:
+                self.session_folders.add(thread_name)
+            self.folders_card.set_value(str(len(self.session_folders)))
+
+            size_mb = self.scraper.stats.get("size_mb", 0.0)
+            size_gb = size_mb / 1024.0
+            self.storage_card.set_value(f"{size_gb:.1f}GB")
+
             # Format ETA if available
             eta_str = ""
             if eta > 0:
@@ -885,65 +640,25 @@ class MainWindow(QMainWindow):
 
     def add_log_message(self, message: str):
         timestamp = datetime.now().strftime("%H:%M:%S")
-        self.log_text.append(f"[{timestamp}] {message}")
+        self.log_text.add_line(f"[{timestamp}] {message}")
         self.log_text.moveCursor(QTextCursor.MoveOperation.End)
         # Update stats after each log message
         self.update_download_stats()
 
     def update_download_stats(self):
-        """Update folder, file, and size statistics using macOS du command."""
+        """Update folder, file, and size statistics for the active session only."""
         try:
-            if (
-                self.scraper.download_dir is None
-                or not self.scraper.download_dir.exists()
-            ):
-                self.folders_label.setText("Folders: 0")
-                self.files_label.setText("Files: 0")
-                self.size_label.setText("Size: 0 MB")
-                return
+            folder_count = len(getattr(self, "session_folders", set()))
+            self.folders_card.set_value(str(folder_count))
 
-            # Count folders (subdirectories only, not the root)
-            folders = [d for d in self.scraper.download_dir.iterdir() if d.is_dir()]
-            folder_count = len(folders)
+            file_count = self.scraper.stats.get("downloaded", 0)
+            self.files_card.set_value(str(file_count))
 
-            # Count files recursively
-            file_count = sum(
-                1 for _ in self.scraper.download_dir.rglob("*") if _.is_file()
-            )
-
-            # Get size using macOS du command (more accurate)
-            try:
-                result = subprocess.run(
-                    ["du", "-sk", str(self.scraper.download_dir)],
-                    capture_output=True,
-                    text=True,
-                    timeout=5,
-                )
-                if result.returncode == 0:
-                    size_kb = int(result.stdout.split()[0])
-                    size_mb = size_kb / 1024
-                else:
-                    # Fallback to Python calculation
-                    size_mb = sum(
-                        f.stat().st_size
-                        for f in self.scraper.download_dir.rglob("*")
-                        if f.is_file()
-                    ) / (1024 * 1024)
-            except (subprocess.TimeoutExpired, subprocess.SubprocessError, ValueError):
-                # Fallback to Python calculation
-                size_mb = sum(
-                    f.stat().st_size
-                    for f in self.scraper.download_dir.rglob("*")
-                    if f.is_file()
-                ) / (1024 * 1024)
-
-            # Update labels
-            self.folders_label.setText(f"FOLDERS: {folder_count}")
-            self.files_label.setText(f"FILES: {file_count}")
-            self.size_label.setText(f"STORAGE: {size_mb:.1f} MB")
-
+            size_mb = self.scraper.stats.get("size_mb", 0.0)
+            size_gb = size_mb / 1024.0
+            self.storage_card.set_value(f"{size_gb:.1f}GB")
         except Exception as e:
-            logger.warning(f"Could not update download stats: {e}")
+            logger.warning(f"Could not update session download stats: {e}")
 
     def paste_from_clipboard(self):
         """Paste URLs from clipboard with auto-formatting."""
@@ -960,10 +675,8 @@ class MainWindow(QMainWindow):
         else:
             # Fallback: Normal paste if no valid URLs found
             self.url_input.paste()
-
-        # Ensure everything is visible and validated
-        self._schedule_url_cursor_follow()
         self.validate_urls()
+        self.url_input.ensureCursorVisible()
 
     def cancel_or_close(self):
         if self.download_thread and self.download_thread.isRunning():
@@ -1011,7 +724,6 @@ class MainWindow(QMainWindow):
         if valid_urls:
             _insert_url_lines(self.url_input, valid_urls)
             self.validate_urls()
-            self._schedule_url_cursor_follow()
 
 
 if __name__ == "__main__":

@@ -97,7 +97,7 @@ For users:
 
 For developers:
 - Primary development/build target: Python 3.14 with `uv`.
-- Source compatibility goal: Python 3.12-3.14 (best effort).
+- Source/build target: Python 3.14 only.
 - Setup: `uv sync`
 - Run: `uv run python -m four_charm`
 <!-- razorcore:runtime:end -->
