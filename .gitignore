@@ -77,3 +77,16 @@ venv/
 # Backup files
 **/*.backup
 docs/*.backup
+
+# ── Workspace standard hygiene (added 2026-06-09, appended only) ──
+Icon?
+.mypy_cache/
+.ty/
+env/
+*.spec.bak
+*.bak
+.env
+*.pem
+*.key
+*.p12
+*.mobileprovision
