@@ -35,16 +35,13 @@ def test_paste_urls_use_four_visually_spaced_slots() -> None:
         app.clipboard().setText(" ".join(urls))
         window.paste_from_clipboard()
 
-        assert window.url_input.toPlainText() == "\n".join(urls)
-        assert window.url_input.document().blockCount() == 4
+        assert window.url_input.toPlainText() == "\n\n".join(urls)
+        assert window.url_input.document().blockCount() == 7
         assert window.url_input_frame.urls() == urls
         assert window.url_count_label.text() == "QUEUE: 4"
-        assert window.line_numbers.toPlainText() == "\n".join(
+        assert window.line_numbers.toPlainText() == "\n\n".join(
             str(number) for number in range(1, 5)
         )
-        line_format = window.url_input.document().firstBlock().blockFormat()
-        assert line_format.topMargin() == 1.5
-        assert line_format.bottomMargin() == 1.5
     finally:
         window.deleteLater()
         app.processEvents()
@@ -62,7 +59,11 @@ def test_url_input_scrolls_after_large_plain_text_paste() -> None:
     window.show()
     app.processEvents()
 
-    paste_text = "\n".join(str(i) for i in range(1, 21))
+    urls = [
+        f"https://boards.4chan.org/g/thread/{number}" for number in range(1, 21)
+    ]
+    paste_text = " ".join(urls)
+    expected_text = "\n\n".join(urls)
 
     try:
         app.clipboard().setText(paste_text)
@@ -74,9 +75,11 @@ def test_url_input_scrolls_after_large_plain_text_paste() -> None:
 
         scrollbar = window.url_input.verticalScrollBar()
 
-        assert window.url_input.toPlainText() == paste_text
-        assert window.url_input.document().blockCount() == 20
-        assert window.line_numbers.toPlainText() == paste_text
+        assert window.url_input.toPlainText() == expected_text
+        assert window.url_input.document().blockCount() == 39
+        assert window.line_numbers.toPlainText() == "\n\n".join(
+            str(number) for number in range(1, 21)
+        )
         assert window.url_input.verticalScrollBarPolicy() == (
             Qt.ScrollBarPolicy.ScrollBarAsNeeded
         )
@@ -186,8 +189,8 @@ def test_enter_creates_new_line_and_updates_gutter() -> None:
         window.url_input.keyPressEvent(enter_event)
         app.processEvents()
 
-        assert window.url_input.document().blockCount() == 2
-        assert window.line_numbers.toPlainText() == "\n".join(
+        assert window.url_input.document().blockCount() == 3
+        assert window.line_numbers.toPlainText() == "\n\n".join(
             str(number) for number in range(1, 5)
         )
 
@@ -195,8 +198,8 @@ def test_enter_creates_new_line_and_updates_gutter() -> None:
         window.url_input.insertPlainText("https://boards.4chan.org/g/thread/2")
         app.processEvents()
 
-        assert window.url_input.document().blockCount() == 2
-        assert window.line_numbers.toPlainText() == "\n".join(
+        assert window.url_input.document().blockCount() == 3
+        assert window.line_numbers.toPlainText() == "\n\n".join(
             str(number) for number in range(1, 5)
         )
         assert window.url_count_label.text() == "QUEUE: 2"
@@ -295,22 +298,14 @@ def test_reference_action_and_gutter_proportions() -> None:
         assert window.clear_btn.height() == 50
         assert window.folder_btn.height() == 50
         assert window.line_numbers.width() == 60
-        assert window.line_numbers.toPlainText() == "\n".join(
+        assert window.line_numbers.toPlainText() == "\n\n".join(
             str(number) for number in range(1, 5)
-        )
-        assert (
-            window.line_numbers.document().firstBlock().blockFormat().topMargin()
-            == 1.5
-        )
-        assert (
-            window.line_numbers.document().firstBlock().blockFormat().bottomMargin()
-            == 1.5
         )
         assert window.line_numbers.document().defaultTextOption().alignment() == (
             Qt.AlignmentFlag.AlignCenter
         )
-        assert window.url_input_frame.minimumHeight() == 100
-        assert window.url_input_frame.maximumHeight() == 100
+        assert window.url_input_frame.minimumHeight() == 152
+        assert window.url_input_frame.maximumHeight() == 152
         assert (
             window.url_input_frame.geometry().bottom()
             < window.start_cancel_btn.geometry().top()

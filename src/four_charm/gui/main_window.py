@@ -115,11 +115,15 @@ def _extract_supported_urls(text: str) -> list[str]:
 def _build_url_paste_text(
     text_before_cursor: str, text_after_cursor: str, urls: list[str]
 ) -> str:
-    paste_text = "\n".join(urls)
-    if text_before_cursor and not text_before_cursor.endswith("\n"):
-        paste_text = "\n" + paste_text
-    if text_after_cursor and not text_after_cursor.startswith("\n"):
-        paste_text += "\n"
+    paste_text = "\n\n".join(urls)
+    if text_before_cursor and not text_before_cursor.endswith("\n\n"):
+        paste_text = (
+            "\n" + paste_text
+            if text_before_cursor.endswith("\n")
+            else "\n\n" + paste_text
+        )
+    if text_after_cursor and not text_after_cursor.startswith("\n\n"):
+        paste_text += "\n" if text_after_cursor.startswith("\n") else "\n\n"
     return paste_text
 
 
@@ -337,7 +341,7 @@ class MainWindow(QMainWindow):
         label = self._build_section_label("URLS TO DOWNLOAD")
 
         self.url_input_frame = LineNumberTextEdit(panel)
-        self.url_input_frame.setFixedHeight(100)
+        self.url_input_frame.setFixedHeight(152)
         self.url_input_frame.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )

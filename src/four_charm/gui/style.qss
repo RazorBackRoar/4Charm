@@ -98,8 +98,8 @@ QMainWindow {
     border-right: 1px solid #2d3430;
     border-top-left-radius: 7px;
     border-bottom-left-radius: 7px;
-    padding-top: 5px;
-    font-size: 16px;
+    padding-top: 3px;
+    font-size: 15px;
 }
 
 #UrlEditor {
@@ -107,10 +107,10 @@ QMainWindow {
     color: #f3f5f4;
     font-family: "Menlo";
     border: none;
-    padding: 5px 12px;
+    padding: 3px 12px;
     selection-background-color: #326c3d;
     selection-color: #ffffff;
-    font-size: 16px;
+    font-size: 15px;
 }
 
 #UrlEditor::placeholder {

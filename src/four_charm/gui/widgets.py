@@ -14,6 +14,7 @@ from PySide6.QtCore import (
 from PySide6.QtGui import (
     QColor,
     QIcon,
+    QKeyEvent,
     QPainter,
     QPainterPath,
     QPen,
@@ -254,12 +255,21 @@ class UrlInputEdit(QPlainTextEdit):
             text = source.text()
             matches = _URL_PATTERN.findall(text)
             if matches:
-                super().insertPlainText("\n".join(matches) + "\n")
+                super().insertPlainText("\n\n".join(matches))
             else:
                 super().insertPlainText(text)
             self.apply_line_block_format()
         else:
             super().insertFromMimeData(source)
+
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            cursor = self.textCursor()
+            cursor.insertText("\n\n")
+            self.setTextCursor(cursor)
+            self.apply_line_block_format()
+            return
+        super().keyPressEvent(event)
 
     def set_line_block_format(self, fmt: QTextBlockFormat) -> None:
         self._line_fmt = fmt
@@ -302,13 +312,11 @@ class LineNumberTextEdit(QFrame):
         text_option.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.line_numbers.document().setDefaultTextOption(text_option)
         self.line_numbers.setPlainText(
-            "\n".join(str(number) for number in range(1, 5))
+            "\n\n".join(str(number) for number in range(1, 5))
         )
 
         self._line_fmt = QTextBlockFormat()
         self._line_fmt.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._line_fmt.setTopMargin(1.5)
-        self._line_fmt.setBottomMargin(1.5)
         cursor = self.line_numbers.textCursor()
         cursor.select(QTextCursor.SelectionType.Document)
         cursor.setBlockFormat(self._line_fmt)
@@ -323,8 +331,6 @@ class LineNumberTextEdit(QFrame):
         self.editor.document().setDocumentMargin(0)
 
         self._url_input_fmt = QTextBlockFormat()
-        self._url_input_fmt.setTopMargin(1.5)
-        self._url_input_fmt.setBottomMargin(1.5)
         cursor = self.editor.textCursor()
         cursor.select(QTextCursor.SelectionType.Document)
         cursor.setBlockFormat(self._url_input_fmt)
@@ -357,10 +363,9 @@ class LineNumberTextEdit(QFrame):
 
     def update_line_numbers(self) -> None:
         self.editor.apply_line_block_format()
-        text = self.editor.toPlainText()
-        count = max(4, text.count("\n") + 1)
+        count = max(4, len(self.urls()))
         self.line_numbers.setPlainText(
-            "\n".join(str(i) for i in range(1, count + 1))
+            "\n\n".join(str(i) for i in range(1, count + 1))
         )
         # Re-apply centre-aligned block format after text replacement
         cursor = self.line_numbers.textCursor()
