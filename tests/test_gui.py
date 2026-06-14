@@ -141,7 +141,7 @@ def test_premium_idle_ui_contract() -> None:
         assert window.folders_card.value_label.text() == "0"
         assert window.files_card.value_label.text() == "0"
         assert window.storage_card.value_label.text() == "0.0GB"
-        assert window.status_bar.currentMessage() == "Engine Status: Ready"
+        assert window.status_message.text() == "Engine Status: Ready"
     finally:
         window.deleteLater()
         app.processEvents()
@@ -166,6 +166,32 @@ def test_lower_area_places_stats_to_the_right_of_log() -> None:
         assert window.stats_layout.indexOf(window.folders_card) == 0
         assert window.stats_layout.indexOf(window.files_card) == 1
         assert window.stats_layout.indexOf(window.storage_card) == 2
+    finally:
+        window.deleteLater()
+        app.processEvents()
+
+
+def test_reference_visual_details_are_present() -> None:
+    """The premium UI should include clean icons, startup activity, and status dot."""
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+    from four_charm.gui.main_window import MainWindow
+
+    app = _app()
+    window = MainWindow()
+
+    try:
+        assert not window.start_cancel_btn.icon().isNull()
+        assert not window.clear_btn.icon().isNull()
+        assert not window.folder_btn.icon().isNull()
+        assert window.status_indicator.objectName() == "StatusIndicator"
+        assert window.status_indicator.size().width() == 10
+
+        log_text = window.log_text.toPlainText()
+        assert "Engine initialized" in log_text
+        assert "Ready to download..." in log_text
+        assert "All systems operational" in log_text
+        assert "Queue is empty" in log_text
     finally:
         window.deleteLater()
         app.processEvents()

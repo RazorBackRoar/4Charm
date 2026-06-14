@@ -55,7 +55,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import override
 
-from PySide6.QtCore import Qt, QThread, QTimer
+from PySide6.QtCore import QSize, Qt, QThread, QTimer
 from PySide6.QtGui import (
     QCloseEvent,
     QDragEnterEvent,
@@ -67,6 +67,7 @@ from PySide6.QtGui import (
 from PySide6.QtWidgets import (
     QApplication,
     QFileDialog,
+    QFrame,
     QHBoxLayout,
     QLabel,
     QMainWindow,
@@ -86,6 +87,7 @@ from four_charm.gui.widgets import (
     NeonButton,
     NeonPanel,
     StatCard,
+    create_interface_icon,
 )
 from four_charm.gui.workers import MultiUrlDownloadWorker
 
@@ -139,8 +141,8 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("4Charm")
-        self.setMinimumSize(980, 720)
-        self.resize(1100, 760)
+        self.setMinimumSize(1080, 780)
+        self.resize(1280, 860)
         self.setAcceptDrops(True)
 
         self.scraper = FourChanScraper()
@@ -157,6 +159,7 @@ class MainWindow(QMainWindow):
         self.setup_connections()
         self._update_ui_for_state("idle")
         self.update_download_stats()
+        self._populate_initial_log()
 
     def _load_styles(self) -> None:
         import sys
@@ -183,8 +186,8 @@ class MainWindow(QMainWindow):
         root.setObjectName("Root")
         self.setCentralWidget(root)
         main_layout = QVBoxLayout(root)
-        main_layout.setContentsMargins(24, 16, 24, 14)
-        main_layout.setSpacing(12)
+        main_layout.setContentsMargins(32, 18, 32, 16)
+        main_layout.setSpacing(14)
 
         header = self._build_header()
         url_panel = self._build_url_panel()
@@ -199,11 +202,18 @@ class MainWindow(QMainWindow):
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
         self.status_bar.setProperty("statusState", "idle")
-        self.status_bar.showMessage("Engine Status: Ready")
+        self.status_indicator = QLabel()
+        self.status_indicator.setObjectName("StatusIndicator")
+        self.status_indicator.setFixedSize(10, 10)
+        self.status_message = QLabel("Engine Status: Ready")
+        self.status_message.setObjectName("StatusMessage")
+        self.status_bar.addWidget(self.status_indicator)
+        self.status_bar.addWidget(self.status_message, 1)
         self.status_bar.setSizeGripEnabled(False)
 
     def _build_header(self) -> QWidget:
         panel = QWidget()
+        panel.setObjectName("Header")
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 8, 0, 10)
         layout.setSpacing(4)
@@ -217,13 +227,31 @@ class MainWindow(QMainWindow):
         layout.addWidget(subtitle)
         return panel
 
+    def _build_section_label(self, text: str) -> QWidget:
+        wrapper = QWidget()
+        wrapper.setObjectName("SectionHeader")
+        layout = QHBoxLayout(wrapper)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(10)
+
+        accent = QFrame()
+        accent.setObjectName("SectionAccent")
+        accent.setFixedSize(4, 22)
+
+        label = QLabel(text)
+        label.setObjectName("SectionLabel")
+
+        layout.addWidget(accent)
+        layout.addWidget(label)
+        layout.addStretch()
+        return wrapper
+
     def _build_url_panel(self) -> NeonPanel:
         panel = NeonPanel("UrlPanel")
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(14, 12, 14, 12)
         layout.setSpacing(9)
-        label = QLabel("URLS TO DOWNLOAD")
-        label.setObjectName("SectionLabel")
+        label = self._build_section_label("URLS TO DOWNLOAD")
 
         self.url_input_frame = LineNumberTextEdit(panel)
         self.url_input_frame.setMinimumHeight(190)
@@ -242,6 +270,16 @@ class MainWindow(QMainWindow):
         self.folder_btn = NeonButton("Folder")
         self.pause_resume_btn = NeonButton("Pause")
         self.pause_resume_btn.setObjectName("pauseBtn")
+
+        icon_size = QSize(22, 22)
+        self.start_cancel_btn.setIcon(create_interface_icon("play"))
+        self.start_cancel_btn.setIconSize(icon_size)
+        self.clear_btn.setIcon(create_interface_icon("trash"))
+        self.clear_btn.setIconSize(icon_size)
+        self.folder_btn.setIcon(create_interface_icon("folder"))
+        self.folder_btn.setIconSize(icon_size)
+        self.pause_resume_btn.setIcon(create_interface_icon("pause"))
+        self.pause_resume_btn.setIconSize(icon_size)
 
         button_row.addWidget(self.start_cancel_btn)
         button_row.addWidget(self.pause_resume_btn)
@@ -262,8 +300,7 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(14, 11, 14, 12)
         layout.setSpacing(7)
-        label = QLabel("DOWNLOAD PROGRESS")
-        label.setObjectName("SectionLabel")
+        label = self._build_section_label("DOWNLOAD PROGRESS")
 
         self.progress_bar = QProgressBar()
         self.progress_bar.setObjectName("DownloadProgress")
@@ -297,8 +334,7 @@ class MainWindow(QMainWindow):
         log_layout = QVBoxLayout(self.log_panel)
         log_layout.setContentsMargins(14, 12, 14, 14)
         log_layout.setSpacing(8)
-        label = QLabel("ACTIVITY LOG")
-        label.setObjectName("SectionLabel")
+        label = self._build_section_label("ACTIVITY LOG")
         self.log_text = ActivityLog()
         self.log_text.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
@@ -308,14 +344,26 @@ class MainWindow(QMainWindow):
 
         self.stats_panel = QWidget()
         self.stats_panel.setObjectName("StatsPanel")
-        self.stats_panel.setFixedWidth(240)
+        self.stats_panel.setFixedWidth(290)
         self.stats_layout = QVBoxLayout(self.stats_panel)
         self.stats_layout.setContentsMargins(0, 0, 0, 0)
         self.stats_layout.setSpacing(10)
 
-        self.folders_card = StatCard("Folders", "0")
-        self.files_card = StatCard("Files", "0")
-        self.storage_card = StatCard("Storage", "0.0GB")
+        self.folders_card = StatCard(
+            "FOLDERS",
+            "0",
+            create_interface_icon("folder", size=30),
+        )
+        self.files_card = StatCard(
+            "FILES",
+            "0",
+            create_interface_icon("file", size=30),
+        )
+        self.storage_card = StatCard(
+            "STORAGE",
+            "0.0GB",
+            create_interface_icon("drive", size=30),
+        )
 
         self.stats_layout.addWidget(self.folders_card)
         self.stats_layout.addWidget(self.files_card)
@@ -325,6 +373,18 @@ class MainWindow(QMainWindow):
         self.lower_layout.addWidget(self.log_panel, stretch=1)
         self.lower_layout.addWidget(self.stats_panel)
         return wrapper
+
+    def _populate_initial_log(self) -> None:
+        """Show a concise startup summary without changing application state."""
+        for message in (
+            "Engine initialized",
+            "Ready to download...",
+            "Waiting for URLs...",
+            "System check complete",
+            "All systems operational",
+            "Queue is empty",
+        ):
+            self.add_log_message(message)
 
     def setup_connections(self):
         """Connect signals and slots."""
@@ -393,7 +453,7 @@ class MainWindow(QMainWindow):
             selected_dir.mkdir(parents=True, exist_ok=True)
             self.scraper.download_dir = selected_dir
             self.add_log_message(f"Download folder changed to: {folder}")
-            self.status_bar.showMessage(f"Download folder: {folder}")
+            self._set_status_message(f"Download folder: {folder}")
 
     def _sync_scroll_bars(self):
         """Force scroll synchronization between input and line numbers."""
@@ -475,7 +535,7 @@ class MainWindow(QMainWindow):
             selected_dir.mkdir(parents=True, exist_ok=True)
             self.scraper.download_dir = selected_dir
             self.add_log_message(f"Download folder set to: {folder}")
-            self.status_bar.showMessage(f"Download folder: {folder}")
+            self._set_status_message(f"Download folder: {folder}")
 
         # Parse and validate URLs (strip numbering if present)
         parsed_urls = []
@@ -516,7 +576,9 @@ class MainWindow(QMainWindow):
 
         self.log_text.clear()
         self._update_ui_for_state("downloading")
-        self.status_bar.showMessage(f"Downloading from {len(parsed_urls)} URLs...")
+        self._set_status_message(
+            f"Downloading from {len(parsed_urls)} URLs...", "valid"
+        )
         self.download_thread.start()
 
     def cancel_download(self):
@@ -543,9 +605,10 @@ class MainWindow(QMainWindow):
         self.status_bar.setProperty(
             "statusState", "valid" if total > 0 else "idle"
         )
-        self.status_bar.showMessage(status_msg if total > 0 else "No files found")
-        self.status_bar.style().unpolish(self.status_bar)
-        self.status_bar.style().polish(self.status_bar)
+        self._set_status_message(
+            status_msg if total > 0 else "No files found",
+            "valid" if total > 0 else "idle",
+        )
 
     def thread_cleanup(self):
         """Safely nullify thread and worker references after the thread has finished."""
@@ -571,29 +634,39 @@ class MainWindow(QMainWindow):
         if state == "idle":
             self.start_cancel_btn.setText("Start Download")
             self.start_cancel_btn.setObjectName("startBtn")
+            self.start_cancel_btn.setIcon(create_interface_icon("play"))
             self.pause_resume_btn.setText("Pause")
+            self.pause_resume_btn.setIcon(create_interface_icon("pause"))
             self.pause_resume_btn.setVisible(False)
             self.validate_urls()
             self.speed_label.setText("0.0 MB/s")
         elif state == "downloading":
             self.start_cancel_btn.setText("Cancel")
             self.start_cancel_btn.setObjectName("cancelBtn")
+            self.start_cancel_btn.setIcon(create_interface_icon("cancel"))
             self.start_cancel_btn.setEnabled(True)
             self.pause_resume_btn.setText("Pause")
+            self.pause_resume_btn.setIcon(create_interface_icon("pause"))
             self.pause_resume_btn.setVisible(True)
             self.is_paused = False
             if self.progress_bar.value() == 0:
                 self.progress_label.setText("Downloading 0%")
         elif state == "paused":
             self.pause_resume_btn.setText("Resume")
+            self.pause_resume_btn.setIcon(create_interface_icon("play"))
 
         self.start_cancel_btn.style().unpolish(self.start_cancel_btn)
         self.start_cancel_btn.style().polish(self.start_cancel_btn)
 
     def _update_url_status(self, text: str, state: str):
         """Update the URL status label with appropriate text and color."""
-        self.status_bar.setProperty("statusState", state)
-        self.status_bar.showMessage(text)
+        self._set_status_message(text, state)
+
+    def _set_status_message(self, text: str, state: str | None = None) -> None:
+        """Update the visible status label while preserving QStatusBar integration."""
+        if state is not None:
+            self.status_bar.setProperty("statusState", state)
+        self.status_message.setText(text)
         self.status_bar.style().unpolish(self.status_bar)
         self.status_bar.style().polish(self.status_bar)
 

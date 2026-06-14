@@ -1,143 +1,192 @@
 /* 4Charm - premium black, white, and green interface */
 
 QWidget {
-    color: #f3f6f4;
-    font-family: "SF Pro Text", "-apple-system", "Helvetica Neue", "Segoe UI", sans-serif;
-    font-size: 13px;
+    color: #f5f7f5;
+    font-family: "Helvetica Neue";
+    font-size: 14px;
 }
 
-QMainWindow,
-#Root {
-    background: #080b09;
+QMainWindow {
+    background: #070908;
 }
 
 #Root {
-    border-top: 2px solid #55df72;
+    background: qradialgradient(
+        cx: 0.5,
+        cy: 0.0,
+        radius: 1.1,
+        fx: 0.5,
+        fy: 0.0,
+        stop: 0 #112416,
+        stop: 0.28 #0b100c,
+        stop: 1 #070908
+    );
+    border-top: 3px solid #58df73;
 }
 
 /* Header */
+#Header {
+    border-bottom: 1px solid #282e2a;
+}
+
 #AppTitle {
     color: #5be376;
-    font-family: "SF Pro Display", "-apple-system", "Helvetica Neue", sans-serif;
-    font-size: 42px;
+    font-family: "Helvetica Neue";
+    font-size: 54px;
     font-weight: 700;
     letter-spacing: -1px;
 }
 
 #AppSubtitle {
-    color: #aeb6b1;
-    font-size: 11px;
+    color: #e4e8e5;
+    font-size: 13px;
     font-weight: 600;
-    letter-spacing: 1.6px;
+    letter-spacing: 1.8px;
 }
 
-/* Panels and section hierarchy */
-#UrlPanel,
+/* URL section is open; progress and log use contained cards */
+#UrlPanel {
+    background: transparent;
+    border: none;
+}
+
 #ProgressPanel,
 #LogPanel {
-    background-color: #111512;
-    border: 1px solid #2a312d;
-    border-radius: 10px;
-}
-
-#UrlPanel {
-    border-color: #334139;
+    background: qlineargradient(
+        x1: 0,
+        y1: 0,
+        x2: 0,
+        y2: 1,
+        stop: 0 #111512,
+        stop: 1 #0d110e
+    );
+    border: 1px solid #303733;
+    border-radius: 11px;
 }
 
 #SectionLabel {
-    color: #f4f6f5;
-    border-left: 3px solid #58df73;
-    padding-left: 9px;
-    font-size: 11px;
+    color: #f5f7f5;
+    font-size: 13px;
     font-weight: 700;
-    letter-spacing: 0.8px;
+    letter-spacing: 0.7px;
+}
+
+#SectionAccent {
+    background: #58df73;
+    border-radius: 2px;
 }
 
 #QueueLabel {
-    color: #8e9892;
-    font-size: 11px;
+    color: #a5ada8;
+    font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.4px;
 }
 
 /* URL editor */
 #UrlInputFrame {
-    background: #070908;
-    border: 1px solid #31513a;
-    border-radius: 9px;
+    background: #050706;
+    border: 1px solid #438e4f;
+    border-radius: 10px;
 }
 
 #LineNumbers {
-    background: #0d100e;
-    color: #747d77;
-    font-family: "SF Mono", "Menlo", "Monaco", monospace;
+    background: #0b0e0c;
+    color: #9ba39e;
+    font-family: "Menlo";
     border: none;
-    border-right: 1px solid #252c28;
-    border-top-left-radius: 8px;
-    border-bottom-left-radius: 8px;
-    padding-top: 10px;
-    font-size: 13px;
+    border-right: 1px solid #2d3430;
+    border-top-left-radius: 9px;
+    border-bottom-left-radius: 9px;
+    padding-top: 11px;
+    font-size: 14px;
 }
 
 #UrlEditor {
     background: transparent;
-    color: #f4f6f5;
-    font-family: "SF Mono", "Menlo", "Monaco", monospace;
+    color: #f3f5f4;
+    font-family: "Menlo";
     border: none;
-    padding: 10px 12px;
-    selection-background-color: #285c34;
+    padding: 11px 14px;
+    selection-background-color: #326c3d;
     selection-color: #ffffff;
-    font-size: 13px;
+    font-size: 14px;
 }
 
 #UrlEditor::placeholder {
-    color: #858e88;
+    color: #9ca39f;
 }
 
 /* Buttons */
 QPushButton {
-    background: #151a17;
-    color: #f4f6f5;
-    border: 1px solid #39413c;
-    border-radius: 8px;
-    padding: 8px 18px;
-    min-height: 40px;
-    font-size: 13px;
-    font-weight: 650;
+    background: qlineargradient(
+        x1: 0,
+        y1: 0,
+        x2: 0,
+        y2: 1,
+        stop: 0 #151a17,
+        stop: 1 #0f1310
+    );
+    color: #ffffff;
+    border: 1px solid #4c8c57;
+    border-radius: 9px;
+    padding: 10px 22px;
+    min-height: 54px;
+    font-size: 15px;
+    font-weight: 700;
 }
 
 QPushButton:hover {
-    background: #1a211c;
-    border-color: #58df73;
+    background: #1c2a20;
+    border-color: #64e97f;
     color: #ffffff;
 }
 
 QPushButton:pressed {
-    background: #244b2d;
-    border-color: #64e980;
+    background: #285b33;
+    border-color: #74ee8d;
     color: #ffffff;
 }
 
 QPushButton:disabled {
-    background: #111512;
-    color: #68716b;
-    border-color: #252c28;
+    color: #89918c;
+    border-color: #344139;
 }
 
 #startBtn {
-    background: #17351f;
-    border-color: #58df73;
+    background: qlineargradient(
+        x1: 0,
+        y1: 0,
+        x2: 1,
+        y2: 0,
+        stop: 0 #4ebd50,
+        stop: 1 #66d35f
+    );
+    border-color: #74ea72;
     color: #ffffff;
 }
 
 #startBtn:hover {
-    background: #1f4729;
-    border-color: #68ec82;
+    background: #5fce5c;
+    border-color: #85f181;
+}
+
+#startBtn:disabled {
+    background: qlineargradient(
+        x1: 0,
+        y1: 0,
+        x2: 1,
+        y2: 0,
+        stop: 0 #25442a,
+        stop: 1 #2e5131
+    );
+    color: #b2bbb4;
+    border-color: #477b4e;
 }
 
 #cancelBtn {
-    background: #1b1d1b;
-    border-color: #5e6962;
+    background: #211719;
+    border-color: #85505a;
 }
 
 #pauseBtn {
@@ -146,40 +195,47 @@ QPushButton:disabled {
 
 /* Progress */
 #StatusLabel {
-    color: #e5e9e6;
-    font-size: 12px;
+    color: #64e97f;
+    font-size: 14px;
     font-weight: 600;
 }
 
 #SpeedLabel {
-    color: #f3f6f4;
-    font-family: "SF Mono", "Menlo", "Monaco", monospace;
-    font-size: 12px;
+    color: #f5f7f5;
+    font-family: "Menlo";
+    font-size: 14px;
     font-weight: 700;
 }
 
 #DownloadProgress {
-    background: #252b27;
-    border: 1px solid #303733;
-    border-radius: 5px;
-    min-height: 10px;
-    max-height: 10px;
+    background: #252a27;
+    border: 1px solid #343a36;
+    border-radius: 6px;
+    min-height: 14px;
+    max-height: 14px;
 }
 
 #DownloadProgress::chunk {
-    background: #55df72;
-    border-radius: 4px;
+    background: qlineargradient(
+        x1: 0,
+        y1: 0,
+        x2: 1,
+        y2: 0,
+        stop: 0 #4fbd53,
+        stop: 1 #65df72
+    );
+    border-radius: 5px;
 }
 
 /* Activity */
 #ActivityLog {
-    background: #070908;
-    color: #d8ddda;
-    font-family: "SF Mono", "Menlo", "Monaco", monospace;
-    border: 1px solid #29302c;
-    border-radius: 8px;
-    padding: 10px;
-    font-size: 12px;
+    background: #050706;
+    color: #e3e7e4;
+    font-family: "Menlo";
+    border: 1px solid #2f3632;
+    border-radius: 9px;
+    padding: 12px;
+    font-size: 13px;
 }
 
 /* Statistics rail */
@@ -188,59 +244,84 @@ QPushButton:disabled {
 }
 
 #StatCard {
-    background: #121613;
-    border: 1px solid #2b332e;
-    border-radius: 10px;
-    min-width: 210px;
+    background: qlineargradient(
+        x1: 0,
+        y1: 0,
+        x2: 0,
+        y2: 1,
+        stop: 0 #121613,
+        stop: 1 #0d110e
+    );
+    border: 1px solid #303733;
+    border-radius: 11px;
+    min-width: 260px;
 }
 
 #StatIcon {
-    background: #19201b;
-    color: #dce1de;
-    border: 1px solid #343d37;
-    border-radius: 7px;
-    font-size: 11px;
-    font-weight: 800;
+    background: transparent;
+    color: #ffffff;
+    border: none;
 }
 
 #StatLabel {
-    color: #f1f4f2;
-    font-size: 12px;
-    font-weight: 650;
+    color: #f5f7f5;
+    font-size: 15px;
+    font-weight: 700;
 }
 
 #StatValue {
-    background: #0b120d;
-    color: #62e17a;
-    border: 1px solid #3d7449;
-    border-radius: 10px;
-    padding: 3px 10px;
-    min-width: 46px;
-    font-family: "SF Mono", "Menlo", "Monaco", monospace;
-    font-size: 12px;
-    font-weight: 800;
+    background: #0b100c;
+    color: #66e47e;
+    border: 1px solid #58a963;
+    border-radius: 16px;
+    padding: 7px 14px;
+    min-width: 62px;
+    font-family: "Menlo";
+    font-size: 15px;
+    font-weight: 700;
 }
 
-/* Native status bar remains the bottom application bar */
+/* Bottom application status */
 QStatusBar {
-    background: #090c0a;
-    color: #d1d7d3;
-    border-top: 1px solid #55df72;
-    border-bottom: 2px solid #55df72;
-    padding: 5px 16px;
-    font-size: 11px;
+    background: qlineargradient(
+        x1: 0,
+        y1: 0,
+        x2: 0,
+        y2: 1,
+        stop: 0 #111512,
+        stop: 1 #0a0d0b
+    );
+    color: #f4f6f5;
+    border-top: 2px solid #58df73;
+    border-bottom: 3px solid #58df73;
+    min-height: 48px;
+    padding: 0 28px;
+    font-size: 14px;
     font-weight: 600;
 }
 
-QStatusBar[statusState="valid"] {
+#StatusIndicator {
+    background: #5fe177;
+    border-radius: 5px;
+    margin-left: 3px;
+    margin-right: 10px;
+}
+
+#StatusMessage {
+    color: #f4f6f5;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+QStatusBar[statusState="valid"] #StatusMessage {
     color: #64e97f;
 }
 
-QStatusBar[statusState="invalid"] {
+QStatusBar[statusState="invalid"] #StatusMessage {
     color: #f08b8b;
 }
 
-QStatusBar[statusState="partial"] {
+QStatusBar[statusState="partial"] #StatusMessage {
     color: #e6c47a;
 }
 
@@ -250,20 +331,20 @@ QStatusBar::item {
 
 /* Scrollbars */
 QScrollBar:vertical {
-    background: #090c0a;
+    background: #080a09;
     border: none;
-    width: 9px;
-    margin: 2px;
+    width: 10px;
+    margin: 3px;
 }
 
 QScrollBar::handle:vertical {
-    background: #303833;
-    min-height: 28px;
-    border-radius: 4px;
+    background: #454d48;
+    min-height: 30px;
+    border-radius: 5px;
 }
 
 QScrollBar::handle:vertical:hover {
-    background: #4c6653;
+    background: #5a6d60;
 }
 
 QScrollBar::add-line:vertical,
@@ -276,20 +357,20 @@ QScrollBar::sub-page:vertical {
 }
 
 QScrollBar:horizontal {
-    background: #090c0a;
+    background: #080a09;
     border: none;
-    height: 9px;
-    margin: 2px;
+    height: 10px;
+    margin: 3px;
 }
 
 QScrollBar::handle:horizontal {
-    background: #303833;
-    min-width: 28px;
-    border-radius: 4px;
+    background: #454d48;
+    min-width: 30px;
+    border-radius: 5px;
 }
 
 QScrollBar::handle:horizontal:hover {
-    background: #4c6653;
+    background: #5a6d60;
 }
 
 QScrollBar::add-line:horizontal,

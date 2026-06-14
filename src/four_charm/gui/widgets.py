@@ -2,8 +2,19 @@ from __future__ import annotations
 
 import re
 
-from PySide6.QtCore import QMimeData, Qt, QTimer
-from PySide6.QtGui import QColor, QTextBlockFormat, QTextCharFormat, QTextCursor
+from PySide6.QtCore import QMimeData, QPointF, QRectF, QSize, Qt, QTimer
+from PySide6.QtGui import (
+    QColor,
+    QIcon,
+    QPainter,
+    QPainterPath,
+    QPen,
+    QPixmap,
+    QPolygonF,
+    QTextBlockFormat,
+    QTextCharFormat,
+    QTextCursor,
+)
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -16,6 +27,137 @@ from PySide6.QtWidgets import (
 _URL_PATTERN = re.compile(r"https?://[^\s<>\'\"]+")
 
 
+def create_interface_icon(kind: str, color: str = "#f5f7f5", size: int = 24) -> QIcon:
+    """Create a simple monochrome interface icon."""
+    pixmap = QPixmap(size, size)
+    pixmap.fill(Qt.GlobalColor.transparent)
+
+    painter = QPainter(pixmap)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+    pen = QPen(QColor(color), max(1.5, size * 0.075))
+    pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+    pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
+    painter.setPen(pen)
+    painter.setBrush(Qt.BrushStyle.NoBrush)
+
+    scale = float(size)
+    if kind == "play":
+        painter.setBrush(QColor(color))
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.drawPolygon(
+            QPolygonF(
+                [
+                    QPointF(scale * 0.34, scale * 0.22),
+                    QPointF(scale * 0.76, scale * 0.50),
+                    QPointF(scale * 0.34, scale * 0.78),
+                ]
+            )
+        )
+    elif kind == "pause":
+        painter.setBrush(QColor(color))
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.drawRoundedRect(
+            QRectF(scale * 0.29, scale * 0.22, scale * 0.13, scale * 0.56),
+            scale * 0.04,
+            scale * 0.04,
+        )
+        painter.drawRoundedRect(
+            QRectF(scale * 0.58, scale * 0.22, scale * 0.13, scale * 0.56),
+            scale * 0.04,
+            scale * 0.04,
+        )
+    elif kind == "cancel":
+        painter.drawLine(
+            QPointF(scale * 0.27, scale * 0.27),
+            QPointF(scale * 0.73, scale * 0.73),
+        )
+        painter.drawLine(
+            QPointF(scale * 0.73, scale * 0.27),
+            QPointF(scale * 0.27, scale * 0.73),
+        )
+    elif kind == "trash":
+        painter.drawRoundedRect(
+            QRectF(scale * 0.29, scale * 0.31, scale * 0.42, scale * 0.50),
+            scale * 0.05,
+            scale * 0.05,
+        )
+        painter.drawLine(
+            QPointF(scale * 0.23, scale * 0.27),
+            QPointF(scale * 0.77, scale * 0.27),
+        )
+        painter.drawLine(
+            QPointF(scale * 0.40, scale * 0.19),
+            QPointF(scale * 0.60, scale * 0.19),
+        )
+        painter.drawLine(
+            QPointF(scale * 0.43, scale * 0.42),
+            QPointF(scale * 0.43, scale * 0.68),
+        )
+        painter.drawLine(
+            QPointF(scale * 0.57, scale * 0.42),
+            QPointF(scale * 0.57, scale * 0.68),
+        )
+    elif kind == "folder":
+        path = QPainterPath()
+        path.moveTo(scale * 0.16, scale * 0.31)
+        path.lineTo(scale * 0.40, scale * 0.31)
+        path.lineTo(scale * 0.49, scale * 0.40)
+        path.lineTo(scale * 0.84, scale * 0.40)
+        path.lineTo(scale * 0.78, scale * 0.76)
+        path.lineTo(scale * 0.20, scale * 0.76)
+        path.closeSubpath()
+        painter.drawPath(path)
+    elif kind == "file":
+        path = QPainterPath()
+        path.moveTo(scale * 0.28, scale * 0.16)
+        path.lineTo(scale * 0.61, scale * 0.16)
+        path.lineTo(scale * 0.76, scale * 0.31)
+        path.lineTo(scale * 0.76, scale * 0.84)
+        path.lineTo(scale * 0.28, scale * 0.84)
+        path.closeSubpath()
+        painter.drawPath(path)
+        painter.drawLine(
+            QPointF(scale * 0.61, scale * 0.17),
+            QPointF(scale * 0.61, scale * 0.32),
+        )
+        painter.drawLine(
+            QPointF(scale * 0.61, scale * 0.32),
+            QPointF(scale * 0.75, scale * 0.32),
+        )
+        painter.drawLine(
+            QPointF(scale * 0.39, scale * 0.55),
+            QPointF(scale * 0.65, scale * 0.55),
+        )
+        painter.drawLine(
+            QPointF(scale * 0.39, scale * 0.68),
+            QPointF(scale * 0.61, scale * 0.68),
+        )
+    elif kind == "drive":
+        painter.drawRoundedRect(
+            QRectF(scale * 0.17, scale * 0.25, scale * 0.66, scale * 0.52),
+            scale * 0.08,
+            scale * 0.08,
+        )
+        painter.drawLine(
+            QPointF(scale * 0.23, scale * 0.57),
+            QPointF(scale * 0.77, scale * 0.57),
+        )
+        painter.setBrush(QColor(color))
+        painter.drawEllipse(
+            QPointF(scale * 0.31, scale * 0.67),
+            scale * 0.035,
+            scale * 0.035,
+        )
+        painter.drawEllipse(
+            QPointF(scale * 0.42, scale * 0.67),
+            scale * 0.035,
+            scale * 0.035,
+        )
+
+    painter.end()
+    return QIcon(pixmap)
+
+
 class NeonPanel(QFrame):
     def __init__(self, object_name: str = "NeonPanel") -> None:
         super().__init__()
@@ -25,15 +167,15 @@ class NeonPanel(QFrame):
 class NeonButton(QPushButton):
     def __init__(self, text: str) -> None:
         super().__init__(text)
-        self.setMinimumHeight(46)
+        self.setMinimumHeight(58)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
 
 class StatCard(QFrame):
-    def __init__(self, label: str, value: str, icon: str = "") -> None:
+    def __init__(self, label: str, value: str, icon: QIcon | None = None) -> None:
         super().__init__()
         self.setObjectName("StatCard")
-        self.setMinimumHeight(68)
+        self.setMinimumHeight(82)
 
         title = QLabel(label)
         title.setObjectName("StatLabel")
@@ -45,11 +187,12 @@ class StatCard(QFrame):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(12, 10, 12, 10)
         layout.setSpacing(10)
-        if icon:
-            icon_label = QLabel(icon)
+        if icon is not None:
+            icon_label = QLabel()
             icon_label.setObjectName("StatIcon")
-            icon_label.setFixedSize(28, 28)
+            icon_label.setFixedSize(38, 38)
             icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            icon_label.setPixmap(icon.pixmap(QSize(30, 30)))
             layout.addWidget(icon_label)
         layout.addWidget(title)
         layout.addStretch()
