@@ -121,3 +121,51 @@ def test_enter_creates_new_line_and_updates_gutter() -> None:
     finally:
         window.deleteLater()
         app.processEvents()
+
+
+def test_premium_idle_ui_contract() -> None:
+    """The idle UI should expose polished labels and the approved initial stats."""
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+    from four_charm.gui.main_window import MainWindow
+
+    app = _app()
+    window = MainWindow()
+
+    try:
+        assert window.start_cancel_btn.text() == "Start Download"
+        assert window.clear_btn.text() == "Clear"
+        assert window.folder_btn.text() == "Folder"
+        assert window.pause_resume_btn.text() == "Pause"
+        assert window.progress_label.text() == "Ready"
+        assert window.folders_card.value_label.text() == "0"
+        assert window.files_card.value_label.text() == "0"
+        assert window.storage_card.value_label.text() == "0.0GB"
+        assert window.status_bar.currentMessage() == "Engine Status: Ready"
+    finally:
+        window.deleteLater()
+        app.processEvents()
+
+
+def test_lower_area_places_stats_to_the_right_of_log() -> None:
+    """Layout A should use a wide log with a vertical stats rail."""
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+    from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout
+
+    from four_charm.gui.main_window import MainWindow
+
+    app = _app()
+    window = MainWindow()
+
+    try:
+        assert isinstance(window.lower_layout, QHBoxLayout)
+        assert isinstance(window.stats_layout, QVBoxLayout)
+        assert window.lower_layout.indexOf(window.log_panel) == 0
+        assert window.lower_layout.indexOf(window.stats_panel) == 1
+        assert window.stats_layout.indexOf(window.folders_card) == 0
+        assert window.stats_layout.indexOf(window.files_card) == 1
+        assert window.stats_layout.indexOf(window.storage_card) == 2
+    finally:
+        window.deleteLater()
+        app.processEvents()

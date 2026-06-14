@@ -86,7 +86,6 @@ from four_charm.gui.widgets import (
     NeonButton,
     NeonPanel,
     StatCard,
-    apply_neon_glow,
 )
 from four_charm.gui.workers import MultiUrlDownloadWorker
 
@@ -140,8 +139,8 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("4Charm")
-        self.setMinimumSize(920, 720)
-        self.resize(960, 740)
+        self.setMinimumSize(980, 720)
+        self.resize(1100, 760)
         self.setAcceptDrops(True)
 
         self.scraper = FourChanScraper()
@@ -184,37 +183,33 @@ class MainWindow(QMainWindow):
         root.setObjectName("Root")
         self.setCentralWidget(root)
         main_layout = QVBoxLayout(root)
-        main_layout.setContentsMargins(24, 20, 24, 16)
-        main_layout.setSpacing(14)
+        main_layout.setContentsMargins(24, 16, 24, 14)
+        main_layout.setSpacing(12)
 
         header = self._build_header()
         url_panel = self._build_url_panel()
         progress_panel = self._build_progress_panel()
         lower_area = self._build_lower_area()
-        stat_row = self._build_stat_row()
-        footer = self._build_footer()
 
         main_layout.addWidget(header)
         main_layout.addWidget(url_panel)
         main_layout.addWidget(progress_panel)
         main_layout.addWidget(lower_area, stretch=1)
-        main_layout.addWidget(stat_row)
-        main_layout.addWidget(footer)
 
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
+        self.status_bar.setProperty("statusState", "idle")
         self.status_bar.showMessage("Engine Status: Ready")
         self.status_bar.setSizeGripEnabled(False)
 
     def _build_header(self) -> QWidget:
         panel = QWidget()
         layout = QVBoxLayout(panel)
-        layout.setContentsMargins(0, 15, 0, 15)
-        layout.setSpacing(6)
+        layout.setContentsMargins(0, 8, 0, 10)
+        layout.setSpacing(4)
         title = QLabel("4Charm")
         title.setObjectName("AppTitle")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        apply_neon_glow(title, "#3fe469", 25)
         subtitle = QLabel("HIGH PERFORMANCE 4CHAN MEDIA DOWNLOADER")
         subtitle.setObjectName("AppSubtitle")
         subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -225,24 +220,27 @@ class MainWindow(QMainWindow):
     def _build_url_panel(self) -> NeonPanel:
         panel = NeonPanel("UrlPanel")
         layout = QVBoxLayout(panel)
-        layout.setContentsMargins(12, 10, 12, 10)
-        layout.setSpacing(6)
+        layout.setContentsMargins(14, 12, 14, 12)
+        layout.setSpacing(9)
         label = QLabel("URLS TO DOWNLOAD")
         label.setObjectName("SectionLabel")
 
         self.url_input_frame = LineNumberTextEdit(panel)
-        self.url_input_frame.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.url_input_frame.setMinimumHeight(190)
+        self.url_input_frame.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+        )
 
         self.url_input = self.url_input_frame.editor
         self.line_numbers = self.url_input_frame.line_numbers
 
         button_row = QHBoxLayout()
-        button_row.setSpacing(14)
-        self.start_cancel_btn = NeonButton("🚀  Start Download")
+        button_row.setSpacing(10)
+        self.start_cancel_btn = NeonButton("Start Download")
         self.start_cancel_btn.setObjectName("startBtn")
-        self.clear_btn = NeonButton("🗑  Clear")
-        self.folder_btn = NeonButton("📁  Folder")
-        self.pause_resume_btn = NeonButton("⏸️  Pause")
+        self.clear_btn = NeonButton("Clear")
+        self.folder_btn = NeonButton("Folder")
+        self.pause_resume_btn = NeonButton("Pause")
         self.pause_resume_btn.setObjectName("pauseBtn")
 
         button_row.addWidget(self.start_cancel_btn)
@@ -262,8 +260,8 @@ class MainWindow(QMainWindow):
     def _build_progress_panel(self) -> NeonPanel:
         panel = NeonPanel("ProgressPanel")
         layout = QVBoxLayout(panel)
-        layout.setContentsMargins(12, 10, 12, 10)
-        layout.setSpacing(8)
+        layout.setContentsMargins(14, 11, 14, 12)
+        layout.setSpacing(7)
         label = QLabel("DOWNLOAD PROGRESS")
         label.setObjectName("SectionLabel")
 
@@ -274,7 +272,7 @@ class MainWindow(QMainWindow):
         self.progress_bar.setTextVisible(False)
 
         status_row = QHBoxLayout()
-        self.progress_label = QLabel("Ready to download...")
+        self.progress_label = QLabel("Ready")
         self.progress_label.setObjectName("StatusLabel")
         self.speed_label = QLabel("0.0 MB/s")
         self.speed_label.setObjectName("SpeedLabel")
@@ -285,44 +283,48 @@ class MainWindow(QMainWindow):
         status_row.addWidget(self.speed_label)
 
         layout.addWidget(label)
-        layout.addWidget(self.progress_bar)
         layout.addLayout(status_row)
+        layout.addWidget(self.progress_bar)
         return panel
 
     def _build_lower_area(self) -> QWidget:
-        log_panel = NeonPanel("LogPanel")
-        log_layout = QVBoxLayout(log_panel)
-        log_layout.setContentsMargins(12, 10, 12, 10)
+        wrapper = QWidget()
+        self.lower_layout = QHBoxLayout(wrapper)
+        self.lower_layout.setContentsMargins(0, 0, 0, 0)
+        self.lower_layout.setSpacing(12)
+
+        self.log_panel = NeonPanel("LogPanel")
+        log_layout = QVBoxLayout(self.log_panel)
+        log_layout.setContentsMargins(14, 12, 14, 14)
         log_layout.setSpacing(8)
         label = QLabel("ACTIVITY LOG")
         label.setObjectName("SectionLabel")
         self.log_text = ActivityLog()
-        self.log_text.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.log_text.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+        )
         log_layout.addWidget(label)
         log_layout.addWidget(self.log_text)
-        return log_panel
 
-    def _build_stat_row(self) -> QWidget:
-        """Horizontal row of stat cards pinned to the bottom."""
-        wrapper = QWidget()
-        layout = QHBoxLayout(wrapper)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(12)
+        self.stats_panel = QWidget()
+        self.stats_panel.setObjectName("StatsPanel")
+        self.stats_panel.setFixedWidth(240)
+        self.stats_layout = QVBoxLayout(self.stats_panel)
+        self.stats_layout.setContentsMargins(0, 0, 0, 0)
+        self.stats_layout.setSpacing(10)
 
-        self.folders_card = StatCard("Folders:", "0", "📂")
-        self.files_card = StatCard("Files:", "0", "📄")
-        self.storage_card = StatCard("Storage:", "0.0GB", "💾")
+        self.folders_card = StatCard("Folders", "0")
+        self.files_card = StatCard("Files", "0")
+        self.storage_card = StatCard("Storage", "0.0GB")
 
-        layout.addWidget(self.folders_card)
-        layout.addWidget(self.files_card)
-        layout.addWidget(self.storage_card)
+        self.stats_layout.addWidget(self.folders_card)
+        self.stats_layout.addWidget(self.files_card)
+        self.stats_layout.addWidget(self.storage_card)
+        self.stats_layout.addStretch()
+
+        self.lower_layout.addWidget(self.log_panel, stretch=1)
+        self.lower_layout.addWidget(self.stats_panel)
         return wrapper
-
-    def _build_footer(self) -> QLabel:
-        footer = QLabel("HIGH PERFORMANCE 4CHAN MEDIA DOWNLOADER")
-        footer.setObjectName("Footer")
-        footer.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        return footer
 
     def setup_connections(self):
         """Connect signals and slots."""
@@ -354,7 +356,7 @@ class MainWindow(QMainWindow):
 
         # Reset progress
         self.progress_bar.setValue(0)
-        self.progress_label.setText("Ready to download...")
+        self.progress_label.setText("Ready")
         self.speed_label.setText("0.0 MB/s")
 
         # Clear log
@@ -369,6 +371,7 @@ class MainWindow(QMainWindow):
         # Reset scraper stats
         self.scraper.stats["downloaded"] = 0
         self.scraper.stats["size_mb"] = 0.0
+        self._update_url_status("Engine Status: Ready", "idle")
 
     def choose_download_folder(self):
         """Open folder chooser dialog to select download location."""
@@ -389,7 +392,7 @@ class MainWindow(QMainWindow):
             selected_dir = Path(folder)
             selected_dir.mkdir(parents=True, exist_ok=True)
             self.scraper.download_dir = selected_dir
-            self.add_log_message(f"📁 Download folder changed to: {folder}")
+            self.add_log_message(f"Download folder changed to: {folder}")
             self.status_bar.showMessage(f"Download folder: {folder}")
 
     def _sync_scroll_bars(self):
@@ -409,13 +412,14 @@ class MainWindow(QMainWindow):
         # Validate URL count (maximum 20)
         if len(raw_lines) > 20:
             self._update_url_status(
-                "⚠️ Maximum 20 URLs allowed. Please remove some URLs.", "invalid"
+                "Maximum 20 URLs allowed. Please remove some URLs.", "invalid"
             )
             self.start_cancel_btn.setEnabled(False)
             return
 
         if not raw_lines:
             self.start_cancel_btn.setEnabled(False)
+            self._update_url_status("Engine Status: Ready", "idle")
             return
 
         # Simple string check for speed (avoid creating Scraper object repeatedly in UI thread)
@@ -434,7 +438,7 @@ class MainWindow(QMainWindow):
             self._update_url_status(f"Ready to download {valid_count} threads", "valid")
         elif invalid_count > 0:
             self.start_cancel_btn.setEnabled(False)
-            self._update_url_status("⚠️ Invalid 4chan URLs detected", "invalid")
+            self._update_url_status("Invalid 4chan URLs detected", "invalid")
 
     def handle_start_cancel_click(self):
         """Handles clicks on the main button, either starting or cancelling."""
@@ -464,13 +468,13 @@ class MainWindow(QMainWindow):
             )
 
             if not folder:
-                self.add_log_message("❌ Download cancelled - no folder selected")
+                self.add_log_message("Download cancelled - no folder selected")
                 return
 
             selected_dir = Path(folder)
             selected_dir.mkdir(parents=True, exist_ok=True)
             self.scraper.download_dir = selected_dir
-            self.add_log_message(f"📁 Download folder set to: {folder}")
+            self.add_log_message(f"Download folder set to: {folder}")
             self.status_bar.showMessage(f"Download folder: {folder}")
 
         # Parse and validate URLs (strip numbering if present)
@@ -482,7 +486,7 @@ class MainWindow(QMainWindow):
             if parsed:
                 parsed_urls.append(parsed)
             else:
-                self.add_log_message(f"⚠️ Skipping invalid URL: {clean_url}")
+                self.add_log_message(f"Skipping invalid URL: {clean_url}")
 
         if not parsed_urls:
             QMessageBox.critical(self, "Error", "No valid URLs found")
@@ -490,7 +494,7 @@ class MainWindow(QMainWindow):
 
         download_dir = self.scraper.download_dir
         if download_dir is None:
-            self.add_log_message("❌ Download cancelled - no folder selected")
+            self.add_log_message("Download cancelled - no folder selected")
             return
 
         # Ensure download directory exists before starting
@@ -519,7 +523,7 @@ class MainWindow(QMainWindow):
         """Cancel the current download."""
         if self.download_worker:
             self.download_worker.cancel()
-            self.add_log_message("🛑 Cancelling download...")
+            self.add_log_message("Cancelling download...")
             self.start_cancel_btn.setEnabled(False)
 
     def download_finished(self, stats: dict):
@@ -535,7 +539,13 @@ class MainWindow(QMainWindow):
         status_msg = f"Complete: {downloaded}/{total} files ({size_mb:.1f}MB)"
         if duplicates > 0:
             status_msg += f" | {duplicates} duplicates skipped"
+        self.progress_label.setText("Complete" if total > 0 else "Ready")
+        self.status_bar.setProperty(
+            "statusState", "valid" if total > 0 else "idle"
+        )
         self.status_bar.showMessage(status_msg if total > 0 else "No files found")
+        self.status_bar.style().unpolish(self.status_bar)
+        self.status_bar.style().polish(self.status_bar)
 
     def thread_cleanup(self):
         """Safely nullify thread and worker references after the thread has finished."""
@@ -549,47 +559,43 @@ class MainWindow(QMainWindow):
             self.is_paused = not self.is_paused
             if self.is_paused:
                 self.download_worker.pause()
-                self.add_log_message("⏸️ Downloads paused")
+                self.add_log_message("Downloads paused")
                 self._update_ui_for_state("paused")
             else:
                 self.download_worker.resume()
-                self.add_log_message("▶️ Downloads resumed")
+                self.add_log_message("Downloads resumed")
                 self._update_ui_for_state("downloading")
 
     def _update_ui_for_state(self, state: str):
         """Update the entire UI based on the application state."""
         if state == "idle":
-            self.start_cancel_btn.setText("🚀 Start Download")
+            self.start_cancel_btn.setText("Start Download")
             self.start_cancel_btn.setObjectName("startBtn")
+            self.pause_resume_btn.setText("Pause")
             self.pause_resume_btn.setVisible(False)
             self.validate_urls()
             self.speed_label.setText("0.0 MB/s")
         elif state == "downloading":
-            self.start_cancel_btn.setText("🛑 Cancel")
+            self.start_cancel_btn.setText("Cancel")
             self.start_cancel_btn.setObjectName("cancelBtn")
             self.start_cancel_btn.setEnabled(True)
-            self.pause_resume_btn.setText("⏸️ Pause")
+            self.pause_resume_btn.setText("Pause")
             self.pause_resume_btn.setVisible(True)
             self.is_paused = False
+            if self.progress_bar.value() == 0:
+                self.progress_label.setText("Downloading 0%")
         elif state == "paused":
-            self.pause_resume_btn.setText("▶️ Resume")
+            self.pause_resume_btn.setText("Resume")
 
         self.start_cancel_btn.style().unpolish(self.start_cancel_btn)
         self.start_cancel_btn.style().polish(self.start_cancel_btn)
 
     def _update_url_status(self, text: str, state: str):
         """Update the URL status label with appropriate text and color."""
-        colors = {
-            "valid": "#76e648",
-            "invalid": "#f44336",
-            "partial": "#FF9800",
-            "idle": "#666666",
-        }
-        color = colors.get(state, "#666666")
+        self.status_bar.setProperty("statusState", state)
         self.status_bar.showMessage(text)
-        self.status_bar.setStyleSheet(
-            f"QStatusBar {{ color: {color}; font-size: 11px; font-weight: 800; padding: 4px; letter-spacing: 0.5px; }}"
-        )
+        self.status_bar.style().unpolish(self.status_bar)
+        self.status_bar.style().polish(self.status_bar)
 
     def update_progress(
         self,
@@ -602,7 +608,8 @@ class MainWindow(QMainWindow):
         eta: float = 0.0,
     ):
         if total > 0:
-            self.progress_bar.setValue(int((current / total) * 100))
+            percent = int((current / total) * 100)
+            self.progress_bar.setValue(percent)
 
             # Update session counters
             self.files_card.set_value(str(current))
@@ -628,11 +635,13 @@ class MainWindow(QMainWindow):
 
             if thread_name and thread_index > 0:
                 self.progress_label.setText(
-                    f"Progress: {current}/{total} files - [{thread_index}] {thread_name} - {filename}{eta_str}"
+                    f"Downloading {percent}% - {current}/{total} files - "
+                    f"[{thread_index}] {thread_name} - {filename}{eta_str}"
                 )
             else:
                 self.progress_label.setText(
-                    f"Progress: {current}/{total} files - {filename}{eta_str}"
+                    f"Downloading {percent}% - {current}/{total} files - "
+                    f"{filename}{eta_str}"
                 )
 
     def update_speed(self, speed: float):

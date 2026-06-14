@@ -1,280 +1,302 @@
-/* 4Charm — Cyber Premium Stylesheet */
+/* 4Charm - premium black, white, and green interface */
 
-/* ═══════════════════════════════════════════════════════════════════
-   Global
-   ═══════════════════════════════════════════════════════════════════ */
 QWidget {
-    color: #8cff9e;
-    font-family: "SF Pro Display", "-apple-system", "Helvetica Neue", "Segoe UI", sans-serif;
+    color: #f3f6f4;
+    font-family: "SF Pro Text", "-apple-system", "Helvetica Neue", "Segoe UI", sans-serif;
     font-size: 13px;
 }
 
-QMainWindow {
-    background: #060906;
-}
-
-/* Radial glow centred under the title */
+QMainWindow,
 #Root {
-    background: qradialgradient(
-        cx:0.5, cy:0.0, radius:1.1,
-        fx:0.5, fy:0.0,
-        stop:0 #1a3c1a,
-        stop:0.35 #0a100a,
-        stop:1 #060906
-    );
+    background: #080b09;
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   Header
-   ═══════════════════════════════════════════════════════════════════ */
+#Root {
+    border-top: 2px solid #55df72;
+}
+
+/* Header */
 #AppTitle {
-    color: #3fe469;
+    color: #5be376;
     font-family: "SF Pro Display", "-apple-system", "Helvetica Neue", sans-serif;
-    font-size: 46px;
-    font-weight: 900;
-    letter-spacing: 2px;
+    font-size: 42px;
+    font-weight: 700;
+    letter-spacing: -1px;
 }
 
 #AppSubtitle {
-    color: #6ecf82;
+    color: #aeb6b1;
     font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 2px;
+    font-weight: 600;
+    letter-spacing: 1.6px;
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   Panels (URL / Progress / Log)
-   ═══════════════════════════════════════════════════════════════════ */
+/* Panels and section hierarchy */
 #UrlPanel,
+#ProgressPanel,
 #LogPanel {
-    background-color: rgba(14, 18, 14, 0.92);
-    border: 1.5px solid #3fe469;
-    border-radius: 12px;
+    background-color: #111512;
+    border: 1px solid #2a312d;
+    border-radius: 10px;
 }
 
-#ProgressPanel {
-    background-color: rgba(14, 18, 14, 0.92);
-    border: 1px solid #263626;
-    border-radius: 12px;
+#UrlPanel {
+    border-color: #334139;
 }
 
 #SectionLabel {
-    color: #8cff9e;
+    color: #f4f6f5;
+    border-left: 3px solid #58df73;
+    padding-left: 9px;
     font-size: 11px;
-    font-weight: 900;
-    letter-spacing: 1px;
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   URL Input / Editor  (monospace)
-   ═══════════════════════════════════════════════════════════════════ */
-#UrlInputFrame {
-    background-color: #040604;
-    border: 1px solid #1c351c;
-    border-radius: 8px;
-}
-
-#LineNumbers {
-    background-color: #080a08;
-    color: #4a8c53;
-    font-family: "Menlo", "SF Mono", "Monaco", monospace;
-    border: none;
-    border-top-left-radius: 7px;
-    border-bottom-left-radius: 7px;
-    padding-top: 8px;
-    font-size: 14px;
-    border-right: 1px solid #142417;
-}
-
-#UrlEditor {
-    background-color: transparent;
-    color: #8cff9e;
-    font-family: "Menlo", "SF Mono", "Monaco", monospace;
-    border: none;
-    padding: 8px 10px;
-    selection-background-color: #2fbf4a;
-    selection-color: #020302;
-    font-size: 14px;
-}
-
-#UrlEditor::placeholder {
-    color: #2a4a2a;
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   Activity Log  (monospace)
-   ═══════════════════════════════════════════════════════════════════ */
-#ActivityLog {
-    background-color: #040604;
-    color: #8cff9e;
-    font-family: "Menlo", "SF Mono", "Monaco", monospace;
-    border: 1px solid #1c351c;
-    border-radius: 8px;
-    font-size: 12px;
-    padding: 6px;
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   Buttons
-   ═══════════════════════════════════════════════════════════════════ */
-QPushButton {
-    background: qlineargradient(
-        x1:0, y1:0, x2:0, y2:1,
-        stop:0 #1a2a1d,
-        stop:0.5 #0f1811,
-        stop:1 #0a0e0a
-    );
-    color: #3fe469;
-    border: 1.5px solid #3fe469;
-    border-radius: 10px;
-    font-size: 14px;
-    font-weight: bold;
-    padding: 8px 18px;
-    min-height: 40px;
-}
-
-QPushButton:hover {
-    background: qlineargradient(
-        x1:0, y1:0, x2:0, y2:1,
-        stop:0 #253d2b,
-        stop:0.5 #16241a,
-        stop:1 #0f1610
-    );
-    border-color: #5dff7a;
-    color: #5dff7a;
-}
-
-QPushButton:pressed {
-    background-color: #3fe469;
-    color: #060906;
-}
-
-QPushButton:disabled {
-    color: #264428;
-    border-color: #1a2c1a;
+    font-weight: 700;
+    letter-spacing: 0.8px;
 }
 
 #QueueLabel {
-    color: #63b372;
+    color: #8e9892;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+}
+
+/* URL editor */
+#UrlInputFrame {
+    background: #070908;
+    border: 1px solid #31513a;
+    border-radius: 9px;
+}
+
+#LineNumbers {
+    background: #0d100e;
+    color: #747d77;
+    font-family: "SF Mono", "Menlo", "Monaco", monospace;
+    border: none;
+    border-right: 1px solid #252c28;
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+    padding-top: 10px;
+    font-size: 13px;
+}
+
+#UrlEditor {
+    background: transparent;
+    color: #f4f6f5;
+    font-family: "SF Mono", "Menlo", "Monaco", monospace;
+    border: none;
+    padding: 10px 12px;
+    selection-background-color: #285c34;
+    selection-color: #ffffff;
+    font-size: 13px;
+}
+
+#UrlEditor::placeholder {
+    color: #858e88;
+}
+
+/* Buttons */
+QPushButton {
+    background: #151a17;
+    color: #f4f6f5;
+    border: 1px solid #39413c;
+    border-radius: 8px;
+    padding: 8px 18px;
+    min-height: 40px;
+    font-size: 13px;
+    font-weight: 650;
+}
+
+QPushButton:hover {
+    background: #1a211c;
+    border-color: #58df73;
+    color: #ffffff;
+}
+
+QPushButton:pressed {
+    background: #244b2d;
+    border-color: #64e980;
+    color: #ffffff;
+}
+
+QPushButton:disabled {
+    background: #111512;
+    color: #68716b;
+    border-color: #252c28;
+}
+
+#startBtn {
+    background: #17351f;
+    border-color: #58df73;
+    color: #ffffff;
+}
+
+#startBtn:hover {
+    background: #1f4729;
+    border-color: #68ec82;
+}
+
+#cancelBtn {
+    background: #1b1d1b;
+    border-color: #5e6962;
+}
+
+#pauseBtn {
+    background: #151a17;
+}
+
+/* Progress */
+#StatusLabel {
+    color: #e5e9e6;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+#SpeedLabel {
+    color: #f3f6f4;
+    font-family: "SF Mono", "Menlo", "Monaco", monospace;
     font-size: 12px;
     font-weight: 700;
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   Progress Bar
-   ═══════════════════════════════════════════════════════════════════ */
 #DownloadProgress {
-    background-color: #050705;
-    border: 1px solid #1c351c;
+    background: #252b27;
+    border: 1px solid #303733;
     border-radius: 5px;
     min-height: 10px;
     max-height: 10px;
 }
 
 #DownloadProgress::chunk {
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #3fe469, stop:1 #5dff7a);
-    border-radius: 5px;
+    background: #55df72;
+    border-radius: 4px;
 }
 
-#StatusLabel {
-    color: #8cff9e;
+/* Activity */
+#ActivityLog {
+    background: #070908;
+    color: #d8ddda;
+    font-family: "SF Mono", "Menlo", "Monaco", monospace;
+    border: 1px solid #29302c;
+    border-radius: 8px;
+    padding: 10px;
     font-size: 12px;
 }
 
-#SpeedLabel {
-    color: #3fe469;
-    font-size: 13px;
-    font-weight: 900;
+/* Statistics rail */
+#StatsPanel {
+    background: transparent;
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   Stat Cards
-   ═══════════════════════════════════════════════════════════════════ */
 #StatCard {
-    background-color: rgba(14, 18, 14, 0.92);
-    border: 1.5px solid #3fe469;
-    border-radius: 8px;
-    min-width: 170px;
+    background: #121613;
+    border: 1px solid #2b332e;
+    border-radius: 10px;
+    min-width: 210px;
 }
 
 #StatIcon {
-    font-size: 15px;
+    background: #19201b;
+    color: #dce1de;
+    border: 1px solid #343d37;
+    border-radius: 7px;
+    font-size: 11px;
+    font-weight: 800;
 }
 
 #StatLabel {
-    color: #8cff9e;
+    color: #f1f4f2;
     font-size: 12px;
-    font-weight: bold;
+    font-weight: 650;
 }
 
 #StatValue {
-    background-color: #040604;
-    border: 1px solid #3fe469;
-    color: #3fe469;
-    font-family: "Menlo", "SF Mono", "Monaco", monospace;
-    border-radius: 8px;
-    padding: 1px 10px;
+    background: #0b120d;
+    color: #62e17a;
+    border: 1px solid #3d7449;
+    border-radius: 10px;
+    padding: 3px 10px;
+    min-width: 46px;
+    font-family: "SF Mono", "Menlo", "Monaco", monospace;
     font-size: 12px;
-    font-weight: 900;
+    font-weight: 800;
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   Footer
-   ═══════════════════════════════════════════════════════════════════ */
-#Footer {
-    color: #264428;
-    font-size: 9px;
-    letter-spacing: 2px;
-    font-weight: bold;
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   Status Bar
-   ═══════════════════════════════════════════════════════════════════ */
+/* Native status bar remains the bottom application bar */
 QStatusBar {
-    background: #040604;
-    color: #3fe469;
-    border-top: 1px solid #142417;
+    background: #090c0a;
+    color: #d1d7d3;
+    border-top: 1px solid #55df72;
+    border-bottom: 2px solid #55df72;
+    padding: 5px 16px;
     font-size: 11px;
+    font-weight: 600;
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   Scrollbars  (premium terminal style)
-   ═══════════════════════════════════════════════════════════════════ */
-QScrollBar:vertical {
-    border: none;
-    background: #040604;
-    width: 8px;
-    margin: 0;
+QStatusBar[statusState="valid"] {
+    color: #64e97f;
 }
+
+QStatusBar[statusState="invalid"] {
+    color: #f08b8b;
+}
+
+QStatusBar[statusState="partial"] {
+    color: #e6c47a;
+}
+
+QStatusBar::item {
+    border: none;
+}
+
+/* Scrollbars */
+QScrollBar:vertical {
+    background: #090c0a;
+    border: none;
+    width: 9px;
+    margin: 2px;
+}
+
 QScrollBar::handle:vertical {
-    background: #1c351c;
-    min-height: 20px;
+    background: #303833;
+    min-height: 28px;
     border-radius: 4px;
 }
+
 QScrollBar::handle:vertical:hover {
-    background: #3fe469;
+    background: #4c6653;
 }
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical,
+QScrollBar::add-page:vertical,
+QScrollBar::sub-page:vertical {
+    background: transparent;
     border: none;
-    background: none;
+    height: 0;
 }
 
 QScrollBar:horizontal {
+    background: #090c0a;
     border: none;
-    background: #040604;
-    height: 8px;
-    margin: 0;
+    height: 9px;
+    margin: 2px;
 }
+
 QScrollBar::handle:horizontal {
-    background: #1c351c;
-    min-width: 20px;
+    background: #303833;
+    min-width: 28px;
     border-radius: 4px;
 }
+
 QScrollBar::handle:horizontal:hover {
-    background: #3fe469;
+    background: #4c6653;
 }
-QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+
+QScrollBar::add-line:horizontal,
+QScrollBar::sub-line:horizontal,
+QScrollBar::add-page:horizontal,
+QScrollBar::sub-page:horizontal {
+    background: transparent;
     border: none;
-    background: none;
+    width: 0;
 }

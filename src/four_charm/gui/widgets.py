@@ -3,10 +3,9 @@ from __future__ import annotations
 import re
 
 from PySide6.QtCore import QMimeData, Qt, QTimer
-from PySide6.QtGui import QColor, QTextBlockFormat, QTextCursor
+from PySide6.QtGui import QColor, QTextBlockFormat, QTextCharFormat, QTextCursor
 from PySide6.QtWidgets import (
     QFrame,
-    QGraphicsDropShadowEffect,
     QHBoxLayout,
     QLabel,
     QPlainTextEdit,
@@ -17,26 +16,16 @@ from PySide6.QtWidgets import (
 _URL_PATTERN = re.compile(r"https?://[^\s<>\'\"]+")
 
 
-def apply_neon_glow(widget, color="#3fe469", blur=14):
-    """Apply a neon drop-shadow glow to a widget."""
-    effect = QGraphicsDropShadowEffect(widget)
-    effect.setBlurRadius(blur)
-    effect.setColor(QColor(color))
-    effect.setOffset(0, 0)
-    widget.setGraphicsEffect(effect)
-
-
 class NeonPanel(QFrame):
     def __init__(self, object_name: str = "NeonPanel") -> None:
         super().__init__()
         self.setObjectName(object_name)
-        apply_neon_glow(self, "#3fe469", 18)
 
 
 class NeonButton(QPushButton):
     def __init__(self, text: str) -> None:
         super().__init__(text)
-        self.setMinimumHeight(44)
+        self.setMinimumHeight(46)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
 
@@ -44,13 +33,7 @@ class StatCard(QFrame):
     def __init__(self, label: str, value: str, icon: str = "") -> None:
         super().__init__()
         self.setObjectName("StatCard")
-        apply_neon_glow(self, "#3fe469", 12)
-        self.setFixedHeight(38)
-
-        icon_label = QLabel(icon)
-        icon_label.setObjectName("StatIcon")
-        icon_label.setFixedWidth(24)
-        icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.setMinimumHeight(68)
 
         title = QLabel(label)
         title.setObjectName("StatLabel")
@@ -60,9 +43,14 @@ class StatCard(QFrame):
         self.value_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(10, 4, 10, 4)
-        layout.setSpacing(8)
-        layout.addWidget(icon_label)
+        layout.setContentsMargins(12, 10, 12, 10)
+        layout.setSpacing(10)
+        if icon:
+            icon_label = QLabel(icon)
+            icon_label.setObjectName("StatIcon")
+            icon_label.setFixedSize(28, 28)
+            icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            layout.addWidget(icon_label)
         layout.addWidget(title)
         layout.addStretch()
         layout.addWidget(self.value_label)
@@ -79,8 +67,19 @@ class ActivityLog(QPlainTextEdit):
         self.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
 
     def add_line(self, text: str) -> None:
-        self.appendPlainText(text)
-        self.moveCursor(QTextCursor.MoveOperation.End)
+        cursor = self.textCursor()
+        cursor.movePosition(QTextCursor.MoveOperation.End)
+        if not self.document().isEmpty():
+            cursor.insertBlock()
+
+        line_format = QTextCharFormat()
+        success_terms = ("complete", "downloaded", "ready", "success", "operational")
+        color = "#65e37b" if any(term in text.lower() for term in success_terms) else "#d8ddda"
+        line_format.setForeground(QColor(color))
+        cursor.setCharFormat(line_format)
+        cursor.insertText(text)
+        self.setTextCursor(cursor)
+        self.ensureCursorVisible()
 
 
 class UrlInputEdit(QPlainTextEdit):
