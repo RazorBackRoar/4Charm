@@ -279,10 +279,13 @@ class LineNumberTextEdit(QFrame):
         )
         self.line_numbers.setFixedWidth(60)
         self.line_numbers.document().setDocumentMargin(0)
+        text_option = self.line_numbers.document().defaultTextOption()
+        text_option.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.line_numbers.document().setDefaultTextOption(text_option)
         self.line_numbers.setPlainText("1\n2\n3\n4\n5")
 
         self._line_fmt = QTextBlockFormat()
-        self._line_fmt.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self._line_fmt.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._line_fmt.setLineHeight(
             140.0, QTextBlockFormat.LineHeightTypes.ProportionalHeight.value
         )

@@ -214,8 +214,8 @@ def test_reference_action_and_gutter_proportions() -> None:
         assert window.folder_btn.height() == 60
         assert window.line_numbers.width() == 60
         assert window.line_numbers.toPlainText() == "1\n2\n3\n4\n5"
-        assert window.line_numbers.textCursor().blockFormat().alignment() == (
-            Qt.AlignmentFlag.AlignRight
+        assert window.line_numbers.document().defaultTextOption().alignment() == (
+            Qt.AlignmentFlag.AlignCenter
         )
     finally:
         window.deleteLater()
