@@ -141,8 +141,8 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("")
-        self.setMinimumSize(1000, 760)
-        self.resize(1100, 820)
+        self.setMinimumSize(1000, 700)
+        self.resize(1100, 740)
         self.setAcceptDrops(True)
 
         self.scraper = FourChanScraper()
@@ -259,8 +259,8 @@ class MainWindow(QMainWindow):
         root.setObjectName("Root")
         self.setCentralWidget(root)
         main_layout = QVBoxLayout(root)
-        main_layout.setContentsMargins(32, 13, 32, 11)
-        main_layout.setSpacing(14)
+        main_layout.setContentsMargins(28, 10, 28, 8)
+        main_layout.setSpacing(10)
 
         header = self._build_header()
         url_panel = self._build_url_panel()
@@ -279,8 +279,8 @@ class MainWindow(QMainWindow):
         self.status_content = QWidget()
         self.status_content.setObjectName("StatusContent")
         status_layout = QHBoxLayout(self.status_content)
-        status_layout.setContentsMargins(28, 0, 28, 0)
-        status_layout.setSpacing(10)
+        status_layout.setContentsMargins(24, 0, 24, 0)
+        status_layout.setSpacing(8)
 
         self.status_indicator = QLabel()
         self.status_indicator.setObjectName("StatusIndicator")
@@ -298,7 +298,7 @@ class MainWindow(QMainWindow):
         panel = QWidget()
         panel.setObjectName("Header")
         layout = QVBoxLayout(panel)
-        layout.setContentsMargins(0, 8, 0, 10)
+        layout.setContentsMargins(0, 4, 0, 6)
         layout.setSpacing(4)
         title = QLabel("4Charm")
         title.setObjectName("AppTitle")
@@ -319,7 +319,7 @@ class MainWindow(QMainWindow):
 
         accent = QFrame()
         accent.setObjectName("SectionAccent")
-        accent.setFixedSize(4, 22)
+        accent.setFixedSize(3, 20)
 
         label = QLabel(text)
         label.setObjectName("SectionLabel")
@@ -332,12 +332,12 @@ class MainWindow(QMainWindow):
     def _build_url_panel(self) -> NeonPanel:
         panel = NeonPanel("UrlPanel")
         layout = QVBoxLayout(panel)
-        layout.setContentsMargins(14, 12, 14, 12)
-        layout.setSpacing(9)
+        layout.setContentsMargins(12, 8, 12, 8)
+        layout.setSpacing(7)
         label = self._build_section_label("URLS TO DOWNLOAD")
 
         self.url_input_frame = LineNumberTextEdit(panel)
-        self.url_input_frame.setFixedHeight(120)
+        self.url_input_frame.setFixedHeight(100)
         self.url_input_frame.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
@@ -354,14 +354,17 @@ class MainWindow(QMainWindow):
         self.pause_resume_btn = NeonButton("Pause")
         self.pause_resume_btn.setObjectName("pauseBtn")
 
-        icon_size = QSize(22, 22)
-        self.start_cancel_btn.setIcon(create_interface_icon("play"))
+        icon_size = QSize(20, 20)
+        self.start_cancel_btn.setProperty("ready", False)
+        self.start_cancel_btn.setIcon(
+            create_interface_icon("play", color="#929a95")
+        )
         self.start_cancel_btn.setIconSize(icon_size)
-        self.clear_btn.setIcon(create_interface_icon("trash"))
+        self.clear_btn.setIcon(create_interface_icon("trash", color="#c7ccc8"))
         self.clear_btn.setIconSize(icon_size)
-        self.folder_btn.setIcon(create_interface_icon("folder"))
+        self.folder_btn.setIcon(create_interface_icon("folder", color="#c7ccc8"))
         self.folder_btn.setIconSize(icon_size)
-        self.pause_resume_btn.setIcon(create_interface_icon("pause"))
+        self.pause_resume_btn.setIcon(create_interface_icon("pause", color="#c7ccc8"))
         self.pause_resume_btn.setIconSize(icon_size)
 
         button_row.addWidget(self.start_cancel_btn)
@@ -381,8 +384,8 @@ class MainWindow(QMainWindow):
     def _build_progress_panel(self) -> NeonPanel:
         panel = NeonPanel("ProgressPanel")
         layout = QVBoxLayout(panel)
-        layout.setContentsMargins(14, 11, 14, 12)
-        layout.setSpacing(7)
+        layout.setContentsMargins(12, 8, 12, 8)
+        layout.setSpacing(5)
         label = self._build_section_label("DOWNLOAD PROGRESS")
 
         self.progress_bar = QProgressBar()
@@ -411,12 +414,12 @@ class MainWindow(QMainWindow):
         wrapper = QWidget()
         self.lower_layout = QHBoxLayout(wrapper)
         self.lower_layout.setContentsMargins(0, 0, 0, 0)
-        self.lower_layout.setSpacing(12)
+        self.lower_layout.setSpacing(10)
 
         self.log_panel = NeonPanel("LogPanel")
         log_layout = QVBoxLayout(self.log_panel)
-        log_layout.setContentsMargins(14, 12, 14, 14)
-        log_layout.setSpacing(8)
+        log_layout.setContentsMargins(12, 8, 12, 10)
+        log_layout.setSpacing(6)
         label = self._build_section_label("ACTIVITY LOG")
         self.log_text = ActivityLog()
         self.log_text.setSizePolicy(
@@ -427,10 +430,10 @@ class MainWindow(QMainWindow):
 
         self.stats_panel = QWidget()
         self.stats_panel.setObjectName("StatsPanel")
-        self.stats_panel.setFixedWidth(420)
+        self.stats_panel.setFixedWidth(360)
         self.stats_layout = QVBoxLayout(self.stats_panel)
         self.stats_layout.setContentsMargins(0, 0, 0, 0)
-        self.stats_layout.setSpacing(10)
+        self.stats_layout.setSpacing(8)
 
         self.folders_card = StatCard(
             "FOLDERS",
@@ -557,11 +560,11 @@ class MainWindow(QMainWindow):
             self._update_url_status(
                 "Maximum 20 URLs allowed. Please remove some URLs.", "invalid"
             )
-            self.start_cancel_btn.setEnabled(False)
+            self._set_start_ready(False)
             return
 
         if not raw_lines:
-            self.start_cancel_btn.setEnabled(False)
+            self._set_start_ready(False)
             self._update_url_status("Engine Status: Ready", "idle")
             return
 
@@ -577,11 +580,23 @@ class MainWindow(QMainWindow):
                 invalid_count += 1
 
         if valid_count > 0 and invalid_count == 0:
-            self.start_cancel_btn.setEnabled(True)
+            self._set_start_ready(True)
             self._update_url_status(f"Ready to download {valid_count} threads", "valid")
         elif invalid_count > 0:
-            self.start_cancel_btn.setEnabled(False)
+            self._set_start_ready(False)
             self._update_url_status("Invalid 4chan URLs detected", "invalid")
+
+    def _set_start_ready(self, ready: bool) -> None:
+        """Refresh the idle Start button immediately when URL validity changes."""
+        self.start_cancel_btn.setProperty("ready", ready)
+        self.start_cancel_btn.setEnabled(ready)
+        icon_color = "#303730" if ready else "#929a95"
+        self.start_cancel_btn.setIcon(
+            create_interface_icon("play", color=icon_color)
+        )
+        self.start_cancel_btn.style().unpolish(self.start_cancel_btn)
+        self.start_cancel_btn.style().polish(self.start_cancel_btn)
+        self.start_cancel_btn.update()
 
     def handle_start_cancel_click(self):
         """Handles clicks on the main button, either starting or cancelling."""
@@ -717,16 +732,20 @@ class MainWindow(QMainWindow):
         if state == "idle":
             self.start_cancel_btn.setText("Start Download")
             self.start_cancel_btn.setObjectName("startBtn")
-            self.start_cancel_btn.setIcon(create_interface_icon("play"))
             self.pause_resume_btn.setText("Pause")
-            self.pause_resume_btn.setIcon(create_interface_icon("pause"))
+            self.pause_resume_btn.setIcon(
+                create_interface_icon("pause", color="#c7ccc8")
+            )
             self.pause_resume_btn.setVisible(False)
             self.validate_urls()
             self.speed_label.setText("0.0 MB/s")
         elif state == "downloading":
             self.start_cancel_btn.setText("Cancel")
             self.start_cancel_btn.setObjectName("cancelBtn")
-            self.start_cancel_btn.setIcon(create_interface_icon("cancel"))
+            self.start_cancel_btn.setProperty("ready", False)
+            self.start_cancel_btn.setIcon(
+                create_interface_icon("cancel", color="#c7ccc8")
+            )
             self.start_cancel_btn.setEnabled(True)
             self.pause_resume_btn.setText("Pause")
             self.pause_resume_btn.setIcon(create_interface_icon("pause"))
@@ -736,7 +755,9 @@ class MainWindow(QMainWindow):
                 self.progress_label.setText("Downloading 0%")
         elif state == "paused":
             self.pause_resume_btn.setText("Resume")
-            self.pause_resume_btn.setIcon(create_interface_icon("play"))
+            self.pause_resume_btn.setIcon(
+                create_interface_icon("play", color="#c7ccc8")
+            )
 
         self.start_cancel_btn.style().unpolish(self.start_cancel_btn)
         self.start_cancel_btn.style().polish(self.start_cancel_btn)

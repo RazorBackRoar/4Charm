@@ -42,7 +42,9 @@ def test_paste_urls_use_four_visually_spaced_slots() -> None:
         assert window.line_numbers.toPlainText() == "\n".join(
             str(number) for number in range(1, 5)
         )
-        assert window.url_input.document().firstBlock().blockFormat().lineHeight() == 200
+        line_format = window.url_input.document().firstBlock().blockFormat()
+        assert line_format.topMargin() == 1.5
+        assert line_format.bottomMargin() == 1.5
     finally:
         window.deleteLater()
         app.processEvents()
@@ -83,6 +85,76 @@ def test_url_input_scrolls_after_large_plain_text_paste() -> None:
         # scroll position 1-2px short of the absolute maximum.  Accept "near
         # the bottom" as proof that scrolling is working correctly.
         assert scrollbar.value() >= scrollbar.maximum() - 2
+    finally:
+        window.deleteLater()
+        app.processEvents()
+
+
+def test_url_scrollbar_starts_after_four_urls() -> None:
+    """Four URL slots should fit; the fifth should enable mouse-wheel scrolling."""
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+    from four_charm.gui.main_window import MainWindow
+
+    app = _app()
+    window = MainWindow()
+    window.show()
+
+    try:
+        four_urls = " ".join(
+            f"https://boards.4chan.org/g/thread/{number}" for number in range(1, 5)
+        )
+        app.clipboard().setText(four_urls)
+        window.paste_from_clipboard()
+        app.processEvents()
+
+        assert window.url_input.verticalScrollBar().maximum() == 0
+
+        window.url_input.clear()
+        five_urls = " ".join(
+            f"https://boards.4chan.org/g/thread/{number}" for number in range(1, 6)
+        )
+        app.clipboard().setText(five_urls)
+        window.paste_from_clipboard()
+        app.processEvents()
+
+        assert window.url_input.verticalScrollBar().maximum() > 0
+        assert window.url_input.verticalScrollBarPolicy() == (
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
+        )
+    finally:
+        window.deleteLater()
+        app.processEvents()
+
+
+def test_start_button_updates_ready_state_immediately() -> None:
+    """Start styling and icon should update as URL validity changes."""
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+    from four_charm.gui.main_window import MainWindow
+
+    app = _app()
+    window = MainWindow()
+
+    try:
+        idle_icon_key = window.start_cancel_btn.icon().cacheKey()
+        assert window.start_cancel_btn.property("ready") is False
+        assert not window.start_cancel_btn.isEnabled()
+
+        window.url_input.setPlainText("https://boards.4chan.org/g/thread/1")
+        app.processEvents()
+
+        ready_icon_key = window.start_cancel_btn.icon().cacheKey()
+        assert window.start_cancel_btn.property("ready") is True
+        assert window.start_cancel_btn.isEnabled()
+        assert ready_icon_key != idle_icon_key
+
+        window.url_input.clear()
+        app.processEvents()
+
+        assert window.start_cancel_btn.property("ready") is False
+        assert not window.start_cancel_btn.isEnabled()
+        assert window.start_cancel_btn.icon().cacheKey() != ready_icon_key
     finally:
         window.deleteLater()
         app.processEvents()
@@ -219,31 +291,39 @@ def test_reference_action_and_gutter_proportions() -> None:
     app.processEvents()
 
     try:
-        assert window.start_cancel_btn.height() == 60
-        assert window.clear_btn.height() == 60
-        assert window.folder_btn.height() == 60
+        assert window.start_cancel_btn.height() == 50
+        assert window.clear_btn.height() == 50
+        assert window.folder_btn.height() == 50
         assert window.line_numbers.width() == 60
         assert window.line_numbers.toPlainText() == "\n".join(
             str(number) for number in range(1, 5)
         )
         assert (
-            window.line_numbers.document().firstBlock().blockFormat().lineHeight()
-            == 200
+            window.line_numbers.document().firstBlock().blockFormat().topMargin()
+            == 1.5
+        )
+        assert (
+            window.line_numbers.document().firstBlock().blockFormat().bottomMargin()
+            == 1.5
         )
         assert window.line_numbers.document().defaultTextOption().alignment() == (
             Qt.AlignmentFlag.AlignCenter
         )
-        assert window.url_input_frame.minimumHeight() == 120
-        assert window.url_input_frame.maximumHeight() == 120
+        assert window.url_input_frame.minimumHeight() == 100
+        assert window.url_input_frame.maximumHeight() == 100
         assert (
             window.url_input_frame.geometry().bottom()
             < window.start_cancel_btn.geometry().top()
         )
-        assert window.stats_panel.width() == 420
+        assert window.stats_panel.width() == 360
+        assert window.folders_card.height() == 58
+        assert window.files_card.height() == 58
+        assert window.storage_card.height() == 58
         assert window.minimumSize().width() == 1000
-        assert window.minimumSize().height() == 760
+        assert window.minimumSize().height() == 700
         assert window.size().width() == 1100
-        assert window.size().height() == 820
+        assert window.size().height() == 740
+        assert window.status_bar.height() <= 46
         assert window.windowTitle() == ""
     finally:
         window.deleteLater()

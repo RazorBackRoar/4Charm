@@ -2,7 +2,15 @@ from __future__ import annotations
 
 import re
 
-from PySide6.QtCore import QMimeData, QPointF, QRectF, QSize, Qt, QTimer
+from PySide6.QtCore import (
+    QMimeData,
+    QPointF,
+    QRectF,
+    QSignalBlocker,
+    QSize,
+    Qt,
+    QTimer,
+)
 from PySide6.QtGui import (
     QColor,
     QIcon,
@@ -155,7 +163,16 @@ def create_interface_icon(kind: str, color: str = "#f5f7f5", size: int = 24) -> 
         )
 
     painter.end()
-    return QIcon(pixmap)
+
+    icon = QIcon()
+    for mode in (
+        QIcon.Mode.Normal,
+        QIcon.Mode.Disabled,
+        QIcon.Mode.Active,
+        QIcon.Mode.Selected,
+    ):
+        icon.addPixmap(pixmap, mode)
+    return icon
 
 
 class NeonPanel(QFrame):
@@ -167,7 +184,7 @@ class NeonPanel(QFrame):
 class NeonButton(QPushButton):
     def __init__(self, text: str) -> None:
         super().__init__(text)
-        self.setFixedHeight(60)
+        self.setFixedHeight(50)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
 
@@ -175,7 +192,7 @@ class StatCard(QFrame):
     def __init__(self, label: str, value: str, icon: QIcon | None = None) -> None:
         super().__init__()
         self.setObjectName("StatCard")
-        self.setMinimumHeight(68)
+        self.setFixedHeight(58)
 
         title = QLabel(label)
         title.setObjectName("StatLabel")
@@ -185,14 +202,14 @@ class StatCard(QFrame):
         self.value_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(12, 10, 12, 10)
-        layout.setSpacing(10)
+        layout.setContentsMargins(10, 6, 10, 6)
+        layout.setSpacing(8)
         if icon is not None:
             icon_label = QLabel()
             icon_label.setObjectName("StatIcon")
-            icon_label.setFixedSize(38, 38)
+            icon_label.setFixedSize(32, 32)
             icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            icon_label.setPixmap(icon.pixmap(QSize(30, 30)))
+            icon_label.setPixmap(icon.pixmap(QSize(26, 26)))
             layout.addWidget(icon_label)
         layout.addWidget(title)
         layout.addStretch()
@@ -240,19 +257,21 @@ class UrlInputEdit(QPlainTextEdit):
                 super().insertPlainText("\n".join(matches) + "\n")
             else:
                 super().insertPlainText(text)
-            self._apply_block_format_to_all()
+            self.apply_line_block_format()
         else:
             super().insertFromMimeData(source)
 
     def set_line_block_format(self, fmt: QTextBlockFormat) -> None:
         self._line_fmt = fmt
 
-    def _apply_block_format_to_all(self) -> None:
+    def apply_line_block_format(self) -> None:
         if not self._line_fmt:
             return
+        blocker = QSignalBlocker(self.document())
         cursor = self.textCursor()
         cursor.select(QTextCursor.SelectionType.Document)
         cursor.setBlockFormat(self._line_fmt)
+        del blocker
 
 
 class LineNumberTextEdit(QFrame):
@@ -288,9 +307,8 @@ class LineNumberTextEdit(QFrame):
 
         self._line_fmt = QTextBlockFormat()
         self._line_fmt.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._line_fmt.setLineHeight(
-            200.0, QTextBlockFormat.LineHeightTypes.ProportionalHeight.value
-        )
+        self._line_fmt.setTopMargin(1.5)
+        self._line_fmt.setBottomMargin(1.5)
         cursor = self.line_numbers.textCursor()
         cursor.select(QTextCursor.SelectionType.Document)
         cursor.setBlockFormat(self._line_fmt)
@@ -305,9 +323,8 @@ class LineNumberTextEdit(QFrame):
         self.editor.document().setDocumentMargin(0)
 
         self._url_input_fmt = QTextBlockFormat()
-        self._url_input_fmt.setLineHeight(
-            200.0, QTextBlockFormat.LineHeightTypes.ProportionalHeight.value
-        )
+        self._url_input_fmt.setTopMargin(1.5)
+        self._url_input_fmt.setBottomMargin(1.5)
         cursor = self.editor.textCursor()
         cursor.select(QTextCursor.SelectionType.Document)
         cursor.setBlockFormat(self._url_input_fmt)
@@ -339,6 +356,7 @@ class LineNumberTextEdit(QFrame):
         )
 
     def update_line_numbers(self) -> None:
+        self.editor.apply_line_block_format()
         text = self.editor.toPlainText()
         count = max(4, text.count("\n") + 1)
         self.line_numbers.setPlainText(

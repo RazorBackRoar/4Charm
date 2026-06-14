@@ -21,7 +21,7 @@ QMainWindow {
         stop: 0.28 #0b100c,
         stop: 1 #070908
     );
-    border-top: 3px solid #58df73;
+    border-top: 1px solid #58df73;
 }
 
 /* Header */
@@ -61,7 +61,7 @@ QMainWindow {
         stop: 1 #0d110e
     );
     border: 1px solid #303733;
-    border-radius: 11px;
+    border-radius: 8px;
 }
 
 #SectionLabel {
@@ -87,7 +87,7 @@ QMainWindow {
 #UrlInputFrame {
     background: #050706;
     border: 1px solid #438e4f;
-    border-radius: 10px;
+    border-radius: 8px;
 }
 
 #LineNumbers {
@@ -96,9 +96,9 @@ QMainWindow {
     font-family: "Menlo";
     border: none;
     border-right: 1px solid #2d3430;
-    border-top-left-radius: 9px;
-    border-bottom-left-radius: 9px;
-    padding-top: 11px;
+    border-top-left-radius: 7px;
+    border-bottom-left-radius: 7px;
+    padding-top: 5px;
     font-size: 16px;
 }
 
@@ -107,7 +107,7 @@ QMainWindow {
     color: #f3f5f4;
     font-family: "Menlo";
     border: none;
-    padding: 11px 14px;
+    padding: 5px 12px;
     selection-background-color: #326c3d;
     selection-color: #ffffff;
     font-size: 16px;
@@ -127,50 +127,45 @@ QPushButton {
         stop: 0 #151a17,
         stop: 1 #0f1310
     );
-    color: #ffffff;
+    color: #c7ccc8;
     border: 1px solid #4c8c57;
-    border-radius: 9px;
-    padding: 4px 22px;
-    font-size: 17px;
+    border-radius: 7px;
+    padding: 3px 18px;
+    font-size: 16px;
     font-weight: 700;
 }
 
 QPushButton:hover {
     background: #1c2a20;
     border-color: #64e97f;
-    color: #ffffff;
+    color: #f1f4f2;
 }
 
 QPushButton:pressed {
-    background: #285b33;
-    border-color: #74ee8d;
-    color: #ffffff;
+    background: #234a2b;
+    border-color: #64e97f;
+    color: #d9dedb;
 }
 
 QPushButton:disabled {
-    color: #89918c;
-    border-color: #344139;
+    color: #929a95;
+    border-color: #4c8c57;
 }
 
 #startBtn {
     background: qlineargradient(
         x1: 0,
         y1: 0,
-        x2: 1,
-        y2: 0,
-        stop: 0 #4ebd50,
-        stop: 1 #66d35f
+        x2: 0,
+        y2: 1,
+        stop: 0 #151a17,
+        stop: 1 #0f1310
     );
-    border-color: #74ea72;
-    color: #ffffff;
+    border-color: #4c8c57;
+    color: #929a95;
 }
 
-#startBtn:hover {
-    background: #5fce5c;
-    border-color: #85f181;
-}
-
-#startBtn:disabled {
+#startBtn[ready="true"] {
     background: qlineargradient(
         x1: 0,
         y1: 0,
@@ -179,8 +174,20 @@ QPushButton:disabled {
         stop: 0 #4ebd50,
         stop: 1 #66d35f
     );
-    color: #ffffff;
-    border-color: #74ea72;
+    border-color: #58df73;
+    color: #303730;
+}
+
+#startBtn[ready="true"]:hover {
+    background: #5fce5c;
+    border-color: #64e97f;
+    color: #242a25;
+}
+
+#startBtn[ready="true"]:pressed {
+    background: #49ad4b;
+    border-color: #58df73;
+    color: #1f2520;
 }
 
 #cancelBtn {
@@ -209,9 +216,9 @@ QPushButton:disabled {
 #DownloadProgress {
     background: #252a27;
     border: 1px solid #343a36;
-    border-radius: 6px;
-    min-height: 14px;
-    max-height: 14px;
+    border-radius: 5px;
+    min-height: 12px;
+    max-height: 12px;
 }
 
 #DownloadProgress::chunk {
@@ -223,7 +230,7 @@ QPushButton:disabled {
         stop: 0 #4fbd53,
         stop: 1 #65df72
     );
-    border-radius: 5px;
+    border-radius: 4px;
 }
 
 /* Activity */
@@ -232,8 +239,8 @@ QPushButton:disabled {
     color: #e3e7e4;
     font-family: "Menlo";
     border: 1px solid #2f3632;
-    border-radius: 9px;
-    padding: 12px;
+    border-radius: 7px;
+    padding: 9px;
     font-size: 15px;
 }
 
@@ -252,8 +259,8 @@ QPushButton:disabled {
         stop: 1 #0d110e
     );
     border: 1px solid #303733;
-    border-radius: 11px;
-    min-width: 260px;
+    border-radius: 8px;
+    min-width: 220px;
 }
 
 #StatIcon {
@@ -264,7 +271,7 @@ QPushButton:disabled {
 
 #StatLabel {
     color: #f5f7f5;
-    font-size: 17px;
+    font-size: 16px;
     font-weight: 700;
 }
 
@@ -272,11 +279,11 @@ QPushButton:disabled {
     background: #0b100c;
     color: #66e47e;
     border: 1px solid #58a963;
-    border-radius: 16px;
-    padding: 7px 14px;
-    min-width: 62px;
+    border-radius: 12px;
+    padding: 4px 10px;
+    min-width: 54px;
     font-family: "Menlo";
-    font-size: 17px;
+    font-size: 16px;
     font-weight: 700;
 }
 
@@ -291,9 +298,9 @@ QStatusBar {
         stop: 1 #0a0d0b
     );
     color: #f4f6f5;
-    border-top: 2px solid #58df73;
-    border-bottom: 3px solid #58df73;
-    min-height: 48px;
+    border-top: 1px solid #58df73;
+    border-bottom: 1px solid #58df73;
+    min-height: 40px;
     padding: 0;
     font-size: 16px;
     font-weight: 600;
