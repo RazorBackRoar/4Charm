@@ -195,3 +195,28 @@ def test_reference_visual_details_are_present() -> None:
     finally:
         window.deleteLater()
         app.processEvents()
+
+
+def test_reference_action_and_gutter_proportions() -> None:
+    """Action buttons and the empty URL gutter should match the reference."""
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+    from four_charm.gui.main_window import MainWindow
+
+    app = _app()
+    window = MainWindow()
+    window.show()
+    app.processEvents()
+
+    try:
+        assert window.start_cancel_btn.height() == 60
+        assert window.clear_btn.height() == 60
+        assert window.folder_btn.height() == 60
+        assert window.line_numbers.width() == 60
+        assert window.line_numbers.toPlainText() == "1\n2\n3\n4\n5"
+        assert window.line_numbers.textCursor().blockFormat().alignment() == (
+            Qt.AlignmentFlag.AlignRight
+        )
+    finally:
+        window.deleteLater()
+        app.processEvents()

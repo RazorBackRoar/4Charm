@@ -130,8 +130,7 @@ QPushButton {
     color: #ffffff;
     border: 1px solid #4c8c57;
     border-radius: 9px;
-    padding: 10px 22px;
-    min-height: 54px;
+    padding: 4px 22px;
     font-size: 15px;
     font-weight: 700;
 }
@@ -177,11 +176,11 @@ QPushButton:disabled {
         y1: 0,
         x2: 1,
         y2: 0,
-        stop: 0 #25442a,
-        stop: 1 #2e5131
+        stop: 0 #315e37,
+        stop: 1 #3d6d40
     );
-    color: #b2bbb4;
-    border-color: #477b4e;
+    color: #e2e9e4;
+    border-color: #55935c;
 }
 
 #cancelBtn {
@@ -295,16 +294,18 @@ QStatusBar {
     border-top: 2px solid #58df73;
     border-bottom: 3px solid #58df73;
     min-height: 48px;
-    padding: 0 28px;
+    padding: 0;
     font-size: 14px;
     font-weight: 600;
+}
+
+#StatusContent {
+    background: transparent;
 }
 
 #StatusIndicator {
     background: #5fe177;
     border-radius: 5px;
-    margin-left: 3px;
-    margin-right: 10px;
 }
 
 #StatusMessage {

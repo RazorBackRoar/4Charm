@@ -167,7 +167,7 @@ class NeonPanel(QFrame):
 class NeonButton(QPushButton):
     def __init__(self, text: str) -> None:
         super().__init__(text)
-        self.setMinimumHeight(58)
+        self.setFixedHeight(60)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
 
@@ -277,12 +277,12 @@ class LineNumberTextEdit(QFrame):
         self.line_numbers.setHorizontalScrollBarPolicy(
             Qt.ScrollBarPolicy.ScrollBarAlwaysOff
         )
-        self.line_numbers.setFixedWidth(44)
+        self.line_numbers.setFixedWidth(60)
         self.line_numbers.document().setDocumentMargin(0)
-        self.line_numbers.setPlainText("1")
+        self.line_numbers.setPlainText("1\n2\n3\n4\n5")
 
         self._line_fmt = QTextBlockFormat()
-        self._line_fmt.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._line_fmt.setAlignment(Qt.AlignmentFlag.AlignRight)
         self._line_fmt.setLineHeight(
             140.0, QTextBlockFormat.LineHeightTypes.ProportionalHeight.value
         )
@@ -335,7 +335,7 @@ class LineNumberTextEdit(QFrame):
 
     def update_line_numbers(self) -> None:
         text = self.editor.toPlainText()
-        count = max(1, text.count("\n") + 1)
+        count = 5 if not text else text.count("\n") + 1
         self.line_numbers.setPlainText(
             "\n".join(str(i) for i in range(1, count + 1))
         )

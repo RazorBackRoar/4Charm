@@ -202,13 +202,23 @@ class MainWindow(QMainWindow):
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
         self.status_bar.setProperty("statusState", "idle")
+
+        self.status_content = QWidget()
+        self.status_content.setObjectName("StatusContent")
+        status_layout = QHBoxLayout(self.status_content)
+        status_layout.setContentsMargins(28, 0, 28, 0)
+        status_layout.setSpacing(10)
+
         self.status_indicator = QLabel()
         self.status_indicator.setObjectName("StatusIndicator")
         self.status_indicator.setFixedSize(10, 10)
         self.status_message = QLabel("Engine Status: Ready")
         self.status_message.setObjectName("StatusMessage")
-        self.status_bar.addWidget(self.status_indicator)
-        self.status_bar.addWidget(self.status_message, 1)
+        status_layout.addWidget(self.status_indicator)
+        status_layout.addWidget(self.status_message)
+        status_layout.addStretch()
+
+        self.status_bar.addWidget(self.status_content, 1)
         self.status_bar.setSizeGripEnabled(False)
 
     def _build_header(self) -> QWidget:
