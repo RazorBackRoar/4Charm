@@ -141,8 +141,8 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("")
-        self.setMinimumSize(1180, 920)
-        self.resize(1400, 960)
+        self.setMinimumSize(1080, 760)
+        self.resize(1280, 820)
         self.setAcceptDrops(True)
 
         self.scraper = FourChanScraper()
@@ -337,7 +337,7 @@ class MainWindow(QMainWindow):
         label = self._build_section_label("URLS TO DOWNLOAD")
 
         self.url_input_frame = LineNumberTextEdit(panel)
-        self.url_input_frame.setFixedHeight(200)
+        self.url_input_frame.setFixedHeight(150)
         self.url_input_frame.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )

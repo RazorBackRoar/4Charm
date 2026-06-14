@@ -283,13 +283,13 @@ class LineNumberTextEdit(QFrame):
         text_option.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.line_numbers.document().setDefaultTextOption(text_option)
         self.line_numbers.setPlainText(
-            "\n".join(str(number) for number in range(1, 11))
+            "\n".join(str(number) for number in range(1, 5))
         )
 
         self._line_fmt = QTextBlockFormat()
         self._line_fmt.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._line_fmt.setLineHeight(
-            165.0, QTextBlockFormat.LineHeightTypes.ProportionalHeight.value
+            200.0, QTextBlockFormat.LineHeightTypes.ProportionalHeight.value
         )
         cursor = self.line_numbers.textCursor()
         cursor.select(QTextCursor.SelectionType.Document)
@@ -306,7 +306,7 @@ class LineNumberTextEdit(QFrame):
 
         self._url_input_fmt = QTextBlockFormat()
         self._url_input_fmt.setLineHeight(
-            165.0, QTextBlockFormat.LineHeightTypes.ProportionalHeight.value
+            200.0, QTextBlockFormat.LineHeightTypes.ProportionalHeight.value
         )
         cursor = self.editor.textCursor()
         cursor.select(QTextCursor.SelectionType.Document)
@@ -340,7 +340,7 @@ class LineNumberTextEdit(QFrame):
 
     def update_line_numbers(self) -> None:
         text = self.editor.toPlainText()
-        count = max(10, text.count("\n") + 1)
+        count = max(4, text.count("\n") + 1)
         self.line_numbers.setPlainText(
             "\n".join(str(i) for i in range(1, count + 1))
         )

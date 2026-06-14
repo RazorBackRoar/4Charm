@@ -16,8 +16,8 @@ def _app() -> QApplication:
     return cast(QApplication, existing)
 
 
-def test_paste_urls_one_per_line_without_hidden_blank_line() -> None:
-    """Pasted thread URLs should produce visible 1..N line numbering."""
+def test_paste_urls_use_four_visually_spaced_slots() -> None:
+    """Four pasted URLs should stay four real lines with four visible slots."""
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
     from four_charm.gui.main_window import MainWindow
@@ -36,9 +36,13 @@ def test_paste_urls_one_per_line_without_hidden_blank_line() -> None:
         window.paste_from_clipboard()
 
         assert window.url_input.toPlainText() == "\n".join(urls)
+        assert window.url_input.document().blockCount() == 4
+        assert window.url_input_frame.urls() == urls
+        assert window.url_count_label.text() == "QUEUE: 4"
         assert window.line_numbers.toPlainText() == "\n".join(
-            str(number) for number in range(1, 11)
+            str(number) for number in range(1, 5)
         )
+        assert window.url_input.document().firstBlock().blockFormat().lineHeight() == 200
     finally:
         window.deleteLater()
         app.processEvents()
@@ -112,7 +116,7 @@ def test_enter_creates_new_line_and_updates_gutter() -> None:
 
         assert window.url_input.document().blockCount() == 2
         assert window.line_numbers.toPlainText() == "\n".join(
-            str(number) for number in range(1, 11)
+            str(number) for number in range(1, 5)
         )
 
         # Type a second URL
@@ -121,7 +125,7 @@ def test_enter_creates_new_line_and_updates_gutter() -> None:
 
         assert window.url_input.document().blockCount() == 2
         assert window.line_numbers.toPlainText() == "\n".join(
-            str(number) for number in range(1, 11)
+            str(number) for number in range(1, 5)
         )
         assert window.url_count_label.text() == "QUEUE: 2"
     finally:
@@ -220,15 +224,22 @@ def test_reference_action_and_gutter_proportions() -> None:
         assert window.folder_btn.height() == 60
         assert window.line_numbers.width() == 60
         assert window.line_numbers.toPlainText() == "\n".join(
-            str(number) for number in range(1, 11)
+            str(number) for number in range(1, 5)
+        )
+        assert (
+            window.line_numbers.document().firstBlock().blockFormat().lineHeight()
+            == 200
         )
         assert window.line_numbers.document().defaultTextOption().alignment() == (
             Qt.AlignmentFlag.AlignCenter
         )
-        assert window.url_input_frame.minimumHeight() >= 190
-        assert window.url_input_frame.maximumHeight() == 200
+        assert window.url_input_frame.minimumHeight() == 150
+        assert window.url_input_frame.maximumHeight() == 150
         assert window.stats_panel.width() == 420
-        assert window.minimumHeight() >= 920
+        assert window.minimumSize().width() == 1080
+        assert window.minimumSize().height() == 760
+        assert window.size().width() == 1280
+        assert window.size().height() == 820
         assert window.windowTitle() == ""
     finally:
         window.deleteLater()
