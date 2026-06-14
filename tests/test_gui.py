@@ -240,9 +240,9 @@ def test_reference_action_and_gutter_proportions() -> None:
             < window.start_cancel_btn.geometry().top()
         )
         assert window.stats_panel.width() == 420
-        assert window.minimumSize().width() == 1080
+        assert window.minimumSize().width() == 1000
         assert window.minimumSize().height() == 760
-        assert window.size().width() == 1280
+        assert window.size().width() == 1100
         assert window.size().height() == 820
         assert window.windowTitle() == ""
     finally:

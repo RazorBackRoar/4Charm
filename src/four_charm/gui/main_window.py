@@ -141,8 +141,8 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("")
-        self.setMinimumSize(1080, 760)
-        self.resize(1280, 820)
+        self.setMinimumSize(1000, 760)
+        self.resize(1100, 820)
         self.setAcceptDrops(True)
 
         self.scraper = FourChanScraper()
