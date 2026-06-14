@@ -225,8 +225,10 @@ def test_reference_action_and_gutter_proportions() -> None:
         assert window.line_numbers.document().defaultTextOption().alignment() == (
             Qt.AlignmentFlag.AlignCenter
         )
-        assert window.url_input_frame.minimumHeight() >= 280
+        assert window.url_input_frame.minimumHeight() >= 190
+        assert window.url_input_frame.maximumHeight() == 200
         assert window.stats_panel.width() == 420
+        assert window.minimumHeight() >= 920
         assert window.windowTitle() == ""
     finally:
         window.deleteLater()
