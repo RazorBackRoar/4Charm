@@ -259,7 +259,7 @@ class MainWindow(QMainWindow):
         root.setObjectName("Root")
         self.setCentralWidget(root)
         main_layout = QVBoxLayout(root)
-        main_layout.setContentsMargins(32, 18, 32, 16)
+        main_layout.setContentsMargins(32, 13, 32, 11)
         main_layout.setSpacing(14)
 
         header = self._build_header()
@@ -337,7 +337,7 @@ class MainWindow(QMainWindow):
         label = self._build_section_label("URLS TO DOWNLOAD")
 
         self.url_input_frame = LineNumberTextEdit(panel)
-        self.url_input_frame.setFixedHeight(150)
+        self.url_input_frame.setFixedHeight(120)
         self.url_input_frame.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )

@@ -10,7 +10,7 @@ evenly spaced slots that match the app name.
 - Default window size: 1280 by 820 pixels.
 - Minimum window height: no more than 780 pixels.
 - Empty URL gutter: show `1` through `4`.
-- URL editor height: approximately 150 pixels.
+- URL editor height: 120 pixels.
 - URL rows: use 200% proportional line height so pasted URLs appear
   double-spaced without inserting blank text lines.
 - Pasted URLs remain stored one per actual document line.
@@ -24,6 +24,7 @@ Modify only:
 
 - `src/four_charm/gui/main_window.py`
 - `src/four_charm/gui/widgets.py`
+- `src/four_charm/gui/style.qss`
 - `tests/test_gui.py`
 - UI progress and design-QA documentation
 

@@ -21,7 +21,7 @@
 - [ ] Assert a four-URL paste contains four document blocks and four queue entries.
 - [ ] Assert the gutter and URL block formats use 200% proportional height.
 - [ ] Assert the default size is 1280 by 820, minimum height is at most 780,
-  and the URL frame is 150 pixels high.
+  and the URL frame is 120 pixels high.
 - [ ] Run `uv run pytest tests/test_gui.py -q` and confirm failures describe the
   old ten-slot, 165% spacing, and large-window contract.
 
@@ -30,11 +30,14 @@
 **Files:**
 - Modify: `src/four_charm/gui/widgets.py`
 - Modify: `src/four_charm/gui/main_window.py`
+- Modify: `src/four_charm/gui/style.qss`
 
 - [ ] Set the initial and minimum gutter count to four.
 - [ ] Set gutter and URL block line height to 200% proportional height.
 - [ ] Set the window minimum to 1080 by 760 and default size to 1280 by 820.
-- [ ] Set the URL editor frame to a fixed height of 150 pixels.
+- [ ] Set the URL editor frame to a fixed height of 120 pixels.
+- [ ] Compact the stat cards, status bar, and outer vertical padding enough to
+  prevent overlap at the default size without changing font or button height.
 - [ ] Run `uv run pytest tests/test_gui.py -q` and confirm all focused tests pass.
 
 ### Task 3: Validate And Rebuild

@@ -175,7 +175,7 @@ class StatCard(QFrame):
     def __init__(self, label: str, value: str, icon: QIcon | None = None) -> None:
         super().__init__()
         self.setObjectName("StatCard")
-        self.setMinimumHeight(82)
+        self.setMinimumHeight(68)
 
         title = QLabel(label)
         title.setObjectName("StatLabel")

@@ -233,8 +233,12 @@ def test_reference_action_and_gutter_proportions() -> None:
         assert window.line_numbers.document().defaultTextOption().alignment() == (
             Qt.AlignmentFlag.AlignCenter
         )
-        assert window.url_input_frame.minimumHeight() == 150
-        assert window.url_input_frame.maximumHeight() == 150
+        assert window.url_input_frame.minimumHeight() == 120
+        assert window.url_input_frame.maximumHeight() == 120
+        assert (
+            window.url_input_frame.geometry().bottom()
+            < window.start_cancel_btn.geometry().top()
+        )
         assert window.stats_panel.width() == 420
         assert window.minimumSize().width() == 1080
         assert window.minimumSize().height() == 760
