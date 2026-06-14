@@ -96,6 +96,7 @@ logger = logging.getLogger("4Charm")
 
 
 _URL_PATTERN = re.compile(r"https?://[^\s<>'\"]+")
+_BRAND_GREEN_RGB = (88 / 255, 223 / 255, 115 / 255)
 
 
 def _is_supported_4chan_url(url: str) -> bool:
@@ -145,8 +146,8 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("")
-        self.setMinimumSize(1000, 700)
-        self.resize(1100, 740)
+        self.setMinimumSize(960, 640)
+        self.resize(1080, 680)
         self.setAcceptDrops(True)
 
         self.scraper = FourChanScraper()
@@ -214,9 +215,7 @@ class MainWindow(QMainWindow):
             title_color = send_color(
                 color_class,
                 sel_register_name(b"colorWithSRGBRed:green:blue:alpha:"),
-                0.08,
-                0.34,
-                0.16,
+                *_BRAND_GREEN_RGB,
                 1.0,
             )
 
@@ -263,8 +262,8 @@ class MainWindow(QMainWindow):
         root.setObjectName("Root")
         self.setCentralWidget(root)
         main_layout = QVBoxLayout(root)
-        main_layout.setContentsMargins(28, 10, 28, 8)
-        main_layout.setSpacing(10)
+        main_layout.setContentsMargins(24, 8, 24, 6)
+        main_layout.setSpacing(8)
 
         header = self._build_header()
         url_panel = self._build_url_panel()
@@ -283,8 +282,8 @@ class MainWindow(QMainWindow):
         self.status_content = QWidget()
         self.status_content.setObjectName("StatusContent")
         status_layout = QHBoxLayout(self.status_content)
-        status_layout.setContentsMargins(24, 0, 24, 0)
-        status_layout.setSpacing(8)
+        status_layout.setContentsMargins(20, 0, 20, 0)
+        status_layout.setSpacing(7)
 
         self.status_indicator = QLabel()
         self.status_indicator.setObjectName("StatusIndicator")
@@ -302,8 +301,8 @@ class MainWindow(QMainWindow):
         panel = QWidget()
         panel.setObjectName("Header")
         layout = QVBoxLayout(panel)
-        layout.setContentsMargins(0, 4, 0, 6)
-        layout.setSpacing(4)
+        layout.setContentsMargins(0, 2, 0, 5)
+        layout.setSpacing(2)
         title = QLabel("4Charm")
         title.setObjectName("AppTitle")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -319,11 +318,11 @@ class MainWindow(QMainWindow):
         wrapper.setObjectName("SectionHeader")
         layout = QHBoxLayout(wrapper)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(10)
+        layout.setSpacing(8)
 
         accent = QFrame()
         accent.setObjectName("SectionAccent")
-        accent.setFixedSize(3, 20)
+        accent.setFixedSize(3, 18)
 
         label = QLabel(text)
         label.setObjectName("SectionLabel")
@@ -336,12 +335,12 @@ class MainWindow(QMainWindow):
     def _build_url_panel(self) -> NeonPanel:
         panel = NeonPanel("UrlPanel")
         layout = QVBoxLayout(panel)
-        layout.setContentsMargins(12, 8, 12, 8)
-        layout.setSpacing(7)
+        layout.setContentsMargins(10, 6, 10, 6)
+        layout.setSpacing(6)
         label = self._build_section_label("URLS TO DOWNLOAD")
 
         self.url_input_frame = LineNumberTextEdit(panel)
-        self.url_input_frame.setFixedHeight(152)
+        self.url_input_frame.setFixedHeight(136)
         self.url_input_frame.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
@@ -350,7 +349,7 @@ class MainWindow(QMainWindow):
         self.line_numbers = self.url_input_frame.line_numbers
 
         button_row = QHBoxLayout()
-        button_row.setSpacing(10)
+        button_row.setSpacing(8)
         self.start_cancel_btn = NeonButton("Start Download")
         self.start_cancel_btn.setObjectName("startBtn")
         self.clear_btn = NeonButton("Clear")
@@ -358,7 +357,7 @@ class MainWindow(QMainWindow):
         self.pause_resume_btn = NeonButton("Pause")
         self.pause_resume_btn.setObjectName("pauseBtn")
 
-        icon_size = QSize(20, 20)
+        icon_size = QSize(18, 18)
         self.start_cancel_btn.setProperty("ready", False)
         self.start_cancel_btn.setIcon(
             create_interface_icon("play", color="#929a95")
@@ -388,8 +387,8 @@ class MainWindow(QMainWindow):
     def _build_progress_panel(self) -> NeonPanel:
         panel = NeonPanel("ProgressPanel")
         layout = QVBoxLayout(panel)
-        layout.setContentsMargins(12, 8, 12, 8)
-        layout.setSpacing(5)
+        layout.setContentsMargins(10, 6, 10, 6)
+        layout.setSpacing(3)
         label = self._build_section_label("DOWNLOAD PROGRESS")
 
         self.progress_bar = QProgressBar()
@@ -418,12 +417,12 @@ class MainWindow(QMainWindow):
         wrapper = QWidget()
         self.lower_layout = QHBoxLayout(wrapper)
         self.lower_layout.setContentsMargins(0, 0, 0, 0)
-        self.lower_layout.setSpacing(10)
+        self.lower_layout.setSpacing(8)
 
         self.log_panel = NeonPanel("LogPanel")
         log_layout = QVBoxLayout(self.log_panel)
-        log_layout.setContentsMargins(12, 8, 12, 10)
-        log_layout.setSpacing(6)
+        log_layout.setContentsMargins(10, 6, 10, 8)
+        log_layout.setSpacing(4)
         label = self._build_section_label("ACTIVITY LOG")
         self.log_text = ActivityLog()
         self.log_text.setSizePolicy(
@@ -434,10 +433,10 @@ class MainWindow(QMainWindow):
 
         self.stats_panel = QWidget()
         self.stats_panel.setObjectName("StatsPanel")
-        self.stats_panel.setFixedWidth(360)
+        self.stats_panel.setFixedWidth(350)
         self.stats_layout = QVBoxLayout(self.stats_panel)
         self.stats_layout.setContentsMargins(0, 0, 0, 0)
-        self.stats_layout.setSpacing(8)
+        self.stats_layout.setSpacing(6)
 
         self.folders_card = StatCard(
             "FOLDERS",

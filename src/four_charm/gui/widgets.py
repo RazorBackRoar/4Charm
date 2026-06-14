@@ -185,7 +185,7 @@ class NeonPanel(QFrame):
 class NeonButton(QPushButton):
     def __init__(self, text: str) -> None:
         super().__init__(text)
-        self.setFixedHeight(50)
+        self.setFixedHeight(44)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
 
@@ -193,7 +193,7 @@ class StatCard(QFrame):
     def __init__(self, label: str, value: str, icon: QIcon | None = None) -> None:
         super().__init__()
         self.setObjectName("StatCard")
-        self.setFixedHeight(58)
+        self.setFixedHeight(50)
 
         title = QLabel(label)
         title.setObjectName("StatLabel")
@@ -203,14 +203,14 @@ class StatCard(QFrame):
         self.value_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(10, 6, 10, 6)
-        layout.setSpacing(8)
+        layout.setContentsMargins(9, 5, 9, 5)
+        layout.setSpacing(7)
         if icon is not None:
             icon_label = QLabel()
             icon_label.setObjectName("StatIcon")
-            icon_label.setFixedSize(32, 32)
+            icon_label.setFixedSize(28, 28)
             icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            icon_label.setPixmap(icon.pixmap(QSize(26, 26)))
+            icon_label.setPixmap(icon.pixmap(QSize(22, 22)))
             layout.addWidget(icon_label)
         layout.addWidget(title)
         layout.addStretch()

@@ -2,3 +2,4 @@
 [x] Task 2: Implement the approved UI-only redesign (completed 2026-06-14)
 [x] Task 3: Validate behavior, static checks, tests, and the rendered app (completed 2026-06-14)
 [x] Task 4: Compact the app around four visually spaced URL slots (completed 2026-06-14)
+[x] Task 5: Unify the brand-green title bar and compact border system (completed 2026-06-14)

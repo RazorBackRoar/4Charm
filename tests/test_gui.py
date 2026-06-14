@@ -294,9 +294,9 @@ def test_reference_action_and_gutter_proportions() -> None:
     app.processEvents()
 
     try:
-        assert window.start_cancel_btn.height() == 50
-        assert window.clear_btn.height() == 50
-        assert window.folder_btn.height() == 50
+        assert window.start_cancel_btn.height() == 44
+        assert window.clear_btn.height() == 44
+        assert window.folder_btn.height() == 44
         assert window.line_numbers.width() == 60
         assert window.line_numbers.toPlainText() == "\n\n".join(
             str(number) for number in range(1, 5)
@@ -304,21 +304,21 @@ def test_reference_action_and_gutter_proportions() -> None:
         assert window.line_numbers.document().defaultTextOption().alignment() == (
             Qt.AlignmentFlag.AlignCenter
         )
-        assert window.url_input_frame.minimumHeight() == 152
-        assert window.url_input_frame.maximumHeight() == 152
+        assert window.url_input_frame.minimumHeight() == 136
+        assert window.url_input_frame.maximumHeight() == 136
         assert (
             window.url_input_frame.geometry().bottom()
             < window.start_cancel_btn.geometry().top()
         )
-        assert window.stats_panel.width() == 360
-        assert window.folders_card.height() == 58
-        assert window.files_card.height() == 58
-        assert window.storage_card.height() == 58
-        assert window.minimumSize().width() == 1000
-        assert window.minimumSize().height() == 700
-        assert window.size().width() == 1100
-        assert window.size().height() == 740
-        assert window.status_bar.height() <= 46
+        assert window.stats_panel.width() == 350
+        assert window.folders_card.height() == 50
+        assert window.files_card.height() == 50
+        assert window.storage_card.height() == 50
+        assert window.minimumSize().width() == 960
+        assert window.minimumSize().height() == 640
+        assert window.size().width() == 1080
+        assert window.size().height() == 680
+        assert window.status_bar.height() <= 40
         assert window.windowTitle() == ""
     finally:
         window.deleteLater()

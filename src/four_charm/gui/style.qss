@@ -30,9 +30,9 @@ QMainWindow {
 }
 
 #AppTitle {
-    color: #5be376;
+    color: #58df73;
     font-family: "Helvetica Neue";
-    font-size: 60px;
+    font-size: 56px;
     font-weight: 700;
     letter-spacing: -1px;
 }
@@ -60,8 +60,8 @@ QMainWindow {
         stop: 0 #111512,
         stop: 1 #0d110e
     );
-    border: 1px solid #303733;
-    border-radius: 8px;
+    border: 1px solid #3c8048;
+    border-radius: 7px;
 }
 
 #SectionLabel {
@@ -86,8 +86,8 @@ QMainWindow {
 /* URL editor */
 #UrlInputFrame {
     background: #050706;
-    border: 1px solid #438e4f;
-    border-radius: 8px;
+    border: 1px solid #3c8048;
+    border-radius: 7px;
 }
 
 #LineNumbers {
@@ -96,8 +96,8 @@ QMainWindow {
     font-family: "Menlo";
     border: none;
     border-right: 1px solid #2d3430;
-    border-top-left-radius: 7px;
-    border-bottom-left-radius: 7px;
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
     padding-top: 3px;
     font-size: 15px;
 }
@@ -128,9 +128,9 @@ QPushButton {
         stop: 1 #0f1310
     );
     color: #c7ccc8;
-    border: 1px solid #4c8c57;
+    border: 1px solid #3c8048;
     border-radius: 7px;
-    padding: 3px 18px;
+    padding: 2px 16px;
     font-size: 16px;
     font-weight: 700;
 }
@@ -149,7 +149,7 @@ QPushButton:pressed {
 
 QPushButton:disabled {
     color: #929a95;
-    border-color: #4c8c57;
+    border-color: #3c8048;
 }
 
 #startBtn {
@@ -161,7 +161,7 @@ QPushButton:disabled {
         stop: 0 #151a17,
         stop: 1 #0f1310
     );
-    border-color: #4c8c57;
+    border-color: #3c8048;
     color: #929a95;
 }
 
@@ -215,10 +215,10 @@ QPushButton:disabled {
 
 #DownloadProgress {
     background: #252a27;
-    border: 1px solid #343a36;
-    border-radius: 5px;
-    min-height: 12px;
-    max-height: 12px;
+    border: 1px solid #354b3a;
+    border-radius: 4px;
+    min-height: 10px;
+    max-height: 10px;
 }
 
 #DownloadProgress::chunk {
@@ -230,7 +230,7 @@ QPushButton:disabled {
         stop: 0 #4fbd53,
         stop: 1 #65df72
     );
-    border-radius: 4px;
+    border-radius: 3px;
 }
 
 /* Activity */
@@ -238,9 +238,9 @@ QPushButton:disabled {
     background: #050706;
     color: #e3e7e4;
     font-family: "Menlo";
-    border: 1px solid #2f3632;
-    border-radius: 7px;
-    padding: 9px;
+    border: 1px solid #315f3a;
+    border-radius: 6px;
+    padding: 7px;
     font-size: 15px;
 }
 
@@ -258,8 +258,8 @@ QPushButton:disabled {
         stop: 0 #121613,
         stop: 1 #0d110e
     );
-    border: 1px solid #303733;
-    border-radius: 8px;
+    border: 1px solid #3c8048;
+    border-radius: 7px;
     min-width: 220px;
 }
 
@@ -271,17 +271,17 @@ QPushButton:disabled {
 
 #StatLabel {
     color: #f5f7f5;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
 }
 
 #StatValue {
     background: #0b100c;
     color: #66e47e;
-    border: 1px solid #58a963;
-    border-radius: 12px;
-    padding: 4px 10px;
-    min-width: 54px;
+    border: 1px solid #3c8048;
+    border-radius: 10px;
+    padding: 3px 9px;
+    min-width: 52px;
     font-family: "Menlo";
     font-size: 16px;
     font-weight: 700;
@@ -300,7 +300,7 @@ QStatusBar {
     color: #f4f6f5;
     border-top: 1px solid #58df73;
     border-bottom: 1px solid #58df73;
-    min-height: 40px;
+    min-height: 34px;
     padding: 0;
     font-size: 16px;
     font-weight: 600;
@@ -317,7 +317,7 @@ QStatusBar {
 
 #StatusMessage {
     color: #f4f6f5;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
 }
 
