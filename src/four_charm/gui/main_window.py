@@ -140,9 +140,9 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("4Charm")
-        self.setMinimumSize(1080, 780)
-        self.resize(1280, 860)
+        self.setWindowTitle("")
+        self.setMinimumSize(1180, 800)
+        self.resize(1400, 860)
         self.setAcceptDrops(True)
 
         self.scraper = FourChanScraper()
@@ -160,6 +160,79 @@ class MainWindow(QMainWindow):
         self._update_ui_for_state("idle")
         self.update_download_stats()
         self._populate_initial_log()
+        QTimer.singleShot(0, self._style_native_title_bar)
+
+    def _style_native_title_bar(self) -> None:
+        """Color the native macOS title bar while preserving window controls."""
+        if sys.platform != "darwin" or QApplication.platformName() != "cocoa":
+            return
+
+        try:
+            import ctypes
+
+            objc = ctypes.CDLL("/usr/lib/libobjc.A.dylib")
+
+            objc_get_class = objc.objc_getClass
+            objc_get_class.restype = ctypes.c_void_p
+            objc_get_class.argtypes = [ctypes.c_char_p]
+
+            sel_register_name = objc.sel_registerName
+            sel_register_name.restype = ctypes.c_void_p
+            sel_register_name.argtypes = [ctypes.c_char_p]
+
+            send_id = ctypes.CFUNCTYPE(
+                ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p
+            )(("objc_msgSend", objc))
+            send_color = ctypes.CFUNCTYPE(
+                ctypes.c_void_p,
+                ctypes.c_void_p,
+                ctypes.c_void_p,
+                ctypes.c_double,
+                ctypes.c_double,
+                ctypes.c_double,
+                ctypes.c_double,
+            )(("objc_msgSend", objc))
+            send_void_id = ctypes.CFUNCTYPE(
+                None, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p
+            )(("objc_msgSend", objc))
+            send_void_bool = ctypes.CFUNCTYPE(
+                None, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool
+            )(("objc_msgSend", objc))
+            send_void_int = ctypes.CFUNCTYPE(
+                None, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_long
+            )(("objc_msgSend", objc))
+
+            native_view = ctypes.c_void_p(int(self.winId()))
+            native_window = send_id(
+                native_view, sel_register_name(b"window")
+            )
+            color_class = objc_get_class(b"NSColor")
+            title_color = send_color(
+                color_class,
+                sel_register_name(b"colorWithSRGBRed:green:blue:alpha:"),
+                0.08,
+                0.34,
+                0.16,
+                1.0,
+            )
+
+            send_void_id(
+                native_window,
+                sel_register_name(b"setBackgroundColor:"),
+                title_color,
+            )
+            send_void_bool(
+                native_window,
+                sel_register_name(b"setTitlebarAppearsTransparent:"),
+                True,
+            )
+            send_void_int(
+                native_window,
+                sel_register_name(b"setTitleVisibility:"),
+                1,
+            )
+        except Exception:
+            logger.warning("Could not apply the native macOS title-bar style")
 
     def _load_styles(self) -> None:
         import sys
@@ -264,7 +337,7 @@ class MainWindow(QMainWindow):
         label = self._build_section_label("URLS TO DOWNLOAD")
 
         self.url_input_frame = LineNumberTextEdit(panel)
-        self.url_input_frame.setMinimumHeight(190)
+        self.url_input_frame.setMinimumHeight(300)
         self.url_input_frame.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
@@ -354,7 +427,7 @@ class MainWindow(QMainWindow):
 
         self.stats_panel = QWidget()
         self.stats_panel.setObjectName("StatsPanel")
-        self.stats_panel.setFixedWidth(290)
+        self.stats_panel.setFixedWidth(420)
         self.stats_layout = QVBoxLayout(self.stats_panel)
         self.stats_layout.setContentsMargins(0, 0, 0, 0)
         self.stats_layout.setSpacing(10)

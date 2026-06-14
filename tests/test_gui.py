@@ -36,7 +36,9 @@ def test_paste_urls_one_per_line_without_hidden_blank_line() -> None:
         window.paste_from_clipboard()
 
         assert window.url_input.toPlainText() == "\n".join(urls)
-        assert window.line_numbers.toPlainText() == "1\n2\n3\n4"
+        assert window.line_numbers.toPlainText() == "\n".join(
+            str(number) for number in range(1, 11)
+        )
     finally:
         window.deleteLater()
         app.processEvents()
@@ -109,14 +111,18 @@ def test_enter_creates_new_line_and_updates_gutter() -> None:
         app.processEvents()
 
         assert window.url_input.document().blockCount() == 2
-        assert window.line_numbers.toPlainText() == "1\n2"
+        assert window.line_numbers.toPlainText() == "\n".join(
+            str(number) for number in range(1, 11)
+        )
 
         # Type a second URL
         window.url_input.insertPlainText("https://boards.4chan.org/g/thread/2")
         app.processEvents()
 
         assert window.url_input.document().blockCount() == 2
-        assert window.line_numbers.toPlainText() == "1\n2"
+        assert window.line_numbers.toPlainText() == "\n".join(
+            str(number) for number in range(1, 11)
+        )
         assert window.url_count_label.text() == "QUEUE: 2"
     finally:
         window.deleteLater()
@@ -213,10 +219,15 @@ def test_reference_action_and_gutter_proportions() -> None:
         assert window.clear_btn.height() == 60
         assert window.folder_btn.height() == 60
         assert window.line_numbers.width() == 60
-        assert window.line_numbers.toPlainText() == "1\n2\n3\n4\n5"
+        assert window.line_numbers.toPlainText() == "\n".join(
+            str(number) for number in range(1, 11)
+        )
         assert window.line_numbers.document().defaultTextOption().alignment() == (
             Qt.AlignmentFlag.AlignCenter
         )
+        assert window.url_input_frame.minimumHeight() >= 280
+        assert window.stats_panel.width() == 420
+        assert window.windowTitle() == ""
     finally:
         window.deleteLater()
         app.processEvents()
