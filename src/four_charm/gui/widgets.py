@@ -338,7 +338,7 @@ class LineNumberTextEdit(QFrame):
 
         # --- Layout ---
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(0, 0, 0, 6)
         layout.setSpacing(0)
         layout.addWidget(self.line_numbers)
         layout.addWidget(self.editor)

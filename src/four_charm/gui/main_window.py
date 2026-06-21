@@ -96,7 +96,7 @@ logger = logging.getLogger("4Charm")
 
 
 _URL_PATTERN = re.compile(r"https?://[^\s<>'\"]+")
-_BRAND_GREEN_RGB = (88 / 255, 223 / 255, 115 / 255)
+_BRAND_GREEN_RGB = (60 / 255, 128 / 255, 72 / 255)
 
 
 def _is_supported_4chan_url(url: str) -> bool:
@@ -340,7 +340,7 @@ class MainWindow(QMainWindow):
         label = self._build_section_label("URLS TO DOWNLOAD")
 
         self.url_input_frame = LineNumberTextEdit(panel)
-        self.url_input_frame.setFixedHeight(136)
+        self.url_input_frame.setFixedHeight(142)
         self.url_input_frame.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )

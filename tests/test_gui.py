@@ -304,8 +304,8 @@ def test_reference_action_and_gutter_proportions() -> None:
         assert window.line_numbers.document().defaultTextOption().alignment() == (
             Qt.AlignmentFlag.AlignCenter
         )
-        assert window.url_input_frame.minimumHeight() == 136
-        assert window.url_input_frame.maximumHeight() == 136
+        assert window.url_input_frame.minimumHeight() == 142
+        assert window.url_input_frame.maximumHeight() == 142
         assert (
             window.url_input_frame.geometry().bottom()
             < window.start_cancel_btn.geometry().top()
