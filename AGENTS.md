@@ -14,10 +14,9 @@ Use this file with `../AGENTS.md`. It only records 4Charm-specific context.
 
 ## Non-Obvious Rules
 
-- Use `razorcore.filesystem.sanitize_filename` for thread titles and downloaded media paths. Raw 4chan titles regularly contain macOS-hostile characters.
+- 4Charm currently uses local reimplementations for logging, config, threading, and filesystem operations — it does not import razorcore. See `../Docs/razorcore-helper-audit.md` for the full audit.
 - Keep new 4chan fetch paths inside the app's rate-limited flow. Do not add request shortcuts that bypass throttling or retry behavior.
 - Duplicate suppression relies on SHA-256 hashes tracked under a mutex. Do not replace that with filename-only checks or unsynchronized set access.
-- New long-running GUI or download work should inherit `razorcore.threading.BaseWorker` so cancel/progress/error handling stays consistent.
 - If a bundled app builds but fails on launch, inspect `4Charm.spec` first for asset/data and hidden-import drift before changing runtime code.
 
 ## Verification
