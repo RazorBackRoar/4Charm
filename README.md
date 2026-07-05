@@ -37,7 +37,7 @@
 - **Download Verification** — MD5 checksum validation ensures file integrity
 - **Connection Pooling** — 4× connection pooling for faster concurrent downloads
 - **Real-Time Progress** — live bandwidth monitoring with ETA display
-- **Apple Silicon Native** — arm64 build optimized for M1/M2/M3/M4 chips
+- **Apple Silicon Native** — arm64 build optimized for M-series Macs
 
 ---
 
