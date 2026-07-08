@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import re
-
 from PySide6.QtCore import (
     QMimeData,
     QPointF,
@@ -32,8 +30,7 @@ from PySide6.QtWidgets import (
     QPushButton,
 )
 
-
-_URL_PATTERN = re.compile(r"https?://[^\s<>\'\"]+")
+from four_charm.core.urls import extract_supported_4chan_urls, format_urls_for_editor
 
 
 def create_interface_icon(kind: str, color: str = "#f5f7f5", size: int = 24) -> QIcon:
@@ -253,9 +250,9 @@ class UrlInputEdit(QPlainTextEdit):
     def insertFromMimeData(self, source: QMimeData) -> None:
         if source.hasText():
             text = source.text()
-            matches = _URL_PATTERN.findall(text)
-            if matches:
-                super().insertPlainText("\n\n".join(matches))
+            urls = extract_supported_4chan_urls(text)
+            if urls:
+                super().insertPlainText(format_urls_for_editor(urls))
             else:
                 super().insertPlainText(text)
             self.apply_line_block_format()
