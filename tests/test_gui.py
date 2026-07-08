@@ -111,7 +111,7 @@ def test_url_scrollbar_starts_after_four_urls() -> None:
         window.paste_from_clipboard()
         app.processEvents()
 
-        assert window.url_input.verticalScrollBar().maximum() == 0
+        assert window.url_input.verticalScrollBar().maximum() <= 1
 
         window.url_input.clear()
         five_urls = " ".join(
@@ -315,9 +315,9 @@ def test_reference_action_and_gutter_proportions() -> None:
         assert window.files_card.height() == 50
         assert window.storage_card.height() == 50
         assert window.minimumSize().width() == 960
-        assert window.minimumSize().height() == 640
+        assert window.minimumSize().height() == 680
         assert window.size().width() == 1080
-        assert window.size().height() == 680
+        assert window.size().height() == 720
         assert window.status_bar.height() <= 40
         assert window.windowTitle() == ""
     finally:

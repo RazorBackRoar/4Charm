@@ -17,16 +17,17 @@ QMainWindow {
         radius: 1.1,
         fx: 0.5,
         fy: 0.0,
-        stop: 0 #112416,
-        stop: 0.28 #0b100c,
+        stop: 0 #0b100c,
+        stop: 0.28 #090c0a,
         stop: 1 #070908
     );
-    border-top: 1px solid #58df73;
+    border-top: 1px solid #3c8048;
 }
 
 /* Header */
 #Header {
     border-bottom: 1px solid #282e2a;
+    padding-bottom: 4px;
 }
 
 #AppTitle {
@@ -35,13 +36,16 @@ QMainWindow {
     font-size: 56px;
     font-weight: 700;
     letter-spacing: -1px;
+    padding-top: 2px;
+    padding-bottom: 4px;
 }
 
 #AppSubtitle {
     color: #b8c0bb;
     font-size: 13px;
     font-weight: 500;
-    letter-spacing: 0.4px;
+    letter-spacing: 0.6px;
+    padding-bottom: 4px;
 }
 
 /* URL section is open; progress and log use contained cards */
@@ -68,11 +72,13 @@ QMainWindow {
     color: #f5f7f5;
     font-size: 15px;
     font-weight: 700;
-    letter-spacing: 0.7px;
+    letter-spacing: 0.9px;
+    padding-top: 1px;
+    padding-bottom: 2px;
 }
 
 #SectionAccent {
-    background: #58df73;
+    background: #3c8048;
     border-radius: 2px;
 }
 
@@ -80,7 +86,8 @@ QMainWindow {
     color: #a5ada8;
     font-size: 13px;
     font-weight: 600;
-    letter-spacing: 0.4px;
+    letter-spacing: 0.5px;
+    padding-top: 2px;
 }
 
 /* URL editor */
@@ -111,7 +118,7 @@ QMainWindow {
     color: #f3f5f4;
     font-family: "Menlo";
     border: none;
-    padding: 3px 12px;
+    padding: 4px 12px;
     selection-background-color: #326c3d;
     selection-color: #ffffff;
     font-size: 15px;
@@ -134,7 +141,7 @@ QPushButton {
     color: #c7ccc8;
     border: 1px solid #3c8048;
     border-radius: 7px;
-    padding: 2px 16px;
+    padding: 4px 18px;
     font-size: 16px;
     font-weight: 700;
 }
@@ -208,6 +215,7 @@ QPushButton:disabled {
     color: #64e97f;
     font-size: 16px;
     font-weight: 600;
+    padding-bottom: 2px;
 }
 
 #SpeedLabel {
@@ -244,7 +252,7 @@ QPushButton:disabled {
     font-family: "Menlo";
     border: 1px solid #315f3a;
     border-radius: 6px;
-    padding: 7px;
+    padding: 10px;
     font-size: 15px;
 }
 
@@ -302,10 +310,10 @@ QStatusBar {
         stop: 1 #0a0d0b
     );
     color: #f4f6f5;
-    border-top: 1px solid #58df73;
-    border-bottom: 1px solid #58df73;
+    border-top: 1px solid #3c8048;
+    border-bottom: 1px solid #3c8048;
     min-height: 34px;
-    padding: 0;
+    padding: 2px 0;
     font-size: 16px;
     font-weight: 600;
 }
@@ -315,7 +323,7 @@ QStatusBar {
 }
 
 #StatusIndicator {
-    background: #5fe177;
+    background: #3c8048;
     border-radius: 5px;
 }
 

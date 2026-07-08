@@ -229,6 +229,10 @@ class ActivityLog(QPlainTextEdit):
         cursor.movePosition(QTextCursor.MoveOperation.End)
         if not self.document().isEmpty():
             cursor.insertBlock()
+            block_format = QTextBlockFormat()
+            block_format.setTopMargin(2)
+            block_format.setBottomMargin(2)
+            cursor.setBlockFormat(block_format)
 
         line_format = QTextCharFormat()
         success_terms = ("complete", "downloaded", "ready", "success", "operational")
