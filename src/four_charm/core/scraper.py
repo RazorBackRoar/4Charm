@@ -13,12 +13,19 @@ import four_charm.config as config
 from four_charm.core.bandwidth import BandwidthMonitor
 from four_charm.core.dedup import DedupTracker
 from four_charm.core.models import DownloadQueue, MediaFile
+from four_charm.core.urls import is_allowed_4chan_host, normalize_host
 from four_charm.transport.session import create_session
 
 
 def _rc_sanitize_filename(name: str, replacement: str = "_") -> str:
     safe = re.sub(r'[^\w\-. ]', replacement, name.strip())
     safe = safe.strip(" .")
+    safe = safe.replace("..", replacement)
+    if len(safe) > config.MAX_FILENAME_LENGTH:
+        stem = Path(safe).stem
+        suffix = Path(safe).suffix
+        max_stem = max(1, config.MAX_FILENAME_LENGTH - len(suffix))
+        safe = f"{stem[:max_stem]}{suffix}"
     return safe or "unnamed_file"
 
 
@@ -63,6 +70,21 @@ class FourChanScraper:
         self.download_queue = DownloadQueue()
         self.bandwidth_monitor = BandwidthMonitor(config.BANDWIDTH_WINDOW_SECONDS)
 
+    def _assert_within_download_dir(self, target: Path) -> Path:
+        """Ensure a resolved path cannot escape the configured download directory."""
+        if self.download_dir is None:
+            raise ValueError("Download directory not set")
+
+        base = self.download_dir.resolve()
+        resolved = target.resolve()
+        try:
+            resolved.relative_to(base)
+        except ValueError as exc:
+            raise ValueError(
+                f"Refusing to write outside download directory: {target}"
+            ) from exc
+        return resolved
+
     def _prepare_download_path(
         self, media_file: MediaFile, url_folder_name: str | None
     ) -> tuple[Path, Path]:
@@ -70,19 +92,20 @@ class FourChanScraper:
         if self.download_dir is None:
             raise ValueError("Download directory not set")
 
-        if url_folder_name:
-            thread_dir = self.download_dir / url_folder_name
-        else:
-            thread_dir = self.download_dir / "misc"
+        folder_name = self._sanitize_folder_component(url_folder_name or "misc")
+        thread_dir = self.download_dir / folder_name
+        self._assert_within_download_dir(thread_dir)
         thread_dir.mkdir(parents=True, exist_ok=True)
 
         if media_file.filename.lower().endswith(".webm"):
             save_dir = thread_dir / "WEBM"
+            self._assert_within_download_dir(save_dir)
             save_dir.mkdir(parents=True, exist_ok=True)
         else:
             save_dir = thread_dir
 
-        file_path = save_dir / media_file.filename
+        file_path = save_dir / _rc_sanitize_filename(media_file.filename)
+        self._assert_within_download_dir(file_path)
         return file_path, save_dir
 
     def _check_existing_file(self, file_path: Path, media_file: MediaFile) -> bool:
@@ -95,6 +118,7 @@ class FourChanScraper:
 
             if self.dedup.check_and_register(file_hash):
                 # Hash already seen — duplicate of a file downloaded this session
+                media_file.skip_reason = "duplicate"
                 self.stats_mutex.lock()
                 try:
                     self.stats["duplicates"] += 1
@@ -108,6 +132,7 @@ class FourChanScraper:
             # Continue with download instead of treating as existing file
             return False
 
+        media_file.skip_reason = "skipped"
         self.stats_mutex.lock()
         try:
             self.stats["skipped"] += 1
@@ -454,8 +479,10 @@ class FourChanScraper:
 
     def _sanitize_folder_component(self, name: str) -> str:
         sanitized = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "_", name or "")
-        sanitized = re.sub(r"\s+", " ", sanitized).strip()
-        return sanitized
+        sanitized = sanitized.replace("..", "_")
+        sanitized = re.sub(r"\s+", " ", sanitized).strip(" .")
+        sanitized = sanitized.strip("-_ ")
+        return sanitized or "session"
 
     def build_session_base_name(self, parsed_url: dict) -> str:
         board = parsed_url.get("board", "").strip()
@@ -504,15 +531,35 @@ class FourChanScraper:
             return True
 
     def parse_url(self, url: str) -> dict | None:
-        """Parse 4chan URL to extract board and thread info."""
+        """Parse 4chan URL to extract board, thread, catalog, or direct media info."""
         try:
             url = url.strip()
+            if not url:
+                return None
             if not url.startswith("http"):
                 url = "https://" + url
             parsed = urlparse(url)
-            hostname = (parsed.hostname or "").lower()
-            if hostname != "4chan.org" and not hostname.endswith(".4chan.org"):
+            hostname = normalize_host(parsed.hostname)
+            if not is_allowed_4chan_host(hostname):
                 return None
+
+            if hostname == "i.4cdn.org":
+                path_parts = [p for p in parsed.path.split("/") if p]
+                if len(path_parts) < 2:
+                    return None
+                board = path_parts[0]
+                media_filename = path_parts[1].split("#")[0]
+                extension = Path(media_filename).suffix.lower()
+                if extension not in config.MEDIA_EXTENSIONS:
+                    return None
+                return {
+                    "board": board,
+                    "type": "media",
+                    "thread_id": None,
+                    "media_filename": media_filename,
+                    "media_url": url,
+                }
+
             path_parts = [p for p in parsed.path.split("/") if p]
             if not path_parts:
                 return None

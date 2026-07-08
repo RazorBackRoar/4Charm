@@ -7,7 +7,8 @@ from typing import Any
 from PySide6.QtCore import QObject, Signal
 
 import four_charm.config as config
-from four_charm.core.scraper import FourChanScraper
+from four_charm.core.models import MediaFile
+from four_charm.core.scraper import FourChanScraper, _rc_sanitize_filename
 
 
 logger = logging.getLogger("4Charm")
@@ -50,6 +51,18 @@ class _BaseDownloadWorker(QObject):
             else:
                 folder_name = self.scraper.build_session_base_name(parsed_url)
             display_title = thread_title or f"Thread {thread_id}"
+        elif url_type == "media":
+            media_filename = parsed_url.get("media_filename", "")
+            media_url = parsed_url.get("media_url", "")
+            media_files = [
+                MediaFile(
+                    media_url,
+                    _rc_sanitize_filename(media_filename),
+                    board=board,
+                )
+            ]
+            folder_name = self.scraper.build_session_base_name(parsed_url)
+            display_title = f"{board} media"
         elif url_type == "catalog":
             media_files = self.scraper.scrape_catalog(board, 10)
             folder_name = self.scraper.build_session_base_name(parsed_url)
@@ -96,17 +109,26 @@ class _BaseDownloadWorker(QObject):
                 try:
                     success = future.result()
                     if success:
-                        speed_info = (
-                            f" ({media_file.download_speed:.1f} MB/s)"
-                            if media_file.download_speed > 0
-                            else ""
-                        )
-                        self.log_message.emit(
-                            f"✅ {prefix}{media_file.filename}{speed_info}"
-                        )
+                        if media_file.skip_reason == "duplicate":
+                            self.log_message.emit(
+                                f"🔄 {prefix}Skipped duplicate: {media_file.filename}"
+                            )
+                        elif media_file.skip_reason == "skipped":
+                            self.log_message.emit(
+                                f"⏭️ {prefix}Already exists: {media_file.filename}"
+                            )
+                        else:
+                            speed_info = (
+                                f" ({media_file.download_speed:.1f} MB/s)"
+                                if media_file.download_speed > 0
+                                else ""
+                            )
+                            self.log_message.emit(
+                                f"✅ {prefix}{media_file.filename}{speed_info}"
+                            )
                     else:
                         self.log_message.emit(
-                            f"❌ {prefix}Failed: {media_file.filename}"
+                            f"❌ {prefix}Failed download: {media_file.filename}"
                         )
                 except Exception as e:
                     self.log_message.emit(
@@ -231,17 +253,36 @@ class MultiUrlDownloadWorker(_BaseDownloadWorker):
 
             # First pass: scrape all URLs to get media counts
             for i, parsed_url in enumerate(self.parsed_urls):
-                task = self._build_url_task(
-                    parsed_url,
-                    url_index=i,
-                    use_thread_title_folder=True,
-                )
+                try:
+                    task = self._build_url_task(
+                        parsed_url,
+                        url_index=i,
+                        use_thread_title_folder=True,
+                    )
+                except Exception as e:
+                    board = parsed_url.get("board", "unknown")
+                    thread_id = parsed_url.get("thread_id")
+                    source = (
+                        f"/{board}/thread/{thread_id}"
+                        if thread_id
+                        else f"/{board}/"
+                    )
+                    self.log_message.emit(
+                        f"⚠️ [{i + 1}/{len(self.parsed_urls)}] Failed to process {source}: {e}"
+                    )
+                    continue
+
                 url_tasks.append(task)
                 media_files = task["media_files"]
                 total_files += len(media_files)
-                self.log_message.emit(
-                    f"📁 [{i + 1}/{len(self.parsed_urls)}] Found {len(media_files)} files in '{task['folder_name']}'"
-                )
+                if media_files:
+                    self.log_message.emit(
+                        f"📁 [{i + 1}/{len(self.parsed_urls)}] Found {len(media_files)} files in '{task['folder_name']}'"
+                    )
+                else:
+                    self.log_message.emit(
+                        f"⚠️ [{i + 1}/{len(self.parsed_urls)}] No media found for '{task['thread_title']}'"
+                    )
 
             if total_files == 0:
                 self.log_message.emit("❌ No media files found in any URLs!")

@@ -103,6 +103,7 @@ class MediaFile:
         self.download_speed = 0.0
         self.start_time: float | None = None
         self.hash: str | None = None
+        self.skip_reason: str | None = None
         # MD5 verification fields
         self.expected_md5: str | None = None  # From 4chan API 'md5' field
         self.verified: bool = False  # Checksum verification status
