@@ -149,6 +149,32 @@ def test_download_worker_finishes_when_no_media_found() -> None:
     assert finished_payloads == [scraper.stats]
 
 
+def test_multi_url_worker_continues_after_scrape_failure() -> None:
+    scraper = _FakeScraper()
+    worker = workers.MultiUrlDownloadWorker(
+        cast(FourChanScraper, scraper),
+        [
+            {"board": "g", "type": "thread", "thread_id": "1"},
+            {"board": "wsg", "type": "thread", "thread_id": "2"},
+        ],
+    )
+    log_messages: list[str] = []
+
+    def flaky_scrape(board: str, thread_id: str):
+        if board == "g":
+            raise RuntimeError("network down")
+        scraper.thread_calls.append((board, thread_id))
+        return [object()], "Second thread"
+
+    scraper.scrape_thread = flaky_scrape  # type: ignore[method-assign]
+    worker.log_message.connect(log_messages.append)
+
+    worker.run()
+
+    assert any("Failed to process /g/thread/1" in message for message in log_messages)
+    assert scraper.thread_calls == [("wsg", "2")]
+
+
 def test_multi_url_worker_reports_empty_sources() -> None:
     scraper = _FakeScraper()
     worker = workers.MultiUrlDownloadWorker(
@@ -165,7 +191,7 @@ def test_multi_url_worker_reports_empty_sources() -> None:
 
     worker.run()
 
-    assert "📁 [1/2] Found 0 files in 'g-catalog'" in log_messages
-    assert "📁 [2/2] Found 0 files in 'wsg-board'" in log_messages
+    assert "⚠️ [1/2] No media found for 'g catalog'" in log_messages
+    assert "⚠️ [2/2] No media found for 'wsg board'" in log_messages
     assert "❌ No media files found in any URLs!" in log_messages
     assert finished_payloads == [scraper.stats]

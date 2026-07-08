@@ -81,6 +81,12 @@ from PySide6.QtWidgets import (
 )
 
 from four_charm.core.scraper import FourChanScraper
+from four_charm.core.urls import (
+    MAX_QUEUE_URLS,
+    dedupe_preserve_order,
+    extract_supported_4chan_urls,
+    format_urls_for_editor,
+)
 from four_charm.gui.widgets import (
     ActivityLog,
     LineNumberTextEdit,
@@ -95,28 +101,21 @@ from four_charm.gui.workers import MultiUrlDownloadWorker
 logger = logging.getLogger("4Charm")
 
 
-_URL_PATTERN = re.compile(r"https?://[^\s<>'\"]+")
-_BRAND_GREEN_RGB = (60 / 255, 128 / 255, 72 / 255)
+_BRAND_GREEN_RGB = (26 / 255, 46 / 255, 32 / 255)
 
 
-def _is_supported_4chan_url(url: str) -> bool:
-    return "boards.4chan.org" in url or "4channel.org" in url or "4chan.org" in url
-
-
-def _extract_supported_urls(text: str) -> list[str]:
-    """Return supported 4chan URLs from pasted or dropped text."""
-    urls = []
-    for match in _URL_PATTERN.findall(text):
-        url = match.rstrip(".,;:)]}")
-        if _is_supported_4chan_url(url):
-            urls.append(url)
-    return urls
+def _existing_url_keys(editor: QPlainTextEdit) -> set[str]:
+    return {
+        line.strip().rstrip("/").lower()
+        for line in editor.toPlainText().splitlines()
+        if line.strip()
+    }
 
 
 def _build_url_paste_text(
     text_before_cursor: str, text_after_cursor: str, urls: list[str]
 ) -> str:
-    paste_text = "\n\n".join(urls)
+    paste_text = format_urls_for_editor(urls)
     if text_before_cursor and not text_before_cursor.endswith("\n\n"):
         paste_text = (
             "\n" + paste_text
@@ -129,11 +128,20 @@ def _build_url_paste_text(
 
 
 def _insert_url_lines(editor: QPlainTextEdit, urls: list[str]) -> None:
+    existing = _existing_url_keys(editor)
+    new_urls = [
+        url
+        for url in dedupe_preserve_order(urls)
+        if url.rstrip("/").lower() not in existing
+    ]
+    if not new_urls:
+        return
+
     cursor = editor.textCursor()
     existing_text = editor.toPlainText()
     start = cursor.selectionStart()
     end = cursor.selectionEnd()
-    paste_text = _build_url_paste_text(existing_text[:start], existing_text[end:], urls)
+    paste_text = _build_url_paste_text(existing_text[:start], existing_text[end:], new_urls)
     cursor.insertText(paste_text)
     editor.setTextCursor(cursor)
     editor.ensureCursorVisible()
@@ -146,8 +154,8 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("")
-        self.setMinimumSize(960, 640)
-        self.resize(1080, 680)
+        self.setMinimumSize(960, 680)
+        self.resize(1080, 720)
         self.setAcceptDrops(True)
 
         self.scraper = FourChanScraper()
@@ -227,7 +235,7 @@ class MainWindow(QMainWindow):
             send_void_bool(
                 native_window,
                 sel_register_name(b"setTitlebarAppearsTransparent:"),
-                True,
+                False,
             )
             send_void_int(
                 native_window,
@@ -262,11 +270,15 @@ class MainWindow(QMainWindow):
         root.setObjectName("Root")
         self.setCentralWidget(root)
         main_layout = QVBoxLayout(root)
-        main_layout.setContentsMargins(24, 8, 24, 6)
-        main_layout.setSpacing(8)
+        main_layout.setContentsMargins(24, 12, 24, 10)
+        main_layout.setSpacing(11)
 
         header = self._build_header()
         url_panel = self._build_url_panel()
+        url_panel.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
+        )
+        url_panel.setMinimumHeight(url_panel.sizeHint().height())
         progress_panel = self._build_progress_panel()
         lower_area = self._build_lower_area()
 
@@ -282,8 +294,8 @@ class MainWindow(QMainWindow):
         self.status_content = QWidget()
         self.status_content.setObjectName("StatusContent")
         status_layout = QHBoxLayout(self.status_content)
-        status_layout.setContentsMargins(20, 0, 20, 0)
-        status_layout.setSpacing(7)
+        status_layout.setContentsMargins(20, 2, 20, 2)
+        status_layout.setSpacing(9)
 
         self.status_indicator = QLabel()
         self.status_indicator.setObjectName("StatusIndicator")
@@ -301,12 +313,12 @@ class MainWindow(QMainWindow):
         panel = QWidget()
         panel.setObjectName("Header")
         layout = QVBoxLayout(panel)
-        layout.setContentsMargins(0, 2, 0, 5)
-        layout.setSpacing(2)
+        layout.setContentsMargins(0, 4, 0, 10)
+        layout.setSpacing(5)
         title = QLabel("4Charm")
         title.setObjectName("AppTitle")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        subtitle = QLabel("HIGH PERFORMANCE 4CHAN MEDIA DOWNLOADER")
+        subtitle = QLabel("4chan image and WEBM downloader for macOS")
         subtitle.setObjectName("AppSubtitle")
         subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(title)
@@ -317,8 +329,8 @@ class MainWindow(QMainWindow):
         wrapper = QWidget()
         wrapper.setObjectName("SectionHeader")
         layout = QHBoxLayout(wrapper)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(8)
+        layout.setContentsMargins(0, 0, 0, 2)
+        layout.setSpacing(10)
 
         accent = QFrame()
         accent.setObjectName("SectionAccent")
@@ -335,21 +347,21 @@ class MainWindow(QMainWindow):
     def _build_url_panel(self) -> NeonPanel:
         panel = NeonPanel("UrlPanel")
         layout = QVBoxLayout(panel)
-        layout.setContentsMargins(10, 6, 10, 6)
-        layout.setSpacing(6)
+        layout.setContentsMargins(10, 8, 10, 8)
+        layout.setSpacing(8)
         label = self._build_section_label("URLS TO DOWNLOAD")
 
         self.url_input_frame = LineNumberTextEdit(panel)
         self.url_input_frame.setFixedHeight(142)
         self.url_input_frame.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
         )
 
         self.url_input = self.url_input_frame.editor
         self.line_numbers = self.url_input_frame.line_numbers
 
         button_row = QHBoxLayout()
-        button_row.setSpacing(8)
+        button_row.setSpacing(10)
         self.start_cancel_btn = NeonButton("Start Download")
         self.start_cancel_btn.setObjectName("startBtn")
         self.clear_btn = NeonButton("Clear")
@@ -379,7 +391,8 @@ class MainWindow(QMainWindow):
         self.url_count_label.setObjectName("QueueLabel")
 
         layout.addWidget(label)
-        layout.addWidget(self.url_input_frame, stretch=1)
+        layout.addWidget(self.url_input_frame)
+        layout.addSpacing(4)
         layout.addLayout(button_row)
         layout.addWidget(self.url_count_label)
         return panel
@@ -387,8 +400,8 @@ class MainWindow(QMainWindow):
     def _build_progress_panel(self) -> NeonPanel:
         panel = NeonPanel("ProgressPanel")
         layout = QVBoxLayout(panel)
-        layout.setContentsMargins(10, 6, 10, 6)
-        layout.setSpacing(3)
+        layout.setContentsMargins(10, 8, 10, 8)
+        layout.setSpacing(6)
         label = self._build_section_label("DOWNLOAD PROGRESS")
 
         self.progress_bar = QProgressBar()
@@ -417,12 +430,12 @@ class MainWindow(QMainWindow):
         wrapper = QWidget()
         self.lower_layout = QHBoxLayout(wrapper)
         self.lower_layout.setContentsMargins(0, 0, 0, 0)
-        self.lower_layout.setSpacing(8)
+        self.lower_layout.setSpacing(10)
 
         self.log_panel = NeonPanel("LogPanel")
         log_layout = QVBoxLayout(self.log_panel)
-        log_layout.setContentsMargins(10, 6, 10, 8)
-        log_layout.setSpacing(4)
+        log_layout.setContentsMargins(10, 8, 10, 10)
+        log_layout.setSpacing(6)
         label = self._build_section_label("ACTIVITY LOG")
         self.log_text = ActivityLog()
         self.log_text.setSizePolicy(
@@ -551,17 +564,15 @@ class MainWindow(QMainWindow):
 
     def validate_urls(self):
         """Validate URLs in real-time and update line numbers."""
-        raw_text = self.url_input.toPlainText()
-        all_lines = raw_text.split("\n")
-        raw_lines = [ln.strip() for ln in all_lines if ln.strip()]
+        raw_lines = self.url_input_frame.urls()
 
         # Update the URL counter label
-        self.url_count_label.setText(f"QUEUE: {len(self.url_input_frame.urls())}")
+        self.url_count_label.setText(f"QUEUE: {len(raw_lines)}")
 
-        # Validate URL count (maximum 20)
-        if len(raw_lines) > 20:
+        if len(raw_lines) > MAX_QUEUE_URLS:
             self._update_url_status(
-                "Maximum 20 URLs allowed. Please remove some URLs.", "invalid"
+                f"Maximum {MAX_QUEUE_URLS} URLs allowed. Please remove some URLs.",
+                "invalid",
             )
             self._set_start_ready(False)
             return
@@ -571,13 +582,12 @@ class MainWindow(QMainWindow):
             self._update_url_status("Engine Status: Ready", "idle")
             return
 
-        # Simple string check for speed (avoid creating Scraper object repeatedly in UI thread)
         valid_count = 0
         invalid_count = 0
 
         for url in raw_lines:
-            # Basic check for 4chan domains
-            if "boards.4chan.org" in url or "4channel.org" in url or "4chan.org" in url:
+            clean_url = re.sub(r"^\d+\.\s*", "", url.strip())
+            if self.scraper.parse_url(clean_url):
                 valid_count += 1
             else:
                 invalid_count += 1
@@ -585,7 +595,13 @@ class MainWindow(QMainWindow):
         if valid_count > 0 and invalid_count == 0:
             self._set_start_ready(True)
             self._update_url_status(f"Ready to download {valid_count} threads", "valid")
-        elif invalid_count > 0:
+        elif valid_count > 0 and invalid_count > 0:
+            self._set_start_ready(True)
+            self._update_url_status(
+                f"Ready: {valid_count} valid, {invalid_count} invalid (will skip bad links)",
+                "partial",
+            )
+        else:
             self._set_start_ready(False)
             self._update_url_status("Invalid 4chan URLs detected", "invalid")
 
@@ -613,11 +629,14 @@ class MainWindow(QMainWindow):
         if not self.start_cancel_btn.isEnabled():
             return
 
-        text = self.url_input.toPlainText().strip()
-        urls = [url.strip() for url in text.split("\n") if url.strip()]
+        urls = self.url_input_frame.urls()
         if not urls:
             QMessageBox.critical(self, "Error", "No URLs provided")
             return
+
+        self._set_status_message("Parsing links...", "valid")
+        self.progress_label.setText("Parsing links...")
+        self.add_log_message("Parsing links...")
 
         # Check if download folder is set, if not prompt user
         if self.scraper.download_dir is None:
@@ -641,16 +660,18 @@ class MainWindow(QMainWindow):
         # Parse and validate URLs (strip numbering if present)
         parsed_urls = []
         for url in urls:
-            # Strip numbering like "1. " from the beginning
             clean_url = re.sub(r"^\d+\.\s*", "", url.strip())
             parsed = self.scraper.parse_url(clean_url)
             if parsed:
                 parsed_urls.append(parsed)
             else:
-                self.add_log_message(f"Skipping invalid URL: {clean_url}")
+                self.add_log_message(f"Invalid link skipped: {clean_url}")
+                self._set_status_message("Invalid link detected", "partial")
 
         if not parsed_urls:
-            QMessageBox.critical(self, "Error", "No valid URLs found")
+            QMessageBox.critical(self, "Error", "No valid 4chan URLs found")
+            self._set_status_message("Invalid 4chan URLs detected", "invalid")
+            self.progress_label.setText("Ready")
             return
 
         download_dir = self.scraper.download_dir
@@ -857,10 +878,22 @@ class MainWindow(QMainWindow):
         if not text:
             return
 
-        valid_urls = _extract_supported_urls(text)
+        valid_urls = extract_supported_4chan_urls(text)
 
         if valid_urls:
-            _insert_url_lines(self.url_input, valid_urls)
+            existing_before = _existing_url_keys(self.url_input)
+            new_urls = [
+                url
+                for url in dedupe_preserve_order(valid_urls)
+                if url.rstrip("/").lower() not in existing_before
+            ]
+            if new_urls:
+                _insert_url_lines(self.url_input, valid_urls)
+                skipped = len(dedupe_preserve_order(valid_urls)) - len(new_urls)
+                if skipped:
+                    self.add_log_message(f"Skipped {skipped} duplicate link(s)")
+            else:
+                self.add_log_message("All pasted links were already in the queue")
         else:
             # Fallback: Normal paste if no valid URLs found
             self.url_input.paste()
@@ -909,7 +942,7 @@ class MainWindow(QMainWindow):
     @override
     def dropEvent(self, event: QDropEvent) -> None:
         text = event.mimeData().text().strip()
-        valid_urls = _extract_supported_urls(text)
+        valid_urls = extract_supported_4chan_urls(text)
         if valid_urls:
             _insert_url_lines(self.url_input, valid_urls)
             self.validate_urls()
