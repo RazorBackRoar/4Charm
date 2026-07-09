@@ -15,18 +15,16 @@ from four_charm.core.dedup import DedupTracker
 from four_charm.core.models import DownloadQueue, MediaFile
 from four_charm.core.urls import is_allowed_4chan_host, normalize_host
 from four_charm.transport.session import create_session
+from razorcore.filesystem import sanitize_filename
 
 
 def _rc_sanitize_filename(name: str, replacement: str = "_") -> str:
-    safe = re.sub(r'[^\w\-. ]', replacement, name.strip())
-    safe = safe.strip(" .")
-    safe = safe.replace("..", replacement)
-    if len(safe) > config.MAX_FILENAME_LENGTH:
-        stem = Path(safe).stem
-        suffix = Path(safe).suffix
-        max_stem = max(1, config.MAX_FILENAME_LENGTH - len(suffix))
-        safe = f"{stem[:max_stem]}{suffix}"
-    return safe or "unnamed_file"
+    """Sanitize download filenames via razorcore (keeps 4Charm max length)."""
+    return sanitize_filename(
+        name,
+        max_length=config.MAX_FILENAME_LENGTH,
+        replacement=replacement,
+    )
 
 
 logger = logging.getLogger("4Charm")
