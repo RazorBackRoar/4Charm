@@ -55,7 +55,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import override
 
-from PySide6.QtCore import QSize, Qt, QThread, QTimer
+from PySide6.QtCore import QEvent, QSize, Qt, QThread, QTimer
 from PySide6.QtGui import (
     QCloseEvent,
     QDragEnterEvent,
@@ -71,6 +71,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QMainWindow,
+    QMenu,
     QMessageBox,
     QPlainTextEdit,
     QProgressBar,
@@ -96,9 +97,14 @@ from four_charm.gui.widgets import (
     create_interface_icon,
 )
 from four_charm.gui.workers import MultiUrlDownloadWorker
+from razorcore.appinfo import AboutDialog
+from razorcore.updates import check_for_updates
 
 
 logger = logging.getLogger("4Charm")
+
+APP_NAME = "4Charm"
+PACKAGE_NAME = "four-charm"
 
 
 _BRAND_GREEN_RGB = (26 / 255, 46 / 255, 32 / 255)
@@ -141,7 +147,9 @@ def _insert_url_lines(editor: QPlainTextEdit, urls: list[str]) -> None:
     existing_text = editor.toPlainText()
     start = cursor.selectionStart()
     end = cursor.selectionEnd()
-    paste_text = _build_url_paste_text(existing_text[:start], existing_text[end:], new_urls)
+    paste_text = _build_url_paste_text(
+        existing_text[:start], existing_text[end:], new_urls
+    )
     cursor.insertText(paste_text)
     editor.setTextCursor(cursor)
     editor.ensureCursorVisible()
@@ -216,9 +224,7 @@ class MainWindow(QMainWindow):
             )(("objc_msgSend", objc))
 
             native_view = ctypes.c_void_p(int(self.winId()))
-            native_window = send_id(
-                native_view, sel_register_name(b"window")
-            )
+            native_window = send_id(native_view, sel_register_name(b"window"))
             color_class = objc_get_class(b"NSColor")
             title_color = send_color(
                 color_class,
@@ -247,6 +253,7 @@ class MainWindow(QMainWindow):
 
     def _load_styles(self) -> None:
         import sys
+
         if getattr(sys, "frozen", False):
             # _MEIPASS only exists in PyInstaller-frozen builds (guarded above)
             base_path = Path(sys._MEIPASS)  # ty: ignore[unresolved-attribute]
@@ -263,7 +270,9 @@ class MainWindow(QMainWindow):
                 logger.info(f"Loading stylesheet from fallback: {fallback_path}")
                 self.setStyleSheet(fallback_path.read_text(encoding="utf-8"))
             else:
-                logger.error(f"CRITICAL: style.qss not found! Looked in {qss_path} and {fallback_path}")
+                logger.error(
+                    f"CRITICAL: style.qss not found! Looked in {qss_path} and {fallback_path}"
+                )
 
     def _build_ui(self) -> None:
         root = QWidget()
@@ -318,12 +327,70 @@ class MainWindow(QMainWindow):
         title = QLabel("4Charm")
         title.setObjectName("AppTitle")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title.setToolTip("Double-click for About · Right-click for updates")
+        title.setCursor(Qt.CursorShape.PointingHandCursor)
+        title.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        title.customContextMenuRequested.connect(self._show_title_context_menu)
+        title.installEventFilter(self)
+        self.title_label = title
         subtitle = QLabel("4chan image and WEBM downloader for macOS")
         subtitle.setObjectName("AppSubtitle")
         subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(title)
         layout.addWidget(subtitle)
         return panel
+
+    def eventFilter(self, obj, event):  # noqa: N802 - Qt override
+        """Open About when the 4Charm title is double-clicked."""
+        if (
+            obj is getattr(self, "title_label", None)
+            and event.type() == QEvent.Type.MouseButtonDblClick
+        ):
+            self._show_about()
+            return True
+        return super().eventFilter(obj, event)
+
+    def _show_about(self) -> None:
+        """Show the standardized razorcore About dialog."""
+        dialog = AboutDialog(self, APP_NAME, package_name=PACKAGE_NAME)
+        dialog.exec()
+
+    def _check_for_updates(self) -> None:
+        """Check GitHub Releases for a newer 4Charm version."""
+        current = QApplication.instance()
+        version = current.applicationVersion() if current is not None else "0.0.0"
+        result = check_for_updates(APP_NAME, version or "0.0.0")
+        if result.is_error:
+            QMessageBox.warning(
+                self,
+                "Update Check",
+                f"Update check failed: {result.error}",
+            )
+            return
+        if result.update_available:
+            detail = f"New version available: {result.latest_version}"
+            if result.download_url:
+                detail = f"{detail}\n{result.download_url}"
+            if result.release_notes:
+                detail = f"{detail}\n\n{result.release_notes[:400]}"
+            QMessageBox.information(self, "Update Available", detail)
+        else:
+            QMessageBox.information(
+                self,
+                "Up to Date",
+                f"You are up to date (v{version}).",
+            )
+
+    def _show_title_context_menu(self, position) -> None:
+        """Title context menu for About and update checking."""
+        menu = QMenu(self)
+        about_action = menu.addAction("About 4Charm")
+        update_action = menu.addAction("Check for Updates")
+        chosen = menu.exec(self.title_label.mapToGlobal(position))
+        if chosen is about_action:
+            self._show_about()
+        elif chosen is update_action:
+            self._check_for_updates()
 
     def _build_section_label(self, text: str) -> QWidget:
         wrapper = QWidget()
@@ -371,9 +438,7 @@ class MainWindow(QMainWindow):
 
         icon_size = QSize(18, 18)
         self.start_cancel_btn.setProperty("ready", False)
-        self.start_cancel_btn.setIcon(
-            create_interface_icon("play", color="#929a95")
-        )
+        self.start_cancel_btn.setIcon(create_interface_icon("play", color="#929a95"))
         self.start_cancel_btn.setIconSize(icon_size)
         self.clear_btn.setIcon(create_interface_icon("trash", color="#c7ccc8"))
         self.clear_btn.setIconSize(icon_size)
@@ -610,9 +675,7 @@ class MainWindow(QMainWindow):
         self.start_cancel_btn.setProperty("ready", ready)
         self.start_cancel_btn.setEnabled(ready)
         icon_color = "#303730" if ready else "#929a95"
-        self.start_cancel_btn.setIcon(
-            create_interface_icon("play", color=icon_color)
-        )
+        self.start_cancel_btn.setIcon(create_interface_icon("play", color=icon_color))
         self.start_cancel_btn.style().unpolish(self.start_cancel_btn)
         self.start_cancel_btn.style().polish(self.start_cancel_btn)
         self.start_cancel_btn.update()
@@ -724,9 +787,7 @@ class MainWindow(QMainWindow):
         if duplicates > 0:
             status_msg += f" | {duplicates} duplicates skipped"
         self.progress_label.setText("Complete" if total > 0 else "Ready")
-        self.status_bar.setProperty(
-            "statusState", "valid" if total > 0 else "idle"
-        )
+        self.status_bar.setProperty("statusState", "valid" if total > 0 else "idle")
         self._set_status_message(
             status_msg if total > 0 else "No files found",
             "valid" if total > 0 else "idle",

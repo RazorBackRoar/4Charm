@@ -4,6 +4,7 @@
 A high-performance GUI application for bulk downloading media from 4chan threads and boards.
 """
 
+import gc
 import sys
 from pathlib import Path
 
@@ -12,14 +13,19 @@ from PySide6.QtWidgets import QApplication
 
 from four_charm.gui.main_window import MainWindow
 from four_charm.utils.logging_setup import setup_logging
+from razorcore.appinfo import print_startup_info
+from razorcore.config import get_version as razorcore_get_version
 
 
 # Setup logging
 logger = setup_logging()
 
+APP_NAME = "4Charm"
+PACKAGE_NAME = "four-charm"
+
 
 def get_version() -> str:
-    """Get version from Info.plist (frozen) or pyproject.toml (dev)."""
+    """Get version from Info.plist (frozen) or razorcore/pyproject (dev)."""
     # 1. Frozen app: read from Info.plist
     if getattr(sys, "frozen", False):
         try:
@@ -43,26 +49,20 @@ def get_version() -> str:
         # Frozen apps should have version in plist; if not, return hardcoded
         return "1.0.0"
 
-    # 2. Development: read from pyproject.toml
-    try:
-        try:
-            import tomllib
-        except ModuleNotFoundError:
-            import tomli as tomllib  # type: ignore
-
-        pyproject_path = Path(__file__).parent.parent.parent / "pyproject.toml"
-        with open(pyproject_path, "rb") as f:
-            data = tomllib.load(f)
-        return data["project"]["version"]
-    except (OSError, KeyError, ValueError) as e:
-        logger.warning("Could not read version from pyproject.toml: %s", e)
-        return "0.0.0"
+    # 2. Development: razorcore version resolution
+    pyproject_path = Path(__file__).resolve().parent.parent.parent / "pyproject.toml"
+    return razorcore_get_version(
+        default="0.0.0",
+        package_name=PACKAGE_NAME,
+        pyproject_path=pyproject_path if pyproject_path.exists() else None,
+    )
 
 
 def main() -> None:
     """Main application entry point."""
+    print_startup_info(APP_NAME, package_name=PACKAGE_NAME)
     app = QApplication(sys.argv)
-    app.setApplicationName("4Charm")
+    app.setApplicationName(APP_NAME)
     app.setApplicationVersion(get_version())
 
     # Set application icon (assets/icons/ is at project root)
@@ -87,10 +87,6 @@ def main() -> None:
 
     # Force cleanup of all resources
     app.deleteLater()
-
-    # Force garbage collection
-    import gc
-
     gc.collect()
 
     sys.exit(exit_code)

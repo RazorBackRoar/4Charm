@@ -28,6 +28,7 @@ dependencies = [
     "certifi>=2026.6.17",
     "chardet>=5.0.0",
     "html5lib>=1.1",
+    "razorcore>=1.211.0",
 ]
 
 [tool.pytest.ini_options]
@@ -61,3 +62,6 @@ dev = [
     "ruff>=0.15.20",
     "ty>=0.0.56",
 ]
+
+[tool.uv.sources]
+razorcore = { path = "../.razorcore", editable = true }
