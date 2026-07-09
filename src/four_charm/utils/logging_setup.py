@@ -1,39 +1,31 @@
+"""4Charm logging setup via razorcore (size-based rotation preserved)."""
+
+from __future__ import annotations
+
 import logging
-from logging.handlers import RotatingFileHandler
-from pathlib import Path
+
+from razorcore.logging import setup_logging as razorcore_setup_logging
 
 
-def setup_logging():
+def setup_logging() -> logging.Logger:
     """Setup comprehensive logging with file output and console output."""
-    # Create log directory in macOS Application Support (proper location)
-    log_dir = Path.home() / "Library" / "Application Support" / "4Charm" / "logs"
-    log_dir.mkdir(parents=True, exist_ok=True)
-
-    log_file = log_dir / "4charm.log"
-
-    # Create formatters
-    file_formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    logger = razorcore_setup_logging(
+        app_name="4Charm",
+        level=logging.DEBUG,
+        log_to_file=True,
+        log_to_console=True,
+        colored_console=True,
+        log_filename="4charm.log",
+        max_bytes=5 * 1024 * 1024,
+        backup_count=3,
+        logger_name="4Charm",
+        configure_root=True,
     )
-    console_formatter = logging.Formatter("%(levelname)s - %(message)s")
-
-    # Create handlers
-    file_handler = RotatingFileHandler(
-        log_file,
-        maxBytes=5 * 1024 * 1024,  # 5 MB
-        backupCount=3,
-    )
-    file_handler.setLevel(logging.DEBUG)
-    file_handler.setFormatter(file_formatter)
-
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
-    console_handler.setFormatter(console_formatter)
-
-    # Configure root logger
-    logging.basicConfig(level=logging.DEBUG, handlers=[file_handler, console_handler])
-
-    logger = logging.getLogger("4Charm")
-    logger.info(f"4Charm logging initialized. Log file: {log_file}")
-
+    log_path = None
+    for handler in logger.handlers:
+        base = getattr(handler, "baseFilename", None)
+        if base:
+            log_path = base
+            break
+    logger.info("4Charm logging initialized. Log file: %s", log_path)
     return logger
