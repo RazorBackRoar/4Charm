@@ -8,9 +8,9 @@
 [![macOS](https://img.shields.io/badge/mac%20os-Apple%20Silicon-d32f2f?style=for-the-badge&logo=apple&logoColor=white)](https://support.apple.com/en-us/HT211814)
 
 <!-- Workspace Health Layer -->
-[![Status](https://img.shields.io/badge/status-active-2ea44f?style=for-the-badge)
-[![Tests](https://img.shields.io/badge/tests-present-2ea44f?style=for-the-badge)
-[![Lint](https://img.shields.io/badge/lint-ruff-2ea44f?style=for-the-badge)
+[![Status](https://img.shields.io/badge/status-active-2ea44f?style=for-the-badge)]()
+[![Tests](https://img.shields.io/badge/tests-present-2ea44f?style=for-the-badge)]()
+[![Lint](https://img.shields.io/badge/lint-ruff-2ea44f?style=for-the-badge)]()
 
 ```text
 ██╗  ██╗ ██████╗██╗  ██╗ █████╗ ██████╗ ███╗   ███╗
@@ -69,6 +69,7 @@
 ```bash
 git clone https://github.com/RazorBackRoar/4Charm.git
 cd 4Charm
+# Workspace layout: sibling Apps/.razorcore provides editable razorcore
 uv sync
 uv run python -m four_charm.main
 ```
@@ -105,5 +106,5 @@ For developers:
 - Primary development/build target: Python 3.14 with `uv`.
 - Source/build target: Python 3.14 only.
 - Setup: `uv sync`
-- Run: `uv run python -m four_charm`
+- Run: `uv run python -m four_charm.main`
 <!-- razorcore:runtime:end -->
