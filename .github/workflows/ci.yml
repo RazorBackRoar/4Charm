@@ -18,6 +18,13 @@ jobs:
         with:
           path: app
 
+      - name: Checkout razorcore
+        uses: actions/checkout@v7
+        with:
+          repository: RazorBackRoar/razorcore
+          path: .razorcore
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
