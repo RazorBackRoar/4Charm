@@ -19,14 +19,20 @@ Native macOS 4chan media downloader (PySide6).
 
 Dev clones expect sibling `../.razorcore` (editable `razorcore>=1.211.0`).
 
+## CI: vendored razorcore wheel
+
+GitHub Actions installs razorcore from `ci/vendor/` (not the private repo).
+After changing `.razorcore`, run `razorvendor` from the Apps workspace root.
+See `ci/vendor/README.md`.
+
 ## razorcore integration (v1.1)
 
 | Surface | Usage |
 |---------|--------|
 | `logging` | App logging setup |
-| `config.get_version` | Version resolution |
-| `appinfo` / `updates` | Startup banner, About, update check |
-| `filesystem.sanitize_filename` | Filename sanitization (via scraper helper) |
+| `config.get_version` | Version resolution (`package_name="four-charm"`) |
+| `appinfo` / `updates` | Startup banner, About (`package_name=PACKAGE_NAME`) |
+| `filesystem.sanitize_filename` | Via `_rc_sanitize_filename` with `max_length=config.MAX_FILENAME_LENGTH` |
 | `threading.BaseWorker` | **Not used** — workers stay on `QObject` + pool with 7-arg progress/ETA and scraper cancel |
 
 User settings JSON remains in local `config.py`.
