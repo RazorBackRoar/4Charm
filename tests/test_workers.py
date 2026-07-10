@@ -166,7 +166,7 @@ def test_multi_url_worker_continues_after_scrape_failure() -> None:
         scraper.thread_calls.append((board, thread_id))
         return [object()], "Second thread"
 
-    scraper.scrape_thread = flaky_scrape  # type: ignore[method-assign]
+    scraper.scrape_thread = flaky_scrape  # ty: ignore[invalid-assignment]
     worker.log_message.connect(log_messages.append)
 
     worker.run()
