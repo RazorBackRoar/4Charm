@@ -23,8 +23,8 @@ Dev clones expect sibling `../.razorcore` (editable `razorcore>=1.211.0`).
 
 | Surface | Usage |
 |---------|--------|
-| `logging` | App logging setup |
-| `config.get_version` | Version resolution |
+| `logging` | Size-based rotation (`max_bytes=5MB`, `configure_root=True`) via `four_charm/utils/logging_setup.py` |
+| `config.get_version` | Version resolution (`package_name="four-charm"`) |
 | `appinfo` / `updates` | Startup banner, About, update check |
 | `filesystem.sanitize_filename` | Filename sanitization (via scraper helper) |
 | `threading.BaseWorker` | **Not used** — workers stay on `QObject` + pool with 7-arg progress/ETA and scraper cancel |
