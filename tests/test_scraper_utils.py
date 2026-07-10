@@ -6,7 +6,7 @@ import pytest
 
 import four_charm.config as config
 from four_charm.core.models import MediaFile
-from four_charm.core.scraper import FourChanScraper
+from four_charm.core.scraper import FourChanScraper, _rc_sanitize_filename
 
 
 def test_parse_url_thread_and_catalog():
@@ -38,6 +38,16 @@ def test_parse_url_rejects_hostname_substring_spoof():
 
     spoofed = scraper.parse_url("https://not4chan.org/boards.4chan.org/g/thread/123")
     assert spoofed is None
+
+
+def test_rc_sanitize_filename_respects_max_length_and_extension():
+    """4Charm download paths must stay within MAX_FILENAME_LENGTH after razorcore migration."""
+    long_name = "x" * (config.MAX_FILENAME_LENGTH + 50) + ".jpg"
+    sanitized = _rc_sanitize_filename(long_name)
+
+    assert len(sanitized) <= config.MAX_FILENAME_LENGTH
+    assert sanitized.endswith(".jpg")
+    assert sanitized != "unnamed_file"
 
 
 def test_build_session_base_name_limits_length_and_sanitizes():
