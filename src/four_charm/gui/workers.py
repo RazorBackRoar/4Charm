@@ -1,3 +1,12 @@
+"""Shared download worker behavior for single and multi-URL flows.
+
+Phase 4.3 note: these workers intentionally stay as ``QObject`` +
+``moveToThread(QThread)`` with ``ThreadPoolExecutor`` inside. razorcore
+``BaseWorker`` is a ``QThread`` with a 3-arg progress schema and does not
+fit this cancel/progress surface (scraper.cancel_downloads + 7-arg ETA).
+Cancel remains ``cancel()`` → ``scraper.cancel_downloads()``.
+"""
+
 import logging
 import time
 import traceback
@@ -29,6 +38,10 @@ class _BaseDownloadWorker(QObject):
     def run(self):
         """Run worker logic."""
         raise NotImplementedError
+
+    def cancel(self):
+        """Cancel downloads via the scraper's shared cancel flag."""
+        self.scraper.cancel_downloads()
 
     def _build_url_task(
         self,
@@ -192,9 +205,6 @@ class _BaseDownloadWorker(QObject):
             return 0.0
         finally:
             self.scraper.stats_mutex.unlock()
-
-    def cancel(self):
-        self.scraper.cancel_downloads()
 
     def pause(self):
         self.scraper.pause_downloads()
