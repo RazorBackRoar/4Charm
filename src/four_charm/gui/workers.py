@@ -223,6 +223,7 @@ class DownloadWorker(_BaseDownloadWorker):
     def run(self):
         """Enhanced concurrent download logic."""
         try:
+            self.scraper.prepare_for_download()
             task = self._build_url_task(
                 self.parsed_url,
                 url_index=0,
@@ -258,6 +259,7 @@ class MultiUrlDownloadWorker(_BaseDownloadWorker):
     def run(self):
         """Run concurrent downloads from multiple URLs."""
         try:
+            self.scraper.prepare_for_download()
             total_files = 0
             url_tasks: list[dict[str, Any]] = []
 
