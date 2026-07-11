@@ -1,7 +1,7 @@
 # 4Charm
 
 [![CI](https://img.shields.io/github/actions/workflow/status/RazorBackRoar/4Charm/ci.yml?branch=main&style=for-the-badge&label=CI)](https://github.com/RazorBackRoar/4Charm/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-2.0.0-blue?style=for-the-badge)](pyproject.toml)
+[![Release](https://img.shields.io/github/v/release/RazorBackRoar/4Charm?style=for-the-badge&label=release)](https://github.com/RazorBackRoar/4Charm/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blueviolet?style=for-the-badge)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.14-2ea44f?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![PySide6](https://img.shields.io/badge/PySide6-Qt6-41cd52?style=for-the-badge&logo=qt&logoColor=white)](https://doc.qt.io/qtforpython/)
@@ -37,6 +37,13 @@
 - **Connection Pooling** — 4× connection pooling for faster concurrent downloads
 - **Real-Time Progress** — live bandwidth monitoring with ETA display
 - **Apple Silicon Native** — arm64 build optimized for M-series Macs
+
+---
+
+## Platform requirements
+
+- macOS 12.0+ on Apple Silicon (arm64)
+- No Python install required for the packaged `.dmg` / `.app`
 
 ---
 
