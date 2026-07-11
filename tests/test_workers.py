@@ -43,6 +43,17 @@ class _FakeScraper:
     def cancel_downloads(self) -> None:
         self.cancel_calls += 1
 
+    def prepare_for_download(self) -> None:
+        self.stats["total"] = 0
+        self.stats["downloaded"] = 0
+        self.stats["failed"] = 0
+        self.stats["skipped"] = 0
+        self.stats["size_mb"] = 0.0
+        self.stats["download_speed"] = 0.0
+        self.stats["start_time"] = None
+        self.stats["duplicates"] = 0
+        self.stats["current_speed"] = 0.0
+
     def pause_downloads(self) -> None:
         self.pause_calls += 1
 

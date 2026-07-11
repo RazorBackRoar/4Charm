@@ -832,6 +832,28 @@ class FourChanScraper:
         )
         return False
 
+    def prepare_for_download(self) -> None:
+        """Reset cancel/pause and per-run stats before a new download session.
+
+        The scraper is shared across runs. ``cancel_downloads`` sets
+        ``cancelled=True`` and must not permanently disable later Start clicks.
+        """
+        self.cancelled = False
+        self.paused = False
+        self.stats_mutex.lock()
+        try:
+            self.stats["total"] = 0
+            self.stats["downloaded"] = 0
+            self.stats["failed"] = 0
+            self.stats["skipped"] = 0
+            self.stats["size_mb"] = 0.0
+            self.stats["download_speed"] = 0.0
+            self.stats["start_time"] = None
+            self.stats["duplicates"] = 0
+            self.stats["current_speed"] = 0.0
+        finally:
+            self.stats_mutex.unlock()
+
     def pause_downloads(self):
         self.paused = True
 
