@@ -10,6 +10,7 @@ import four_charm.config as config
 from four_charm.core.models import MediaFile
 from four_charm.core.paths import (
     PathBuilder,
+    limit_folder_length,
     sanitize_filename,
     sanitize_folder_component,
 )
@@ -98,3 +99,28 @@ def test_path_builder_thread_folder_name_falls_back_to_id() -> None:
     builder = PathBuilder()
     name = builder.thread_folder_name(None, "123", "g")
     assert name == "g-123"
+
+
+def test_limit_folder_length_truncates_and_strips_trailing_separators() -> None:
+    long_name = "a" * (config.MAX_FOLDER_NAME_LENGTH + 20) + "---"
+    trimmed = limit_folder_length(long_name)
+
+    assert len(trimmed) <= config.MAX_FOLDER_NAME_LENGTH
+    assert not trimmed.endswith("-")
+    assert trimmed == "a" * config.MAX_FOLDER_NAME_LENGTH
+
+
+def test_limit_folder_length_returns_session_for_empty_result() -> None:
+    assert limit_folder_length("") == "session"
+
+
+def test_path_builder_session_base_name_catalog() -> None:
+    builder = PathBuilder()
+    name = builder.session_base_name({"board": "g", "type": "catalog", "thread_id": None})
+    assert name == "g-catalog"
+
+
+def test_path_builder_session_base_name_empty_board_fallback() -> None:
+    builder = PathBuilder()
+    name = builder.session_base_name({"board": "", "type": "board", "thread_id": None})
+    assert name == "4chan"
