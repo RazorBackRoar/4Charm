@@ -102,15 +102,21 @@ def test_download_file_registers_hash_in_dedup_tracker(
             _ = chunk_size
             yield b"data"
 
-    scraper = FourChanScraper()
+    class FakeBoardApi:
+        def stream_range(self, url, *, headers=None, timeout=None):
+            return FakeResponse()
+
+        def fetch_thread(self, board, thread_id):
+            raise NotImplementedError
+
+        def fetch_catalog(self, board):
+            raise NotImplementedError
+
+    scraper = FourChanScraper(board_api=FakeBoardApi())
     scraper.download_dir = tmp_path
 
     media = MediaFile("https://i.4cdn.org/g/123.jpg", "123.jpg")
     monkeypatch.setattr(scraper, "check_disk_space", lambda required_mb=0: True)
-    monkeypatch.setattr(
-        "four_charm.core.scraper.safe_get",
-        lambda _session, _url, **_kwargs: FakeResponse(),
-    )
     monkeypatch.setattr(media, "calculate_hash", lambda _path: "hash-123")
 
     assert scraper.download_file(media, "g-123") is True

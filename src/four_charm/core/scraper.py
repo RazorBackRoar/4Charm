@@ -13,18 +13,39 @@ import four_charm.config as config
 from four_charm.core.bandwidth import BandwidthMonitor
 from four_charm.core.dedup import DedupTracker
 from four_charm.core.models import DownloadQueue, MediaFile
+from four_charm.core.paths import (
+    PathBuilder,
+    sanitize_filename,
+    sanitize_folder_component,
+)
 from four_charm.core.urls import is_allowed_4chan_host, normalize_host
+from four_charm.transport.api import BoardApi, LiveBoardApi
 from four_charm.transport.session import create_session, safe_get
-from razorcore.filesystem import sanitize_filename
 
 
+# Re-export for backward compatibility with imports like
+# ``from four_charm.core.scraper import _rc_sanitize_filename``.
 def _rc_sanitize_filename(name: str, replacement: str = "_") -> str:
     """Sanitize download filenames via razorcore (keeps 4Charm max length)."""
-    return sanitize_filename(
-        name,
-        max_length=config.MAX_FILENAME_LENGTH,
-        replacement=replacement,
-    )
+    return sanitize_filename(name, replacement=replacement)
+
+
+# Re-export ``sanitize_folder_component`` as ``_sanitize_folder_component``
+# for tests that historically imported the private method off the class.
+_sanitize_folder_component = sanitize_folder_component
+
+
+# Re-export so tests that monkeypatch ``four_charm.core.scraper.safe_get``
+# keep working when the scraper delegates to a BoardApi.
+__all__ = [
+    "FourChanScraper",
+    "_rc_sanitize_filename",
+    "_sanitize_folder_component",
+    "safe_get",
+    "PathBuilder",
+    "BoardApi",
+    "LiveBoardApi",
+]
 
 
 logger = logging.getLogger("4Charm")
@@ -45,10 +66,11 @@ class ScraperStats(TypedDict):
 class FourChanScraper:
     """Enhanced scraper for 4chan media files with concurrent downloads."""
 
-    def __init__(self):
+    def __init__(self, board_api: BoardApi | None = None):
         # Don't set a default folder - let user choose on first download
-        self.download_dir: Path | None = None
+        self._path_builder = PathBuilder()
         self.session = create_session()
+        self._board_api: BoardApi = board_api or LiveBoardApi(self.session)
         self.stats: ScraperStats = {
             "total": 0,
             "downloaded": 0,
@@ -68,43 +90,43 @@ class FourChanScraper:
         self.download_queue = DownloadQueue()
         self.bandwidth_monitor = BandwidthMonitor(config.BANDWIDTH_WINDOW_SECONDS)
 
-    def _assert_within_download_dir(self, target: Path) -> Path:
-        """Ensure a resolved path cannot escape the configured download directory."""
-        if self.download_dir is None:
-            raise ValueError("Download directory not set")
+    @property
+    def download_dir(self) -> Path | None:
+        """Active download root (mirrored into the internal PathBuilder)."""
+        return self._path_builder.download_dir
 
-        base = self.download_dir.resolve()
-        resolved = target.resolve()
-        try:
-            resolved.relative_to(base)
-        except ValueError as exc:
-            raise ValueError(
-                f"Refusing to write outside download directory: {target}"
-            ) from exc
-        return resolved
+    @download_dir.setter
+    def download_dir(self, value: Path | None) -> None:
+        self._path_builder.set_download_dir(value) if value is not None else setattr(
+            self._path_builder, "download_dir", None
+        )
+
+    # ------------------------------------------------------------------
+    # Path-building delegators
+    #
+    # The real logic lives in ``core.paths.PathBuilder``. The methods
+    # below are kept as thin delegators so the existing test surface
+    # (``test_scraper_utils``, ``test_cancel_reset``) keeps working
+    # while the seam to razorcore stays at one location.
+    # ------------------------------------------------------------------
+    def _assert_within_download_dir(self, target: Path) -> Path:
+        return self._path_builder.within_download_dir(target)
 
     def _prepare_download_path(
         self, media_file: MediaFile, url_folder_name: str | None
     ) -> tuple[Path, Path]:
-        """Prepare download directory and file path."""
-        if self.download_dir is None:
-            raise ValueError("Download directory not set")
+        return self._path_builder.build(media_file, url_folder_name)
 
-        folder_name = self._sanitize_folder_component(url_folder_name or "misc")
-        thread_dir = self.download_dir / folder_name
-        self._assert_within_download_dir(thread_dir)
-        thread_dir.mkdir(parents=True, exist_ok=True)
+    def _sanitize_folder_component(self, name: str) -> str:
+        return sanitize_folder_component(name)
 
-        if media_file.filename.lower().endswith(".webm"):
-            save_dir = thread_dir / "WEBM"
-            self._assert_within_download_dir(save_dir)
-            save_dir.mkdir(parents=True, exist_ok=True)
-        else:
-            save_dir = thread_dir
+    def build_session_base_name(self, parsed_url: dict) -> str:
+        return self._path_builder.session_base_name(parsed_url)
 
-        file_path = save_dir / _rc_sanitize_filename(media_file.filename)
-        self._assert_within_download_dir(file_path)
-        return file_path, save_dir
+    def build_thread_folder_name(
+        self, thread_title: str | None, thread_id: str, board: str
+    ) -> str:
+        return self._path_builder.thread_folder_name(thread_title, thread_id, board)
 
     def _check_existing_file(self, file_path: Path, media_file: MediaFile) -> bool:
         """Check for existing complete file and handle duplicates."""
@@ -475,47 +497,6 @@ class FourChanScraper:
             error_info["category"] = "unknown"
             return error_info
 
-    def _sanitize_folder_component(self, name: str) -> str:
-        sanitized = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "_", name or "")
-        sanitized = sanitized.replace("..", "_")
-        sanitized = re.sub(r"\s+", " ", sanitized).strip(" .")
-        sanitized = sanitized.strip("-_ ")
-        return sanitized or "session"
-
-    def build_session_base_name(self, parsed_url: dict) -> str:
-        board = parsed_url.get("board", "").strip()
-        url_type = parsed_url.get("type")
-        thread_id = parsed_url.get("thread_id")
-        if url_type == "thread" and thread_id:
-            base_name = f"{board}-{thread_id}"
-        elif url_type == "catalog":
-            base_name = f"{board}-catalog"
-        else:
-            base_name = board or "4chan"
-        base_name = self._sanitize_folder_component(base_name)
-        if len(base_name) > config.MAX_FOLDER_NAME_LENGTH:
-            base_name = base_name[: config.MAX_FOLDER_NAME_LENGTH]
-        base_name = base_name.rstrip("-_ ")
-        return base_name or "session"
-
-    def build_thread_folder_name(
-        self, thread_title: str | None, thread_id: str, board: str
-    ) -> str:
-        """Build folder name for thread using title. Falls back to board-thread_id if no title."""
-        if thread_title and thread_title.strip():
-            # Sanitize the thread title for folder name
-            folder_name = self._sanitize_folder_component(thread_title)
-
-            # Truncate if too long (keep all words, just shorten if needed)
-            if len(folder_name) > config.MAX_FOLDER_NAME_LENGTH:
-                folder_name = folder_name[: config.MAX_FOLDER_NAME_LENGTH].rstrip("-_ ")
-            # Only return if we have a valid title
-            if folder_name:
-                return folder_name
-
-        # Fallback: use board-thread_id format if no title available
-        return f"{board}-{thread_id}"
-
     def check_disk_space(self, required_mb: float = 0) -> bool:
         """Check if sufficient disk space is available."""
         if self.download_dir is None:
@@ -594,7 +575,7 @@ class FourChanScraper:
         self.adaptive_delay()  # Adaptive rate limiting
         api_url = f"https://a.4cdn.org/{board}/thread/{thread_id}.json"
         try:
-            response = safe_get(self.session, api_url, timeout=config.API_TIMEOUT)
+            response = self._board_api.fetch_thread(board, thread_id)
             response.raise_for_status()
             thread_data = response.json()
             thread_data["_thread_title"] = self._extract_thread_title(
@@ -608,7 +589,7 @@ class FourChanScraper:
                 # Retry once after rate limit handling
                 try:
                     time.sleep(config.RETRY_DELAY)
-                    response = safe_get(self.session, api_url, timeout=config.API_TIMEOUT)
+                    response = self._board_api.fetch_thread(board, thread_id)
                     response.raise_for_status()
                     thread_data = response.json()
                     thread_data["_thread_title"] = self._extract_thread_title(
@@ -625,7 +606,7 @@ class FourChanScraper:
         self.adaptive_delay()  # Adaptive rate limiting
         api_url = f"https://a.4cdn.org/{board}/catalog.json"
         try:
-            response = safe_get(self.session, api_url, timeout=config.API_TIMEOUT)
+            response = self._board_api.fetch_catalog(board)
             response.raise_for_status()
             catalog_data = response.json()
             self.adaptive_delay(success=True)  # Success, reduce delay
@@ -636,7 +617,7 @@ class FourChanScraper:
                 # Retry once after rate limit handling
                 try:
                     time.sleep(config.RETRY_DELAY)
-                    response = safe_get(self.session, api_url, timeout=config.API_TIMEOUT)
+                    response = self._board_api.fetch_catalog(board)
                     response.raise_for_status()
                     return response.json()
                 except Exception as e2:
@@ -745,11 +726,9 @@ class FourChanScraper:
                 )
 
                 media_file.start_time = time.time()
-                response = safe_get(
-                    self.session,
+                response = self._board_api.stream_range(
                     media_file.url,
                     headers=headers,
-                    stream=True,
                     timeout=config.DOWNLOAD_TIMEOUT,
                 )
 
