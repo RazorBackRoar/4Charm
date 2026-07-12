@@ -5,6 +5,15 @@ All notable changes to 4Charm will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-07-12
+
+### Security
+- **Redirect allowlisting:** Media and API fetches follow redirects manually and block hops outside known 4chan/4cdn hosts
+- **Narrowed App Transport Security:** Replaced blanket `NSAllowsArbitraryLoads` with explicit exception domains for `4chan.org`, `4channel.org`, `4cdn.org`, and `github.com`
+
+### Changed
+- Outbound HTTP helpers live in `transport/session.py` (`safe_get`) and are used by the scraper for all network calls
+
 ## [4.12.0] - 2026-04-03
 
 ### Added

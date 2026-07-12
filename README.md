@@ -34,6 +34,7 @@
 - **Duplicate Prevention** — SHA-256 hashing prevents re-downloading files
 - **Rate Limiting** — adaptive throttling with exponential backoff prevents IP bans
 - **Download Verification** — MD5 checksum validation ensures file integrity
+- **Redirect Allowlisting** — outbound fetches stay on 4chan/4cdn hosts even across redirects
 - **Connection Pooling** — 4× connection pooling for faster concurrent downloads
 - **Real-Time Progress** — live bandwidth monitoring with ETA display
 - **Apple Silicon Native** — arm64 build optimized for M-series Macs

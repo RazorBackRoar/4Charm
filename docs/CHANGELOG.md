@@ -8,6 +8,13 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-07-12
+
+### Security
+
+- Redirect allowlisting for API and media downloads (`safe_get`)
+- Narrowed macOS App Transport Security exception domains
+
 ### Changed
 
 - Capped PySide6 below v7 to prevent silent dependency breakage.
