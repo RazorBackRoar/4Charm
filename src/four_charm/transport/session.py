@@ -6,6 +6,7 @@ retry logic, and standard headers. No Qt dependencies.
 
 from __future__ import annotations
 
+from typing import Any
 from urllib.parse import urljoin, urlparse
 
 import requests
@@ -55,7 +56,7 @@ def create_session() -> requests.Session:
 
 
 def _resolve_redirect_url(
-    session: requests.Session, url: str, **kwargs: object
+    session: requests.Session, url: str, **kwargs: Any
 ) -> tuple[str, requests.Response | None]:
     """Follow redirects manually, validating each hop stays on allowed hosts."""
     probe_kwargs = dict(kwargs)
@@ -86,7 +87,7 @@ def _resolve_redirect_url(
     )
 
 
-def safe_get(session: requests.Session, url: str, **kwargs: object) -> requests.Response:
+def safe_get(session: requests.Session, url: str, **kwargs: Any) -> requests.Response:
     """GET with manual redirect handling and per-hop host allowlisting."""
     stream = bool(kwargs.get("stream"))
     final_url, resolved = _resolve_redirect_url(session, url, **kwargs)
