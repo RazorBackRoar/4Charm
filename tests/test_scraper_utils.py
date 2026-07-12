@@ -107,7 +107,10 @@ def test_download_file_registers_hash_in_dedup_tracker(
 
     media = MediaFile("https://i.4cdn.org/g/123.jpg", "123.jpg")
     monkeypatch.setattr(scraper, "check_disk_space", lambda required_mb=0: True)
-    monkeypatch.setattr(scraper.session, "get", lambda *args, **kwargs: FakeResponse())
+    monkeypatch.setattr(
+        "four_charm.core.scraper.safe_get",
+        lambda _session, _url, **_kwargs: FakeResponse(),
+    )
     monkeypatch.setattr(media, "calculate_hash", lambda _path: "hash-123")
 
     assert scraper.download_file(media, "g-123") is True

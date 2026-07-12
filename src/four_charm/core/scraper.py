@@ -14,7 +14,7 @@ from four_charm.core.bandwidth import BandwidthMonitor
 from four_charm.core.dedup import DedupTracker
 from four_charm.core.models import DownloadQueue, MediaFile
 from four_charm.core.urls import is_allowed_4chan_host, normalize_host
-from four_charm.transport.session import create_session
+from four_charm.transport.session import create_session, safe_get
 from razorcore.filesystem import sanitize_filename
 
 
@@ -594,7 +594,7 @@ class FourChanScraper:
         self.adaptive_delay()  # Adaptive rate limiting
         api_url = f"https://a.4cdn.org/{board}/thread/{thread_id}.json"
         try:
-            response = self.session.get(api_url, timeout=config.API_TIMEOUT)
+            response = safe_get(self.session, api_url, timeout=config.API_TIMEOUT)
             response.raise_for_status()
             thread_data = response.json()
             thread_data["_thread_title"] = self._extract_thread_title(
@@ -608,7 +608,7 @@ class FourChanScraper:
                 # Retry once after rate limit handling
                 try:
                     time.sleep(config.RETRY_DELAY)
-                    response = self.session.get(api_url, timeout=config.API_TIMEOUT)
+                    response = safe_get(self.session, api_url, timeout=config.API_TIMEOUT)
                     response.raise_for_status()
                     thread_data = response.json()
                     thread_data["_thread_title"] = self._extract_thread_title(
@@ -625,7 +625,7 @@ class FourChanScraper:
         self.adaptive_delay()  # Adaptive rate limiting
         api_url = f"https://a.4cdn.org/{board}/catalog.json"
         try:
-            response = self.session.get(api_url, timeout=config.API_TIMEOUT)
+            response = safe_get(self.session, api_url, timeout=config.API_TIMEOUT)
             response.raise_for_status()
             catalog_data = response.json()
             self.adaptive_delay(success=True)  # Success, reduce delay
@@ -636,7 +636,7 @@ class FourChanScraper:
                 # Retry once after rate limit handling
                 try:
                     time.sleep(config.RETRY_DELAY)
-                    response = self.session.get(api_url, timeout=config.API_TIMEOUT)
+                    response = safe_get(self.session, api_url, timeout=config.API_TIMEOUT)
                     response.raise_for_status()
                     return response.json()
                 except Exception as e2:
@@ -745,12 +745,12 @@ class FourChanScraper:
                 )
 
                 media_file.start_time = time.time()
-                response = self.session.get(
+                response = safe_get(
+                    self.session,
                     media_file.url,
                     headers=headers,
                     stream=True,
                     timeout=config.DOWNLOAD_TIMEOUT,
-                    allow_redirects=True,
                 )
 
                 mode, total_size = self._handle_download_response(
