@@ -72,6 +72,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adaptive rate limiting
 - Apple Silicon optimization
 
+[2.0.1]: https://github.com/RazorBackRoar/4Charm/releases/tag/v2.0.1
 [4.12.0]: https://github.com/RazorBackRoar/4Charm/compare/v4.11.8...v4.12.0
 [4.11.8]: https://github.com/RazorBackRoar/4Charm/compare/v4.11.7...v4.11.8
 [4.11.7]: https://github.com/RazorBackRoar/4Charm/releases/tag/v4.11.7
