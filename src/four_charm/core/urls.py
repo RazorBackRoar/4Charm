@@ -10,12 +10,14 @@ URL_PATTERN = re.compile(r"https?://[^\s<>\"']+")
 _TRAILING_PUNCT = re.compile(r"[.,;:)\]}>]+$")
 
 ALLOWED_HOST_SUFFIXES = (".4chan.org", ".4channel.org")
+ALLOWED_FETCH_SUFFIXES = (".4chan.org", ".4channel.org", ".4cdn.org")
 ALLOWED_EXACT_HOSTS = frozenset(
     {
         "4chan.org",
         "4channel.org",
         "boards.4chan.org",
         "boards.4channel.org",
+        "a.4cdn.org",
         "i.4cdn.org",
         "is2.4chan.org",
         "is2.4channel.org",
@@ -37,6 +39,16 @@ def is_allowed_4chan_host(hostname: str | None) -> bool:
     if host in ALLOWED_EXACT_HOSTS:
         return True
     return any(host.endswith(suffix) for suffix in ALLOWED_HOST_SUFFIXES)
+
+
+def is_allowed_fetch_host(hostname: str | None) -> bool:
+    """Return True for outbound fetch/redirect targets (includes 4cdn API hosts)."""
+    host = normalize_host(hostname)
+    if not host:
+        return False
+    if host in ALLOWED_EXACT_HOSTS:
+        return True
+    return any(host.endswith(suffix) for suffix in ALLOWED_FETCH_SUFFIXES)
 
 
 def clean_url_token(url: str) -> str:

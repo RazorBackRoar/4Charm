@@ -6,10 +6,18 @@ retry logic, and standard headers. No Qt dependencies.
 
 from __future__ import annotations
 
+from typing import Any
+from urllib.parse import urljoin, urlparse
+
 import requests
 from requests.adapters import HTTPAdapter
 
 import four_charm.config as config
+from four_charm.core.urls import is_allowed_fetch_host
+
+
+MAX_REDIRECTS = 5
+_REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
 
 
 def create_session() -> requests.Session:
@@ -45,3 +53,50 @@ def create_session() -> requests.Session:
         }
     )
     return session
+
+
+def _resolve_redirect_url(
+    session: requests.Session, url: str, **kwargs: Any
+) -> tuple[str, requests.Response | None]:
+    """Follow redirects manually, validating each hop stays on allowed hosts."""
+    probe_kwargs = dict(kwargs)
+    probe_kwargs.pop("stream", None)
+    probe_kwargs["allow_redirects"] = False
+
+    current_url = url
+    for _ in range(MAX_REDIRECTS + 1):
+        response = session.get(current_url, stream=False, **probe_kwargs)
+        if response.status_code not in _REDIRECT_STATUSES:
+            return current_url, response
+
+        location = response.headers.get("Location")
+        response.close()
+        if not location:
+            return current_url, None
+
+        next_url = urljoin(current_url, location)
+        next_host = urlparse(next_url).hostname
+        if not is_allowed_fetch_host(next_host):
+            raise requests.exceptions.RequestException(
+                f"Blocked redirect to disallowed host: {next_url}"
+            )
+        current_url = next_url
+
+    raise requests.exceptions.TooManyRedirects(
+        f"Exceeded {MAX_REDIRECTS} redirects for {url}"
+    )
+
+
+def safe_get(session: requests.Session, url: str, **kwargs: Any) -> requests.Response:
+    """GET with manual redirect handling and per-hop host allowlisting."""
+    stream = bool(kwargs.get("stream"))
+    final_url, resolved = _resolve_redirect_url(session, url, **kwargs)
+    if resolved is not None and not stream:
+        return resolved
+
+    if resolved is not None:
+        resolved.close()
+
+    fetch_kwargs = dict(kwargs)
+    fetch_kwargs["allow_redirects"] = False
+    return session.get(final_url, **fetch_kwargs)

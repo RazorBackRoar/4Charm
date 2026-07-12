@@ -97,7 +97,14 @@ app = BUNDLE(
         "LSApplicationCategoryType": "public.app-category.utilities",
         "NSHighResolutionCapable": True,
         "NSRequiresAquaSystemAppearance": False,
-        "NSAppTransportSecurity": {"NSAllowsArbitraryLoads": True},
+        "NSAppTransportSecurity": {
+            "NSExceptionDomains": {
+                "4chan.org": {"NSIncludesSubdomains": True},
+                "4channel.org": {"NSIncludesSubdomains": True},
+                "4cdn.org": {"NSIncludesSubdomains": True},
+                "github.com": {"NSIncludesSubdomains": True},
+            },
+        },
         "NSHumanReadableCopyright": "Copyright © 2026 RazorBackRoar. All rights reserved.",
     },
 )
