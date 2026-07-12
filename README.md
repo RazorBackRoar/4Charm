@@ -63,6 +63,12 @@
 
 ---
 
+## Disclaimer
+
+4Charm is a media downloading helper for public 4chan threads and boards only. It is not affiliated with or endorsed by 4chan. You are solely responsible for complying with 4chan's rules, applicable copyright law, and the laws in your jurisdiction. The authors assume no liability for how you use this software.
+
+---
+
 ## Development
 
 ### Requirements
