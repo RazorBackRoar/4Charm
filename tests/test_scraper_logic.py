@@ -1,6 +1,33 @@
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 from four_charm.core.scraper import FourChanScraper
+
+
+class FakeBoardApi:
+    """Minimal BoardApi fake for scraper fetch tests."""
+
+    def __init__(self) -> None:
+        self.fetch_thread_calls: list[tuple[str, str]] = []
+        self.fetch_catalog_calls: list[str] = []
+
+    def fetch_thread(self, board: str, thread_id: str):
+        self.fetch_thread_calls.append((board, thread_id))
+        response = Mock()
+        response.json.return_value = {
+            "posts": [{"no": 123, "com": "Thread title"}],
+        }
+        response.raise_for_status.return_value = None
+        return response
+
+    def fetch_catalog(self, board: str):
+        self.fetch_catalog_calls.append(board)
+        response = Mock()
+        response.json.return_value = [{"threads": []}]
+        response.raise_for_status.return_value = None
+        return response
+
+    def stream_range(self, url, *, headers=None, timeout=None):
+        raise NotImplementedError
 
 
 def test_scraper_initialization():
@@ -24,14 +51,23 @@ def test_parse_thread_url_invalid():
     assert scraper.parse_url(url) is None
 
 
-@patch("requests.Session.get")
-def test_fetch_thread_data_success(mock_get):
-    mock_response = Mock()
-    mock_response.json.return_value = {"posts": [{"no": 123}]}
-    mock_response.raise_for_status.return_value = None
-    mock_get.return_value = mock_response
+def test_get_thread_data_uses_board_api_and_adds_title():
+    api = FakeBoardApi()
+    scraper = FourChanScraper(board_api=api)
 
-    scraper = FourChanScraper()
     data = scraper.get_thread_data("g", "123")
+
     assert data is not None
     assert data["posts"][0]["no"] == 123
+    assert data["_thread_title"] == "Thread title"
+    assert api.fetch_thread_calls == [("g", "123")]
+
+
+def test_get_catalog_data_uses_board_api():
+    api = FakeBoardApi()
+    scraper = FourChanScraper(board_api=api)
+
+    data = scraper.get_catalog_data("wsg")
+
+    assert data == [{"threads": []}]
+    assert api.fetch_catalog_calls == ["wsg"]

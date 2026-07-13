@@ -95,3 +95,43 @@ def test_safe_get_retries_without_location_header() -> None:
     assert response is final_response
     assert mock_get.call_count == 2
     assert mock_get.call_args_list[1].args[0] == "https://i.4cdn.org/g/1.jpg"
+
+
+def test_safe_get_streaming_follows_redirect_then_reopens_with_stream() -> None:
+    session = requests.Session()
+
+    redirect_response = MagicMock()
+    redirect_response.status_code = 302
+    redirect_response.headers = {
+        "Location": "https://i.4cdn.org/g/redirected.jpg",
+    }
+    redirect_response.close = MagicMock()
+
+    stream_response = MagicMock()
+    stream_response.status_code = 200
+
+    with patch.object(
+        session, "get", side_effect=[redirect_response, stream_response]
+    ) as mock_get:
+        response = safe_get(
+            session, "https://i.4cdn.org/g/1.jpg", stream=True, timeout=30
+        )
+
+    assert response is stream_response
+    assert mock_get.call_count == 2
+    assert mock_get.call_args_list[1].args[0] == "https://i.4cdn.org/g/redirected.jpg"
+    assert mock_get.call_args_list[1].kwargs.get("stream") is True
+    assert mock_get.call_args_list[1].kwargs.get("allow_redirects") is False
+
+
+def test_safe_get_streaming_blocks_disallowed_redirect() -> None:
+    session = requests.Session()
+
+    redirect_response = MagicMock()
+    redirect_response.status_code = 302
+    redirect_response.headers = {"Location": "https://evil.com/secret"}
+    redirect_response.close = MagicMock()
+
+    with patch.object(session, "get", return_value=redirect_response):
+        with pytest.raises(requests.exceptions.RequestException, match="Blocked redirect"):
+            safe_get(session, "https://i.4cdn.org/g/1.jpg", stream=True, timeout=5)
