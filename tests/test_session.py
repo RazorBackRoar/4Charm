@@ -107,21 +107,27 @@ def test_safe_get_streaming_follows_redirect_then_reopens_with_stream() -> None:
     }
     redirect_response.close = MagicMock()
 
+    resolved_probe = MagicMock()
+    resolved_probe.status_code = 200
+    resolved_probe.close = MagicMock()
+
     stream_response = MagicMock()
     stream_response.status_code = 200
 
     with patch.object(
-        session, "get", side_effect=[redirect_response, stream_response]
+        session,
+        "get",
+        side_effect=[redirect_response, resolved_probe, stream_response],
     ) as mock_get:
         response = safe_get(
             session, "https://i.4cdn.org/g/1.jpg", stream=True, timeout=30
         )
 
     assert response is stream_response
-    assert mock_get.call_count == 2
-    assert mock_get.call_args_list[1].args[0] == "https://i.4cdn.org/g/redirected.jpg"
-    assert mock_get.call_args_list[1].kwargs.get("stream") is True
-    assert mock_get.call_args_list[1].kwargs.get("allow_redirects") is False
+    assert mock_get.call_count == 3
+    assert mock_get.call_args_list[2].args[0] == "https://i.4cdn.org/g/redirected.jpg"
+    assert mock_get.call_args_list[2].kwargs.get("stream") is True
+    assert mock_get.call_args_list[2].kwargs.get("allow_redirects") is False
 
 
 def test_safe_get_streaming_blocks_disallowed_redirect() -> None:
