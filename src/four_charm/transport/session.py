@@ -60,12 +60,11 @@ def _resolve_redirect_url(
 ) -> tuple[str, requests.Response | None]:
     """Follow redirects manually, validating each hop stays on allowed hosts."""
     probe_kwargs = dict(kwargs)
-    probe_kwargs.pop("stream", None)
     probe_kwargs["allow_redirects"] = False
 
     current_url = url
     for _ in range(MAX_REDIRECTS + 1):
-        response = session.get(current_url, stream=False, **probe_kwargs)
+        response = session.get(current_url, **probe_kwargs)
         if response.status_code not in _REDIRECT_STATUSES:
             return current_url, response
 
@@ -89,13 +88,9 @@ def _resolve_redirect_url(
 
 def safe_get(session: requests.Session, url: str, **kwargs: Any) -> requests.Response:
     """GET with manual redirect handling and per-hop host allowlisting."""
-    stream = bool(kwargs.get("stream"))
     final_url, resolved = _resolve_redirect_url(session, url, **kwargs)
-    if resolved is not None and not stream:
-        return resolved
-
     if resolved is not None:
-        resolved.close()
+        return resolved
 
     fetch_kwargs = dict(kwargs)
     fetch_kwargs["allow_redirects"] = False

@@ -33,6 +33,24 @@ def test_safe_get_blocks_disallowed_redirect() -> None:
     assert mock_get.call_args.kwargs.get("allow_redirects") is False
 
 
+def test_safe_get_streaming_reuses_probe_response_without_double_fetch() -> None:
+    """Streaming downloads must not buffer the full body during redirect probing."""
+    session = requests.Session()
+
+    stream_response = MagicMock()
+    stream_response.status_code = 200
+    stream_response.headers = {"content-length": "99999999"}
+
+    with patch.object(session, "get", return_value=stream_response) as mock_get:
+        response = safe_get(
+            session, "https://i.4cdn.org/g/large.webm", timeout=5, stream=True
+        )
+
+    assert response is stream_response
+    mock_get.assert_called_once()
+    assert mock_get.call_args.kwargs.get("stream") is True
+
+
 def test_safe_get_follows_allowed_redirect() -> None:
     session = requests.Session()
 
