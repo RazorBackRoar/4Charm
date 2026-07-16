@@ -1,7 +1,7 @@
 # 4Charm AGENTS
 
-**Package:** `four-charm` (import: `four_charm`)  
-**Version:** 2.0.0  
+**Package:** `four-charm` (import: `four_charm`)
+**Version:** 2.0.1
 **GitHub:** `RazorBackRoar/4Charm`
 
 Use with `../AGENTS.md`. Keep this file 4Charm-specific.
