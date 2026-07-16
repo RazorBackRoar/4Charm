@@ -28,7 +28,7 @@ See `ci/vendor/README.md`.
 ## razorcore integration (v1.1)
 
 | Surface | Usage |
-|---------|--------|
+| --- | --- |
 | `logging` | Size-based rotation (`max_bytes=5MB`, `configure_root=True`) via `four_charm/utils/logging_setup.py` |
 | `config.get_version` | Version resolution (`package_name="four-charm"`) |
 | `appinfo` / `updates` | Startup banner, About (`package_name=PACKAGE_NAME`) |
