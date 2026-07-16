@@ -3,8 +3,13 @@
 Phase 4.3 note: these workers intentionally stay as ``QObject`` +
 ``moveToThread(QThread)`` with ``ThreadPoolExecutor`` inside. razorcore
 ``BaseWorker`` is a ``QThread`` with a 3-arg progress schema and does not
-fit this cancel/progress surface (scraper.cancel_downloads + 7-arg ETA).
-Cancel remains ``cancel()`` → ``scraper.cancel_downloads()``.
+fit this cancel/progress surface (scraper.cancel_downloads + ETA). Cancel
+remains ``cancel()`` → ``scraper.cancel_downloads()``.
+
+Progress is carried as a single ``DownloadTask`` dataclass (see
+``four_charm.core.signals``). The dataclass replaces the previous
+``Signal(int, int, str, float, str, int, float)`` 7-tuple so the GUI and
+tests no longer have to know positional argument order.
 """
 
 import logging
@@ -17,7 +22,9 @@ from PySide6.QtCore import QObject, Signal
 
 import four_charm.config as config
 from four_charm.core.models import MediaFile
-from four_charm.core.scraper import FourChanScraper, _rc_sanitize_filename
+from four_charm.core.paths import sanitize_filename
+from four_charm.core.scraper import FourChanScraper
+from four_charm.core.signals import DownloadTask
 
 
 logger = logging.getLogger("4Charm")
@@ -26,7 +33,7 @@ logger = logging.getLogger("4Charm")
 class _BaseDownloadWorker(QObject):
     """Shared download worker behavior for single and multi-URL flows."""
 
-    progress = Signal(int, int, str, float, str, int, float)  # Added ETA as 7th param
+    progress = Signal(object)  # DownloadTask (see four_charm.core.signals)
     log_message = Signal(str)
     finished = Signal(dict)
     speed_update = Signal(float)
@@ -70,7 +77,7 @@ class _BaseDownloadWorker(QObject):
             media_files = [
                 MediaFile(
                     media_url,
-                    _rc_sanitize_filename(media_filename),
+                    sanitize_filename(media_filename),
                     board=board,
                 )
             ]
@@ -161,13 +168,15 @@ class _BaseDownloadWorker(QObject):
                     eta = 0.0
 
                 self.progress.emit(
-                    completed,
-                    total_files,
-                    media_file.filename,
-                    avg_speed,
-                    thread_title,
-                    thread_index,
-                    eta,
+                    DownloadTask(
+                        completed=completed,
+                        total=total_files,
+                        filename=media_file.filename,
+                        speed_mb_s=avg_speed,
+                        thread_title=thread_title,
+                        thread_index=thread_index,
+                        eta_s=eta,
+                    )
                 )
                 self.speed_update.emit(avg_speed)
 

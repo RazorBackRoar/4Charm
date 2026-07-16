@@ -11,13 +11,16 @@ from PySide6.QtCore import QMutex
 
 import four_charm.config as config
 from four_charm.core.bandwidth import BandwidthMonitor
+from four_charm.core.chunking import ChunkSelector
 from four_charm.core.dedup import DedupTracker
+from four_charm.core.error_format import ErrorFormatter
 from four_charm.core.models import DownloadQueue, MediaFile
 from four_charm.core.paths import (
     PathBuilder,
     sanitize_filename,
     sanitize_folder_component,
 )
+from four_charm.core.retry import RetryPolicy
 from four_charm.core.urls import is_allowed_4chan_host, normalize_host
 from four_charm.transport.api import BoardApi, LiveBoardApi
 from four_charm.transport.session import create_session, safe_get
@@ -86,9 +89,26 @@ class FourChanScraper:
         self.paused = False
         self.cancelled = False
         self.stats_mutex = QMutex()
-        self.current_delay = config.BASE_DELAY
+        self._retry_policy = RetryPolicy()
+        self._chunk_selector = ChunkSelector()
+        self._error_formatter = ErrorFormatter()
         self.download_queue = DownloadQueue()
         self.bandwidth_monitor = BandwidthMonitor(config.BANDWIDTH_WINDOW_SECONDS)
+
+    # ------------------------------------------------------------------
+    # Legacy attribute mirrors for the rate-limit delay.
+    #
+    # ``current_delay`` was a public attribute that workers and tests read
+    # directly. The new owner is ``RetryPolicy``; we mirror it for back
+    # compatibility but new code should reach for ``self._retry_policy``.
+    # ------------------------------------------------------------------
+    @property
+    def current_delay(self) -> float:
+        return self._retry_policy.current_delay
+
+    @current_delay.setter
+    def current_delay(self, value: float) -> None:
+        self._retry_policy.current_delay = value
 
     @property
     def download_dir(self) -> Path | None:
@@ -127,6 +147,61 @@ class FourChanScraper:
         self, thread_title: str | None, thread_id: str, board: str
     ) -> str:
         return self._path_builder.thread_folder_name(thread_title, thread_id, board)
+
+    # ------------------------------------------------------------------
+    # Retry / chunk / error delegators
+    #
+    # The real logic lives in ``core.retry.RetryPolicy``,
+    # ``core.chunking.ChunkSelector`` and ``core.error_format.ErrorFormatter``.
+    # These methods are thin delegators so the existing test surface
+    # (``test_retry_logic``, ``test_md5_verification``) keeps working
+    # while the math/formatting live at one location each.
+    # ------------------------------------------------------------------
+    def calculate_retry_delay(
+        self, attempt: int, base_delay: float | None = None
+    ) -> float:
+        return self._retry_policy.calculate_retry_delay(attempt, base_delay)
+
+    def adaptive_delay(self, success: bool = True) -> None:
+        self._retry_policy.adaptive_delay(success)
+
+    def select_chunk_size(self, file_size: int) -> int:
+        return self._chunk_selector.select_chunk_size(file_size)
+
+    def format_error_message(self, error: Exception, context: dict) -> str:
+        return self._error_formatter.format_error_message(error, context)
+
+    def handle_network_error(
+        self,
+        error: Exception,
+        url: str,
+        context: str = "",
+        filename: str = "",
+    ) -> dict:
+        """Classify ``error`` and update rate-limit delay on 429.
+
+        The classifier itself is ``ErrorFormatter.classify``; this wrapper
+        keeps the historic behavior of bumping ``current_delay`` for a 429
+        response and sleeping before the caller retries.
+        """
+        # Compute a 2x delay in advance so the message can include it.
+        retry_delay = self._retry_policy.current_delay * 2
+        info = self._error_formatter.classify(
+            error,
+            url=url,
+            context=context,
+            filename=filename,
+            retry_delay_for_rate_limit=retry_delay,
+        )
+        if info.get("category") == "rate_limited":
+            self._retry_policy.current_delay = min(
+                self._retry_policy.max_delay,
+                self._retry_policy.current_delay * 2,
+            )
+            time.sleep(self._retry_policy.current_delay)
+        else:
+            self._retry_policy.adaptive_delay(success=False)
+        return info
 
     def _check_existing_file(self, file_path: Path, media_file: MediaFile) -> bool:
         """Check for existing complete file and handle duplicates."""
@@ -261,111 +336,6 @@ class FourChanScraper:
         time.sleep(delay)
         return True
 
-    def adaptive_delay(self, success=True):
-        """Adaptive rate limiting based on success/failure."""
-        if success:
-            self.current_delay = max(config.BASE_DELAY, self.current_delay / 1.1)
-        else:
-            self.current_delay = min(
-                config.MAX_DELAY, self.current_delay * config.BACKOFF_MULTIPLIER
-            )
-        time.sleep(self.current_delay)
-
-    def calculate_retry_delay(
-        self, attempt: int, base_delay: float | None = None
-    ) -> float:
-        """Calculate exponential backoff delay with jitter.
-
-        Args:
-            attempt: Retry attempt number (0-indexed)
-            base_delay: Base delay in seconds (defaults to config.BASE_RETRY_DELAY)
-
-        Returns:
-            Delay in seconds with jitter applied
-        """
-        import random
-
-        if base_delay is None:
-            base_delay = config.BASE_RETRY_DELAY
-
-        # Exponential: 2^attempt * base_delay
-        exponential_delay = (2**attempt) * base_delay
-
-        # Cap at maximum
-        capped_delay = min(exponential_delay, config.MAX_RETRY_DELAY)
-
-        # Add jitter: 0 to 1 second to prevent thundering herd
-        jitter = random.uniform(0, 1)
-
-        return capped_delay + jitter
-
-    def select_chunk_size(self, file_size: int) -> int:
-        """Select optimal chunk size based on file size.
-
-        Args:
-            file_size: Total file size in bytes
-
-        Returns:
-            Chunk size in bytes (8KB, 64KB, or 256KB)
-        """
-        threshold_10mb, threshold_100mb = config.ADAPTIVE_CHUNK_THRESHOLDS
-        chunk_8kb, chunk_64kb, chunk_256kb = config.CHUNK_SIZES
-
-        if file_size < threshold_10mb:  # < 10MB
-            return chunk_8kb  # 8KB
-        elif file_size < threshold_100mb:  # < 100MB
-            return chunk_64kb  # 64KB
-        else:  # >= 100MB
-            return chunk_256kb  # 256KB
-
-    def format_error_message(self, error: Exception, context: dict) -> str:
-        """Format user-friendly error message with suggested fixes.
-
-        Args:
-            error: The exception that occurred
-            context: Dict with 'url', 'filename', 'timeout', 'path', etc.
-
-        Returns:
-            Formatted error message with actionable guidance
-        """
-        context.get("url", "unknown")
-        filename = context.get("filename", "file")
-
-        if isinstance(error, requests.exceptions.ConnectionError):
-            return f"Connection failed for {filename}. Check your internet connection."
-
-        elif isinstance(error, requests.exceptions.Timeout):
-            timeout = context.get("timeout", "unknown")
-            return f"Download timed out after {timeout}s for {filename}. The server may be slow or unresponsive."
-
-        elif isinstance(error, requests.exceptions.HTTPError):
-            status = getattr(error.response, "status_code", 0)
-
-            if status == 403:
-                return f"Access denied for {filename}. The file may have been deleted or is no longer available."
-            elif status == 404:
-                return f"File not found: {filename}. The thread may have been archived or deleted."
-            elif status == 429:
-                delay = context.get("retry_delay", "unknown")
-                return f"Rate limited by server for {filename}. Waiting {delay}s before retry."
-            else:
-                return f"HTTP {status} error for {filename}. {str(error)}"
-
-        elif isinstance(error, OSError):
-            error_str = str(error)
-            if "No space left" in error_str or "Disk quota exceeded" in error_str:
-                required = context.get("required_mb", "unknown")
-                available = context.get("available_mb", "unknown")
-                return f"Insufficient disk space. Need {required}MB, have {available}MB free."
-            elif "Permission denied" in error_str:
-                path = context.get("path", "unknown")
-                return f"Cannot write to {path}. Check folder permissions."
-            else:
-                return f"File system error for {filename}: {str(error)}"
-
-        else:
-            return f"Error downloading {filename}: {str(error)}"
-
     def verify_download(self, file_path: Path, media_file: MediaFile) -> bool:
         """Verify downloaded file integrity using MD5 checksum and size.
 
@@ -421,81 +391,6 @@ class FourChanScraper:
 
         media_file.verified = True
         return True
-
-    def handle_network_error(self, error, url, context="", filename=""):
-        """Handle different types of network errors with user-friendly messages."""
-        error_info = {
-            "type": type(error).__name__,
-            "message": str(error),
-            "url": url,
-            "context": context,
-        }
-
-        # Build context for error formatting
-        error_context = {
-            "url": url,
-            "filename": filename or url.split("/")[-1],
-            "timeout": config.DOWNLOAD_TIMEOUT[1]
-            if isinstance(error, requests.exceptions.Timeout)
-            else None,
-        }
-
-        # Get user-friendly message
-        friendly_message = self.format_error_message(error, error_context)
-
-        if isinstance(error, requests.exceptions.ConnectionError):
-            logger.error(friendly_message)
-            self.adaptive_delay(success=False)
-            error_info["category"] = "connection"
-            error_info["friendly_message"] = friendly_message
-            return error_info
-
-        elif isinstance(error, requests.exceptions.Timeout):
-            logger.error(friendly_message)
-            self.adaptive_delay(success=False)
-            error_info["category"] = "timeout"
-            error_info["friendly_message"] = friendly_message
-            return error_info
-
-        elif isinstance(error, requests.exceptions.HTTPError):
-            status_code = getattr(error.response, "status_code", 0)
-            error_info["status_code"] = status_code
-
-            if status_code == 429:  # Rate limited
-                error_context["retry_delay"] = f"{self.current_delay * 2:.1f}"
-                friendly_message = self.format_error_message(error, error_context)
-                logger.warning(friendly_message)
-                self.current_delay = min(config.MAX_DELAY, self.current_delay * 2)
-                time.sleep(self.current_delay)
-                error_info["category"] = "rate_limited"
-                error_info["friendly_message"] = friendly_message
-                return error_info
-
-            elif status_code in [403, 404]:
-                logger.error(friendly_message)
-                self.adaptive_delay(success=False)
-                error_info["category"] = "access"
-                error_info["friendly_message"] = friendly_message
-                return error_info
-
-            else:
-                logger.error(friendly_message)
-                self.adaptive_delay(success=False)
-                error_info["category"] = "http"
-                error_info["friendly_message"] = friendly_message
-                return error_info
-
-        elif isinstance(error, requests.exceptions.TooManyRedirects):
-            logger.error(f"Too many redirects {context} for {url}: {str(error)}")
-            self.adaptive_delay(success=False)
-            error_info["category"] = "redirects"
-            return error_info
-
-        else:
-            logger.error(f"Unknown error {context} for {url}: {str(error)}")
-            self.adaptive_delay(success=False)
-            error_info["category"] = "unknown"
-            return error_info
 
     def check_disk_space(self, required_mb: float = 0) -> bool:
         """Check if sufficient disk space is available."""

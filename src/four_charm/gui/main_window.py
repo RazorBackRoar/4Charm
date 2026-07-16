@@ -81,7 +81,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from four_charm.core.bandwidth import BandwidthMonitor
 from four_charm.core.scraper import FourChanScraper
+from four_charm.core.signals import DownloadTask
 from four_charm.core.urls import (
     MAX_QUEUE_URLS,
     dedupe_preserve_order,
@@ -859,52 +861,49 @@ class MainWindow(QMainWindow):
         self.status_bar.style().unpolish(self.status_bar)
         self.status_bar.style().polish(self.status_bar)
 
-    def update_progress(
-        self,
-        current: int,
-        total: int,
-        filename: str,
-        speed: float,
-        thread_name: str = "",
-        thread_index: int = 0,
-        eta: float = 0.0,
-    ):
-        if total > 0:
-            percent = int((current / total) * 100)
-            self.progress_bar.setValue(percent)
+    def update_progress(self, task: DownloadTask) -> None:
+        """Render a ``DownloadTask`` from the worker to the progress UI.
 
-            # Update session counters
-            self.files_card.set_value(str(current))
-            if thread_name:
-                self.session_folders.add(thread_name)
-            self.folders_card.set_value(str(len(self.session_folders)))
+        Accepts a single ``DownloadTask`` (see ``four_charm.core.signals``).
+        Worker callers use the typed schema; older 7-positional-arg call
+        sites have been collapsed. ETA formatting reuses
+        ``BandwidthMonitor.format_eta`` so the rules live in one place.
+        """
+        if task.total <= 0:
+            return
 
-            size_mb = self.scraper.stats.get("size_mb", 0.0)
-            size_gb = size_mb / 1024.0
-            self.storage_card.set_value(f"{size_gb:.1f}GB")
+        percent = int((task.completed / task.total) * 100)
+        self.progress_bar.setValue(percent)
 
-            # Format ETA if available
-            eta_str = ""
-            if eta > 0:
-                if eta < 60:
-                    eta_str = f" - ETA: {int(eta)}s"
-                elif eta < 3600:
-                    eta_str = f" - ETA: {int(eta / 60)}m {int(eta % 60)}s"
-                else:
-                    hours = int(eta / 3600)
-                    minutes = int((eta % 3600) / 60)
-                    eta_str = f" - ETA: {hours}h {minutes}m"
+        # Update session counters
+        self.files_card.set_value(str(task.completed))
+        if task.thread_title:
+            self.session_folders.add(task.thread_title)
+        self.folders_card.set_value(str(len(self.session_folders)))
 
-            if thread_name and thread_index > 0:
-                self.progress_label.setText(
-                    f"Downloading {percent}% - {current}/{total} files - "
-                    f"[{thread_index}] {thread_name} - {filename}{eta_str}"
-                )
-            else:
-                self.progress_label.setText(
-                    f"Downloading {percent}% - {current}/{total} files - "
-                    f"{filename}{eta_str}"
-                )
+        size_mb = self.scraper.stats.get("size_mb", 0.0)
+        size_gb = size_mb / 1024.0
+        self.storage_card.set_value(f"{size_gb:.1f}GB")
+
+        # Reuse the BandwidthMonitor ETA formatter — the rules belong in
+        # one place (the data layer), not duplicated in the UI.
+        eta_str = (
+            f" - ETA: {BandwidthMonitor().format_eta(task.eta_s)}"
+            if task.eta_s > 0
+            else ""
+        )
+
+        if task.thread_title and task.thread_index > 0:
+            self.progress_label.setText(
+                f"Downloading {percent}% - {task.completed}/{task.total} files - "
+                f"[{task.thread_index}] {task.thread_title} - "
+                f"{task.filename}{eta_str}"
+            )
+        else:
+            self.progress_label.setText(
+                f"Downloading {percent}% - {task.completed}/{task.total} files - "
+                f"{task.filename}{eta_str}"
+            )
 
     def update_speed(self, speed: float):
         self.speed_label.setText(f"{speed:.1f} MB/s")
