@@ -58,9 +58,13 @@ from typing import override
 from PySide6.QtCore import QEvent, QSize, Qt, QThread, QTimer
 from PySide6.QtGui import (
     QCloseEvent,
+    QColor,
     QDragEnterEvent,
     QDropEvent,
+    QIcon,
+    QImage,
     QKeySequence,
+    QPixmap,
     QShortcut,
     QTextCursor,
 )
@@ -109,7 +113,76 @@ APP_NAME = "4Charm"
 PACKAGE_NAME = "four-charm"
 
 
-_BRAND_GREEN_RGB = (26 / 255, 46 / 255, 32 / 255)
+_TITLEBAR_GREEN_RGB = (11 / 255, 20 / 255, 13 / 255)
+_HEADER_LOGO_HEIGHT = 156
+_HEADER_LOGO_MAX_WIDTH = 360
+
+
+def _resolve_app_icon_path() -> Path:
+    if getattr(sys, "frozen", False):
+        return Path(sys._MEIPASS) / "assets" / "icons" / "4Charm.icns"
+    return Path(__file__).resolve().parents[3] / "assets" / "icons" / "4Charm.icns"
+
+
+def _resolve_header_logo_source() -> Path | None:
+    icon_dir = _resolve_app_icon_path().parent
+    png_path = icon_dir / "4charm.png"
+    if png_path.exists():
+        return png_path
+    icns_path = icon_dir / "4Charm.icns"
+    return icns_path if icns_path.exists() else None
+
+
+def _make_header_logo_pixmap(
+    target_height: int = _HEADER_LOGO_HEIGHT,
+    max_width: int = _HEADER_LOGO_MAX_WIDTH,
+) -> QPixmap | None:
+    """Build a large header logo with transparent background (green mark only)."""
+    source_path = _resolve_header_logo_source()
+    if source_path is None:
+        return None
+
+    image = QIcon(str(source_path)).pixmap(1024, 1024).toImage()
+    image = image.convertToFormat(QImage.Format.Format_ARGB32)
+
+    min_x = image.width()
+    min_y = image.height()
+    max_x = 0
+    max_y = 0
+    found_visible = False
+
+    for y in range(image.height()):
+        for x in range(image.width()):
+            color = image.pixelColor(x, y)
+            red, green, blue, alpha = (
+                color.red(),
+                color.green(),
+                color.blue(),
+                color.alpha(),
+            )
+            if alpha < 16 or (red < 34 and green < 40 and blue < 34):
+                image.setPixelColor(x, y, QColor(0, 0, 0, 0))
+                continue
+            found_visible = True
+            min_x = min(min_x, x)
+            min_y = min(min_y, y)
+            max_x = max(max_x, x)
+            max_y = max(max_y, y)
+
+    if not found_visible:
+        return None
+
+    cropped = image.copy(min_x, min_y, max_x - min_x + 1, max_y - min_y + 1)
+    scale = min(target_height / cropped.height(), max_width / cropped.width())
+    scaled_width = max(1, round(cropped.width() * scale))
+    scaled_height = max(1, round(cropped.height() * scale))
+    scaled = cropped.scaled(
+        scaled_width,
+        scaled_height,
+        Qt.AspectRatioMode.IgnoreAspectRatio,
+        Qt.TransformationMode.SmoothTransformation,
+    )
+    return QPixmap.fromImage(scaled)
 
 
 def _existing_url_keys(editor: QPlainTextEdit) -> set[str]:
@@ -231,7 +304,7 @@ class MainWindow(QMainWindow):
             title_color = send_color(
                 color_class,
                 sel_register_name(b"colorWithSRGBRed:green:blue:alpha:"),
-                *_BRAND_GREEN_RGB,
+                *_TITLEBAR_GREEN_RGB,
                 1.0,
             )
 
@@ -326,19 +399,23 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(0, 4, 0, 10)
         layout.setSpacing(5)
-        title = QLabel("4Charm")
-        title.setObjectName("AppTitle")
-        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        title.setToolTip("Double-click for About · Right-click for updates")
-        title.setCursor(Qt.CursorShape.PointingHandCursor)
-        title.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        title.customContextMenuRequested.connect(self._show_title_context_menu)
-        title.installEventFilter(self)
-        self.title_label = title
+        logo = QLabel()
+        logo.setObjectName("AppLogo")
+        logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        logo.setToolTip("Double-click for About · Right-click for updates")
+        logo.setCursor(Qt.CursorShape.PointingHandCursor)
+        logo.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        logo.customContextMenuRequested.connect(self._show_title_context_menu)
+        logo.installEventFilter(self)
+        header_logo = _make_header_logo_pixmap()
+        if header_logo is not None:
+            logo.setPixmap(header_logo)
+            logo.setFixedSize(header_logo.size())
+        self.title_label = logo
         subtitle = QLabel("4chan image and WEBM downloader for macOS")
         subtitle.setObjectName("AppSubtitle")
         subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(title)
+        layout.addWidget(logo)
         layout.addWidget(subtitle)
         return panel
 
