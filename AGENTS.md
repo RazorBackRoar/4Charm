@@ -11,13 +11,31 @@ Use with `../AGENTS.md`. Keep this file 4Charm-specific.
 Native macOS 4chan media downloader (PySide6).
 
 - Main: `src/four_charm/main.py`
-- Core: `src/four_charm/core/scraper.py`
+- Core: `src/four_charm/core/scraper.py` (orchestrator)
+- Transport: `src/four_charm/transport/api.py` (`BoardApi` protocol + `LiveBoardApi`)
 - Workers: `src/four_charm/gui/workers.py` (`QObject` + `ThreadPoolExecutor`)
 - UI: `src/four_charm/gui/main_window.py`
 - Run: `uv run python -m four_charm.main`
 - Build: `4charmbuild` or `razorbuild 4Charm`
 
 Dev clones expect sibling `../.razorcore` (editable `razorcore>=1.211.0`).
+
+## Core architecture (scraper seams)
+
+Recent refactors split the scraper into injectable seams. ADRs in `docs/adr/` are the
+design record; this section is the agent quick-reference.
+
+| Module | Role |
+|--------|------|
+| `transport/api.py` | `BoardApi` protocol (`fetch_thread`, `fetch_catalog`, `stream_range`) + `LiveBoardApi`. Tests inject `FakeBoardApi` instead of monkeypatching `safe_get`. See ADR-0001. |
+| `core/retry.py` | `RetryPolicy` — exponential backoff + adaptive rate-limit delay (stateful per scraper). |
+| `core/chunking.py` | `ChunkSelector` — adaptive streaming chunk sizes from `config.ADAPTIVE_CHUNK_THRESHOLDS`. |
+| `core/paths.py` | `PathBuilder` — download path construction, folder sanitization, containment checks. Public `sanitize_filename` delegates to razorcore with `MAX_FILENAME_LENGTH`. |
+| `core/error_format.py` | `ErrorFormatter` — classifies `requests` exceptions for retry/UI messaging. |
+| `core/signals.py` | `DownloadTask` dataclass carried on the worker `progress` signal (replaces 7-arg tuple). See ADR-0002. |
+
+Invariant: 4chan fetch paths stay inside the rate-limited flow. Any new `BoardApi` adapter
+must honour `RetryPolicy.adaptive_delay` (or document why not).
 
 ## CI: vendored razorcore wheel
 
