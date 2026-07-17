@@ -119,7 +119,7 @@ _HEADER_LOGO_MAX_WIDTH = 360
 
 
 def _resolve_app_icon_path() -> Path:
-    if getattr(sys, "frozen", False):
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
         return Path(sys._MEIPASS) / "assets" / "icons" / "4Charm.icns"
     return Path(__file__).resolve().parents[3] / "assets" / "icons" / "4Charm.icns"
 
