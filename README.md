@@ -1,30 +1,23 @@
 # 4Charm
 
+[![Download](https://img.shields.io/github/v/release/RazorBackRoar/4Charm?style=for-the-badge&label=Download%20DMG&color=d32f2f)](https://github.com/RazorBackRoar/4Charm/releases/latest)
 [![CI](https://img.shields.io/github/actions/workflow/status/RazorBackRoar/4Charm/ci.yml?branch=main&style=for-the-badge&label=CI)](https://github.com/RazorBackRoar/4Charm/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/RazorBackRoar/4Charm?style=for-the-badge&label=release)](https://github.com/RazorBackRoar/4Charm/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blueviolet?style=for-the-badge)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.14-2ea44f?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![PySide6](https://img.shields.io/badge/PySide6-Qt6-41cd52?style=for-the-badge&logo=qt&logoColor=white)](https://doc.qt.io/qtforpython/)
 [![macOS](https://img.shields.io/badge/mac%20os-Apple%20Silicon-d32f2f?style=for-the-badge&logo=apple&logoColor=white)](https://support.apple.com/en-us/HT211814)
 
-<!-- Workspace Health Layer -->
-[![Status](https://img.shields.io/badge/status-active-2ea44f?style=for-the-badge)]()
-[![Tests](https://img.shields.io/badge/tests-present-2ea44f?style=for-the-badge)]()
-[![Lint](https://img.shields.io/badge/lint-ruff-2ea44f?style=for-the-badge)]()
+**High-performance native macOS 4chan media downloader.**
 
-```text
-██╗  ██╗ ██████╗██╗  ██╗ █████╗ ██████╗ ███╗   ███╗
-██║  ██║██╔════╝██║  ██║██╔══██╗██╔══██╗████╗ ████║
-███████║██║     ███████║███████║██████╔╝██╔████╔██║
-╚════██║██║     ██╔══██║██╔══██║██╔══██╗██║╚██╔╝██║
-     ██║╚██████╗██║  ██║██║  ██║██║  ██║██║ ╚═╝ ██║
-     ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝
-```
+Download entire threads, catalogs, or boards with intelligent organization, fail-safe resume, and zero duplicates.
 
-> **High-performance native macOS 4chan media downloader.**
-> Download entire threads, catalogs, or boards with intelligent organization, fail-safe resume, and zero duplicates.
+<p align="center">
+  <a href="https://github.com/RazorBackRoar/4Charm/releases/latest/download/4Charm.dmg"><strong>↓ Download 4Charm.dmg</strong></a>
+  ·
+  <a href="https://github.com/RazorBackRoar/4Charm/releases">All releases</a>
+</p>
 
----
+![4Charm](docs/screenshots/app.png)
 
 ## Features
 
@@ -48,9 +41,9 @@
 
 ---
 
-## Installation
+## Install
 
-1. Download the latest `4Charm.dmg` from [Releases](https://github.com/RazorBackRoar/4Charm/releases)
+1. Download [`4Charm.dmg`](https://github.com/RazorBackRoar/4Charm/releases/latest/download/4Charm.dmg)
 2. Open the DMG and drag `4Charm.app` to `/Applications`
 3. First launch — right-click the app → **Open** to bypass Gatekeeper on the ad-hoc signed build
 
