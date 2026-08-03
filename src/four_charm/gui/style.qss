@@ -398,3 +398,51 @@ QScrollBar::sub-page:horizontal {
     border: none;
     width: 0;
 }
+
+/* Dark-green chrome for context menus and future Qt menu bars */
+QMenu {
+    background: #0b140d;
+    border: 1px solid #3c8048;
+    border-radius: 6px;
+    padding: 6px;
+}
+
+QMenu::item {
+    color: #f5f7f5;
+    padding: 6px 24px 6px 16px;
+    border-radius: 4px;
+}
+
+QMenu::item:selected {
+    background: #1c2a20;
+    color: #64e97f;
+}
+
+QMenu::separator {
+    height: 1px;
+    background: #3c8048;
+    margin: 4px 8px;
+}
+
+QMenuBar {
+    background: #0b140d;
+    color: #f5f7f5;
+    border-bottom: 1px solid #3c8048;
+}
+
+QMenuBar::item {
+    background: transparent;
+    color: #f5f7f5;
+    padding: 4px 12px;
+}
+
+QMenuBar::item:selected {
+    background: #1c2a20;
+    color: #64e97f;
+}
+
+/* Central scroll container — visually continuous with the content shell */
+QScrollArea#ContentScroll {
+    background: #070908;
+    border: none;
+}

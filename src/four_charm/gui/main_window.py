@@ -65,11 +65,13 @@ from PySide6.QtGui import (
     QImage,
     QKeySequence,
     QPixmap,
+    QResizeEvent,
     QShortcut,
     QTextCursor,
 )
 from PySide6.QtWidgets import (
     QApplication,
+    QBoxLayout,
     QFileDialog,
     QFrame,
     QHBoxLayout,
@@ -79,6 +81,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QPlainTextEdit,
     QProgressBar,
+    QScrollArea,
     QSizePolicy,
     QStatusBar,
     QVBoxLayout,
@@ -116,6 +119,13 @@ PACKAGE_NAME = "four-charm"
 _TITLEBAR_GREEN_RGB = (11 / 255, 20 / 255, 13 / 255)
 _HEADER_LOGO_HEIGHT = 156
 _HEADER_LOGO_MAX_WIDTH = 360
+
+_MIN_WINDOW_WIDTH = 960
+_DEFAULT_WINDOW_WIDTH = 1080
+_TARGET_MIN_HEIGHT = 760
+_TARGET_DEFAULT_HEIGHT = 820
+_SCREEN_SAFE_MARGIN = 28
+_REFLOW_BREAKPOINT = 1024
 
 
 def _resolve_app_icon_path() -> Path:
@@ -185,6 +195,16 @@ def _make_header_logo_pixmap(
     return QPixmap.fromImage(scaled)
 
 
+def _compute_clamped_heights(available_height: int) -> tuple[int, int]:
+    """Return (minimum_height, default_height) capped to the available screen height."""
+    usable = max(available_height - _SCREEN_SAFE_MARGIN, 400)
+    min_h = min(_TARGET_MIN_HEIGHT, usable)
+    default_h = min(_TARGET_DEFAULT_HEIGHT, usable)
+    if default_h < min_h:
+        default_h = min_h
+    return min_h, default_h
+
+
 def _existing_url_keys(editor: QPlainTextEdit) -> set[str]:
     return {
         line.strip().rstrip("/").lower()
@@ -237,8 +257,16 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("")
-        self.setMinimumSize(960, 680)
-        self.resize(1080, 720)
+        self._lower_compact = False
+        self.setMinimumWidth(_MIN_WINDOW_WIDTH)
+        screen = QApplication.primaryScreen()
+        if screen is not None:
+            avail_h = screen.availableGeometry().height()
+        else:
+            avail_h = _TARGET_DEFAULT_HEIGHT
+        min_h, default_h = _compute_clamped_heights(avail_h)
+        self.setMinimumHeight(min_h)
+        self._startup_default_height = default_h
         self.setAcceptDrops(True)
 
         self.scraper = FourChanScraper()
@@ -257,6 +285,7 @@ class MainWindow(QMainWindow):
         self.update_download_stats()
         self._populate_initial_log()
         QTimer.singleShot(0, self._style_native_title_bar)
+        QTimer.singleShot(0, self._apply_startup_size)
 
     def _style_native_title_bar(self) -> None:
         """Color the native macOS title bar while preserving window controls."""
@@ -316,7 +345,7 @@ class MainWindow(QMainWindow):
             send_void_bool(
                 native_window,
                 sel_register_name(b"setTitlebarAppearsTransparent:"),
-                False,
+                True,
             )
             send_void_int(
                 native_window,
@@ -325,6 +354,28 @@ class MainWindow(QMainWindow):
             )
         except Exception:
             logger.warning("Could not apply the native macOS title-bar style")
+
+    def _apply_startup_size(self) -> None:
+        """Apply the default window size once after the native handle exists."""
+        self.resize(_DEFAULT_WINDOW_WIDTH, self._startup_default_height)
+        self._reflow_lower_area()
+
+    def _reflow_lower_area(self) -> None:
+        """Reflow the lower area between side-by-side and stacked based on width."""
+        if not hasattr(self, "lower_layout"):
+            return
+        width = self.width()
+        should_compact = width < _REFLOW_BREAKPOINT
+        if should_compact == self._lower_compact:
+            return
+        self._lower_compact = should_compact
+        if should_compact:
+            self.lower_layout.setDirection(QBoxLayout.Direction.TopToBottom)
+            self.stats_panel.setMinimumWidth(0)
+            self.stats_panel.setMaximumWidth(16777215)
+        else:
+            self.lower_layout.setDirection(QBoxLayout.Direction.LeftToRight)
+            self.stats_panel.setFixedWidth(350)
 
     def _load_styles(self) -> None:
         import sys
@@ -352,7 +403,7 @@ class MainWindow(QMainWindow):
     def _build_ui(self) -> None:
         root = QWidget()
         root.setObjectName("Root")
-        self.setCentralWidget(root)
+        self.root_widget = root
         main_layout = QVBoxLayout(root)
         main_layout.setContentsMargins(24, 12, 24, 10)
         main_layout.setSpacing(11)
@@ -370,6 +421,17 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(url_panel)
         main_layout.addWidget(progress_panel)
         main_layout.addWidget(lower_area, stretch=1)
+
+        scroll = QScrollArea()
+        scroll.setObjectName("ContentScroll")
+        scroll.setWidget(root)
+        scroll.setWidgetResizable(True)
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setAcceptDrops(False)
+        self.content_scroll = scroll
+        self.setCentralWidget(scroll)
 
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
@@ -392,6 +454,8 @@ class MainWindow(QMainWindow):
 
         self.status_bar.addWidget(self.status_content, 1)
         self.status_bar.setSizeGripEnabled(False)
+
+        self._reflow_lower_area()
 
     def _build_header(self) -> QWidget:
         panel = QWidget()
@@ -1070,6 +1134,11 @@ class MainWindow(QMainWindow):
         # Accept the close event
         event.accept()
         logger.info("MainWindow cleanup complete")
+
+    @override
+    def resizeEvent(self, event: QResizeEvent) -> None:
+        super().resizeEvent(event)
+        self._reflow_lower_area()
 
     @override
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:

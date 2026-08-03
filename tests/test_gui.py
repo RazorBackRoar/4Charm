@@ -59,9 +59,7 @@ def test_url_input_scrolls_after_large_plain_text_paste() -> None:
     window.show()
     app.processEvents()
 
-    urls = [
-        f"https://boards.4chan.org/g/thread/{number}" for number in range(1, 21)
-    ]
+    urls = [f"https://boards.4chan.org/g/thread/{number}" for number in range(1, 21)]
     paste_text = " ".join(urls)
     expected_text = "\n\n".join(urls)
 
@@ -185,7 +183,9 @@ def test_enter_creates_new_line_and_updates_gutter() -> None:
         cursor.movePosition(cursor.MoveOperation.End)
         window.url_input.setTextCursor(cursor)
 
-        enter_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Return, Qt.KeyboardModifier.NoModifier)
+        enter_event = QKeyEvent(
+            QEvent.Type.KeyPress, Qt.Key.Key_Return, Qt.KeyboardModifier.NoModifier
+        )
         window.url_input.keyPressEvent(enter_event)
         app.processEvents()
 
@@ -286,12 +286,13 @@ def test_reference_action_and_gutter_proportions() -> None:
     """Action buttons and the empty URL gutter should match the reference."""
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-    from four_charm.gui.main_window import MainWindow
+    from four_charm.gui.main_window import MainWindow, _compute_clamped_heights
 
     app = _app()
     window = MainWindow()
     window.show()
-    app.processEvents()
+    for _ in range(6):
+        app.processEvents()
 
     try:
         assert window.start_cancel_btn.height() == 44
@@ -315,11 +316,123 @@ def test_reference_action_and_gutter_proportions() -> None:
         assert window.files_card.height() == 50
         assert window.storage_card.height() == 50
         assert window.minimumSize().width() == 960
-        assert window.minimumSize().height() == 680
+        screen = app.primaryScreen()
+        if screen is not None:
+            avail_h = screen.availableGeometry().height()
+        else:
+            avail_h = 820
+        expected_min_h, expected_default_h = _compute_clamped_heights(avail_h)
+        assert window.minimumSize().height() == expected_min_h
         assert window.size().width() == 1080
-        assert window.size().height() == 720
+        assert window._startup_default_height == expected_default_h
         assert window.status_bar.height() <= 40
         assert window.windowTitle() == ""
+    finally:
+        window.deleteLater()
+        app.processEvents()
+
+
+def test_compute_clamped_heights_tall_screen() -> None:
+    """On a tall display the helper returns the agreed target heights."""
+    from four_charm.gui.main_window import _compute_clamped_heights
+
+    min_h, default_h = _compute_clamped_heights(1200)
+    assert min_h == 760
+    assert default_h == 820
+
+
+def test_compute_clamped_heights_short_screen() -> None:
+    """On a short display both heights are capped and ordered correctly."""
+    from four_charm.gui.main_window import _compute_clamped_heights
+
+    min_h, default_h = _compute_clamped_heights(600)
+    assert min_h < 760
+    assert default_h < 820
+    assert min_h <= default_h
+
+
+def test_central_widget_is_scroll_area() -> None:
+    """The central widget must be a configured QScrollArea."""
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+    from PySide6.QtWidgets import QFrame, QScrollArea
+
+    from four_charm.gui.main_window import MainWindow
+
+    app = _app()
+    window = MainWindow()
+
+    try:
+        central = window.centralWidget()
+        assert isinstance(central, QScrollArea)
+        assert central.widgetResizable()
+        assert central.verticalScrollBarPolicy() == (
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
+        )
+        assert central.horizontalScrollBarPolicy() == (
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
+        assert central.frameShape() == QFrame.Shape.NoFrame
+    finally:
+        window.deleteLater()
+        app.processEvents()
+
+
+def test_lower_area_reflow_responds_to_width() -> None:
+    """The lower area reflows between side-by-side and stacked on resize."""
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+    from PySide6.QtWidgets import QBoxLayout
+
+    from four_charm.gui.main_window import MainWindow
+
+    app = _app()
+    window = MainWindow()
+    window.show()
+    for _ in range(6):
+        app.processEvents()
+
+    try:
+        # Wide state: side-by-side with 350px rail
+        window.resize(1080, 820)
+        for _ in range(3):
+            app.processEvents()
+        assert window.lower_layout.direction() == (QBoxLayout.Direction.LeftToRight)
+        assert window.stats_panel.maximumWidth() == 350
+
+        # Compact state: stacked with expanding stats
+        window.resize(960, 820)
+        for _ in range(3):
+            app.processEvents()
+        assert window.lower_layout.direction() == (QBoxLayout.Direction.TopToBottom)
+        assert window.stats_panel.maximumWidth() != 350
+
+        # Restore wide state
+        window.resize(1080, 820)
+        for _ in range(3):
+            app.processEvents()
+        assert window.lower_layout.direction() == (QBoxLayout.Direction.LeftToRight)
+        assert window.stats_panel.maximumWidth() == 350
+    finally:
+        window.deleteLater()
+        app.processEvents()
+
+
+def test_stylesheet_contains_dark_green_chrome() -> None:
+    """The stylesheet must include dark-green QMenu and QScrollArea rules."""
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+    from four_charm.gui.main_window import MainWindow
+
+    app = _app()
+    window = MainWindow()
+
+    try:
+        qss = window.styleSheet()
+        assert "#0b140d" in qss
+        assert "QMenu" in qss
+        assert "QMenuBar" in qss
+        assert "QScrollArea" in qss
     finally:
         window.deleteLater()
         app.processEvents()
