@@ -1,5 +1,7 @@
 """Logic tests for FourChanScraper utilities."""
 
+import base64
+import hashlib
 from pathlib import Path
 
 import pytest
@@ -122,3 +124,129 @@ def test_download_file_registers_hash_in_dedup_tracker(
     assert scraper.download_file(media, "g-123") is True
     # Hash should now be known to the dedup tracker
     assert scraper.dedup.check_and_register("hash-123") is True
+
+
+def test_check_existing_file_marks_session_duplicate(tmp_path: Path) -> None:
+    """A file whose hash was already downloaded this session is a duplicate."""
+    scraper = FourChanScraper()
+    scraper.download_dir = tmp_path
+    file_path = tmp_path / "existing.jpg"
+    file_path.write_bytes(b"duplicate-content")
+    media = MediaFile("https://i.4cdn.org/g/1.jpg", "existing.jpg")
+
+    scraper.dedup.add("dup-hash")
+    media.calculate_hash = lambda _path: "dup-hash"  # ty: ignore[invalid-assignment]
+
+    assert scraper._check_existing_file(file_path, media) is True
+    assert media.skip_reason == "duplicate"
+    assert scraper.stats["duplicates"] == 1
+
+
+def test_check_existing_file_skips_unchanged_on_disk(tmp_path: Path) -> None:
+    """An on-disk file with a new hash is skipped without re-downloading."""
+    scraper = FourChanScraper()
+    scraper.download_dir = tmp_path
+    file_path = tmp_path / "on-disk.jpg"
+    file_path.write_bytes(b"already-here")
+    media = MediaFile("https://i.4cdn.org/g/2.jpg", "on-disk.jpg")
+
+    media.calculate_hash = lambda _path: "fresh-hash"  # ty: ignore[invalid-assignment]
+
+    assert scraper._check_existing_file(file_path, media) is True
+    assert media.skip_reason == "skipped"
+    assert media.downloaded is True
+    assert scraper.stats["skipped"] == 1
+
+
+def test_extract_thread_title_prefers_subject_over_comment() -> None:
+  posts = [
+      {"sub": "Subject line", "com": "<b>ignored</b>"},
+  ]
+  assert FourChanScraper._extract_thread_title(posts) == "Subject line"
+
+
+def test_extract_thread_title_strips_html_from_comment() -> None:
+  posts = [{"com": "<b>HTML</b> thread title"}]
+  assert FourChanScraper._extract_thread_title(posts) == "HTML thread title"
+
+
+def test_extract_media_from_posts_builds_media_files() -> None:
+    scraper = FourChanScraper()
+    posts = [
+        {
+            "tim": 123,
+            "ext": ".webm",
+            "filename": "vid",
+            "fsize": 5000,
+            "md5": "abc123",
+        },
+        {"tim": 456, "ext": ".exe", "filename": "bad"},
+    ]
+
+    media_files = scraper.extract_media_from_posts(posts, "g", "99")
+
+    assert len(media_files) == 1
+    media = media_files[0]
+    assert media.url == "https://i.4cdn.org/g/123.webm"
+    assert media.filename.endswith(".webm")
+    assert media.board == "g"
+    assert media.thread_id == "99"
+    assert media.size == 5000
+    assert media.expected_md5 == "abc123"
+
+
+def test_download_file_retries_after_verification_failure(
+    monkeypatch, tmp_path: Path
+) -> None:
+    """Corrupt first attempt is deleted and a verified retry succeeds."""
+    good_content = b"verified-download-bytes"
+    md5_digest = hashlib.md5(good_content).digest()
+    expected_md5 = base64.b64encode(md5_digest).decode("ascii")
+
+    class BadResponse:
+        status_code = 200
+        headers = {"content-length": str(len(good_content))}
+
+        @staticmethod
+        def iter_content(chunk_size: int):
+            _ = chunk_size
+            yield b"corrupt"
+
+    class GoodResponse:
+        status_code = 200
+        headers = {"content-length": str(len(good_content))}
+
+        @staticmethod
+        def iter_content(chunk_size: int):
+            _ = chunk_size
+            yield good_content
+
+    class FlipBoardApi:
+        def __init__(self) -> None:
+            self.attempt = 0
+
+        def stream_range(self, url, *, headers=None, timeout=None):
+            self.attempt += 1
+            if self.attempt == 1:
+                return BadResponse()
+            return GoodResponse()
+
+        def fetch_thread(self, board, thread_id):
+            raise NotImplementedError
+
+        def fetch_catalog(self, board):
+            raise NotImplementedError
+
+    api = FlipBoardApi()
+    scraper = FourChanScraper(board_api=api)
+    scraper.download_dir = tmp_path
+    monkeypatch.setattr(scraper, "check_disk_space", lambda required_mb=0: True)
+    monkeypatch.setattr("time.sleep", lambda _seconds: None)
+
+    media = MediaFile("https://i.4cdn.org/g/retry.jpg", "retry.jpg")
+    media.size = len(good_content)
+    media.expected_md5 = expected_md5
+
+    assert scraper.download_file(media, "g-retry") is True
+    assert api.attempt == 2
+    assert scraper.stats["downloaded"] == 1
