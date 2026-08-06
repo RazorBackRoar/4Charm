@@ -159,15 +159,15 @@ def test_check_existing_file_skips_unchanged_on_disk(tmp_path: Path) -> None:
 
 
 def test_extract_thread_title_prefers_subject_over_comment() -> None:
-  posts = [
-      {"sub": "Subject line", "com": "<b>ignored</b>"},
-  ]
-  assert FourChanScraper._extract_thread_title(posts) == "Subject line"
+    posts = [
+        {"sub": "Subject line", "com": "<b>ignored</b>"},
+    ]
+    assert FourChanScraper._extract_thread_title(posts) == "Subject line"
 
 
 def test_extract_thread_title_strips_html_from_comment() -> None:
-  posts = [{"com": "<b>HTML</b> thread title"}]
-  assert FourChanScraper._extract_thread_title(posts) == "HTML thread title"
+    posts = [{"com": "<b>HTML</b> thread title"}]
+    assert FourChanScraper._extract_thread_title(posts) == "HTML thread title"
 
 
 def test_extract_media_from_posts_builds_media_files() -> None:
