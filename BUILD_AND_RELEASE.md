@@ -84,8 +84,19 @@ RazorBackRoar apps.
 | PyInstaller missing modules | Rebuild with a clean `dist/` / `build/`; check `*.spec` excludes |
 | Tests fail under QThread | Ensure a `QCoreApplication` fixture exists for the suite |
 
+## DMG assets
+
+Window positions and background art for the release DMG live under `assets/`:
+
+- `assets/dmg-layout.json` — icon positions and background path
+- `assets/dmg-background.png` — DMG background image
+
+See [docs/DMG_BUILD_README.md](docs/DMG_BUILD_README.md) for packaging
+troubleshooting.
+
 ## Related Docs
 
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — download pipeline and module seams
 - [README.md](README.md) — product overview
 - [CONTRIBUTING.md](CONTRIBUTING.md) — PR workflow
 - [SECURITY.md](SECURITY.md) — vulnerability reporting
