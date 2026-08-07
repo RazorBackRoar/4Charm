@@ -33,6 +33,36 @@ workspace, `razor-autosync` may commit locally; publishing uses
 See [BUILD_AND_RELEASE.md](BUILD_AND_RELEASE.md) for prerequisites, build,
 packaging, and release steps for this repository.
 
+Architecture, module seams, and testing patterns are documented in
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+## Testing
+
+Run the full suite from the repository root:
+
+```bash
+uv run ruff check .
+uv run ty check src --python-version 3.14
+uv run pytest tests/ -q
+```
+
+Focused areas when touching specific subsystems:
+
+| Subsystem | Tests |
+|-----------|-------|
+| Scraper, paths, dedup | `tests/test_scraper_utils.py`, `tests/test_paths.py`, `tests/test_scraper_logic.py` |
+| Workers, cancel | `tests/test_workers.py`, `tests/test_cancel_reset.py` |
+| HTTP / redirects | `tests/test_session.py` |
+| GUI | `tests/test_gui.py` (sets `QT_QPA_PLATFORM=offscreen`) |
+
+Prefer injecting a `FakeBoardApi` into `FourChanScraper(board_api=…)` over
+monkeypatching `safe_get` at the module level. See
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#testing-without-live-4chan) for
+examples.
+
+CI covers lint, types, and unit tests. It does **not** exercise live 4chan
+downloads or packaged-app behavior on macOS.
+
 ## Pull Requests
 
 - Describe **why** the change is needed.
