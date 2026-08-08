@@ -100,6 +100,7 @@ uv run pytest tests/ -q
 
 ## Community & docs
 
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — developer map (download flow, seams, testing)
 - [BUILD_AND_RELEASE.md](BUILD_AND_RELEASE.md) — prerequisites, build, packaging, release, versioning
 - [CONTRIBUTING.md](CONTRIBUTING.md) — how to contribute
 - [SECURITY.md](SECURITY.md) — vulnerability reporting
