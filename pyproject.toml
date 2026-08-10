@@ -63,3 +63,7 @@ dev = [
     "ty>=0.0.56",
 ]
 
+[tool.uv]
+find-links = ["ci/vendor"]
+no-sources-package = ["razorcore"]
+
