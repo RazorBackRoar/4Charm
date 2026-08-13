@@ -34,6 +34,7 @@ class _FakeScraper:
             "current_speed": 0.0,
         }
         self.stats_mutex = _FakeMutex()
+        self.cancelled = False
         self.cancel_calls = 0
         self.pause_calls = 0
         self.resume_calls = 0
@@ -206,3 +207,20 @@ def test_multi_url_worker_reports_empty_sources() -> None:
     assert "⚠️ [2/2] No media found for 'wsg board'" in log_messages
     assert "❌ No media files found in any URLs!" in log_messages
     assert finished_payloads == [scraper.stats]
+
+
+def test_emit_summary_skips_complete_message_when_cancelled() -> None:
+    scraper = _FakeScraper()
+    scraper.cancelled = True
+    worker = workers.DownloadWorker(
+        cast(FourChanScraper, scraper), {"board": "g", "type": "catalog"}
+    )
+    log_messages: list[str] = []
+    finished_payloads: list[dict] = []
+    worker.log_message.connect(log_messages.append)
+    worker.finished.connect(finished_payloads.append)
+
+    worker._emit_summary()
+
+    assert finished_payloads == [scraper.stats]
+    assert not any("Complete!" in message for message in log_messages)

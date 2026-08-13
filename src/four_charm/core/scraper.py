@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 import requests
 from PySide6.QtCore import QMutex
 
-import four_charm.config as config
+from four_charm import config
 from four_charm.core.bandwidth import BandwidthMonitor
 from four_charm.core.chunking import ChunkSelector
 from four_charm.core.dedup import DedupTracker
@@ -41,14 +41,17 @@ _sanitize_folder_component = sanitize_folder_component
 # Re-export so tests that monkeypatch ``four_charm.core.scraper.safe_get``
 # keep working when the scraper delegates to a BoardApi.
 __all__ = [
+    "BoardApi",
     "FourChanScraper",
+    "LiveBoardApi",
+    "PathBuilder",
     "_rc_sanitize_filename",
     "_sanitize_folder_component",
     "safe_get",
-    "PathBuilder",
-    "BoardApi",
-    "LiveBoardApi",
 ]
+
+
+OVERSIZED_BACKUP_SUFFIX = ".4charm-oversized.bak"
 
 
 logger = logging.getLogger("4Charm")
@@ -203,10 +206,46 @@ class FourChanScraper:
             self._retry_policy.adaptive_delay(success=False)
         return info
 
+    def _oversized_backup_path(self, file_path: Path) -> Path:
+        return file_path.with_name(file_path.name + OVERSIZED_BACKUP_SUFFIX)
+
+    def _quarantine_oversized_file(self, file_path: Path) -> bool:
+        backup = self._oversized_backup_path(file_path)
+        backup.unlink(missing_ok=True)
+        try:
+            file_path.rename(backup)
+            return True
+        except OSError:
+            return False
+
+    def _discard_oversized_backup(self, file_path: Path) -> None:
+        self._oversized_backup_path(file_path).unlink(missing_ok=True)
+
+    def _restore_oversized_backup(self, file_path: Path) -> bool:
+        backup = self._oversized_backup_path(file_path)
+        if not backup.exists() or file_path.exists():
+            return False
+        backup.rename(file_path)
+        return True
+
     def _check_existing_file(self, file_path: Path, media_file: MediaFile) -> bool:
         """Check for existing complete file and handle duplicates."""
         if not file_path.exists() or file_path.stat().st_size == 0:
             return False
+
+        actual_size = file_path.stat().st_size
+        expected_size = media_file.size
+        if expected_size and expected_size > 0:
+            if actual_size < expected_size:
+                # Partial file from a failed attempt — resume instead of skipping.
+                return False
+            if actual_size > expected_size:
+                logger.warning(
+                    f"Existing file larger than expected for {media_file.filename}: "
+                    f"{actual_size} > {expected_size}, re-downloading"
+                )
+                self._quarantine_oversized_file(file_path)
+                return False
 
         try:
             file_hash = media_file.calculate_hash(file_path)
@@ -272,6 +311,8 @@ class FourChanScraper:
         """Handle cancellation by cleaning up and marking queue item failed."""
         if file_path and file_path.exists():
             file_path.unlink(missing_ok=True)
+        if file_path is not None:
+            self._restore_oversized_backup(file_path)
         self.download_queue.fail_download(media_url, Exception("Cancelled"))
         return False
 
@@ -457,9 +498,9 @@ class FourChanScraper:
         if not posts:
             return None
         op = posts[0]
-        if "sub" in op and op["sub"]:
+        if op.get("sub"):
             return op["sub"]
-        if "com" in op and op["com"]:
+        if op.get("com"):
             text = re.sub(r"<[^>]+>", "", op["com"]).strip()
             if text:
                 return re.sub(r"\s+", " ", text[:60]).strip()
@@ -600,6 +641,8 @@ class FourChanScraper:
         if not self._ensure_active_download(media_file.url):
             return False
 
+        file_path: Path | None = None
+
         for attempt in range(config.MAX_RETRIES):
             try:
                 file_path, _save_dir = self._prepare_download_path(
@@ -614,6 +657,8 @@ class FourChanScraper:
                     self._record_failed_download(
                         media_file.url, Exception("Insufficient disk space")
                     )
+                    if file_path is not None:
+                        self._restore_oversized_backup(file_path)
                     return False
 
                 headers, existing_size = self._build_resume_headers(
@@ -630,14 +675,14 @@ class FourChanScraper:
                 mode, total_size = self._handle_download_response(
                     response, file_path, existing_size
                 )
+                # 200 means the server ignored Range and we started a fresh file.
+                downloaded_size = existing_size if mode == "ab" else 0
 
                 # Select optimal chunk size based on file size
                 chunk_size = self.select_chunk_size(total_size)
                 logger.debug(
                     f"Using {chunk_size} byte chunks for {media_file.filename} ({total_size} bytes)"
                 )
-
-                downloaded_size = existing_size
 
                 with open(file_path, mode) as f:
                     for chunk in response.iter_content(chunk_size=chunk_size):
@@ -685,6 +730,8 @@ class FourChanScraper:
                     file_path.unlink(missing_ok=True)
                     raise Exception("Download verification failed")
 
+                self._discard_oversized_backup(file_path)
+
                 try:
                     media_file.hash = media_file.calculate_hash(file_path)
                     self.dedup.add(media_file.hash)
@@ -699,6 +746,9 @@ class FourChanScraper:
 
             except Exception as e:
                 if not self._handle_download_retry(media_file, attempt, e):
+                    if file_path is not None:
+                        file_path.unlink(missing_ok=True)
+                        self._restore_oversized_backup(file_path)
                     return False
 
         self.download_queue.fail_download(

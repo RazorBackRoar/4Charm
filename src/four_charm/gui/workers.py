@@ -182,6 +182,10 @@ class _BaseDownloadWorker(QObject):
 
     def _emit_summary(self, source_count: int = 0) -> None:
         """Emit final download summary and completion signal."""
+        if getattr(self.scraper, "cancelled", False):
+            self.finished.emit(self.scraper.stats)
+            return
+
         stats = self.scraper.stats
         total_time = time.time() - (stats["start_time"] or time.time())
         avg_speed = stats["size_mb"] / total_time if total_time > 0 else 0

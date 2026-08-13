@@ -228,6 +228,13 @@ def _build_url_paste_text(
     return paste_text
 
 
+def _format_storage_size(size_mb: float) -> str:
+    """Format session download size. Use MB until the total reaches 1GB."""
+    if size_mb >= 1024.0:
+        return f"{size_mb / 1024.0:.1f}GB"
+    return f"{size_mb:.1f}MB"
+
+
 def _insert_url_lines(editor: QPlainTextEdit, urls: list[str]) -> None:
     existing = _existing_url_keys(editor)
     new_urls = [
@@ -671,7 +678,7 @@ class MainWindow(QMainWindow):
         )
         self.storage_card = StatCard(
             "STORAGE",
-            "0.0GB",
+            _format_storage_size(0.0),
             create_interface_icon("drive", size=30),
         )
 
@@ -736,7 +743,7 @@ class MainWindow(QMainWindow):
         self.session_folders.clear()
         self.folders_card.set_value("0")
         self.files_card.set_value("0")
-        self.storage_card.set_value("0.0GB")
+        self.storage_card.set_value(_format_storage_size(0.0))
 
         # Reset scraper stats
         self.scraper.stats["downloaded"] = 0
@@ -920,6 +927,12 @@ class MainWindow(QMainWindow):
         """Handle download completion. This should ONLY update the UI."""
         self._update_ui_for_state("idle")
 
+        if self.scraper.cancelled:
+            self.progress_label.setText("Cancelled")
+            self.status_bar.setProperty("statusState", "idle")
+            self._set_status_message("Download cancelled", "idle")
+            return
+
         total, downloaded, size_mb, duplicates = (
             stats.get("total", 0),
             stats.get("downloaded", 0),
@@ -1023,8 +1036,7 @@ class MainWindow(QMainWindow):
         self.folders_card.set_value(str(len(self.session_folders)))
 
         size_mb = self.scraper.stats.get("size_mb", 0.0)
-        size_gb = size_mb / 1024.0
-        self.storage_card.set_value(f"{size_gb:.1f}GB")
+        self.storage_card.set_value(_format_storage_size(size_mb))
 
         # Reuse the BandwidthMonitor ETA formatter — the rules belong in
         # one place (the data layer), not duplicated in the UI.
@@ -1066,8 +1078,7 @@ class MainWindow(QMainWindow):
             self.files_card.set_value(str(file_count))
 
             size_mb = self.scraper.stats.get("size_mb", 0.0)
-            size_gb = size_mb / 1024.0
-            self.storage_card.set_value(f"{size_gb:.1f}GB")
+            self.storage_card.set_value(_format_storage_size(size_mb))
         except Exception as e:
             logger.warning(f"Could not update session download stats: {e}")
 
@@ -1089,7 +1100,7 @@ class MainWindow(QMainWindow):
                 if url.rstrip("/").lower() not in existing_before
             ]
             if new_urls:
-                _insert_url_lines(self.url_input, valid_urls)
+                _insert_url_lines(self.url_input, new_urls)
                 skipped = len(dedupe_preserve_order(valid_urls)) - len(new_urls)
                 if skipped:
                     self.add_log_message(f"Skipped {skipped} duplicate link(s)")
@@ -1152,6 +1163,7 @@ class MainWindow(QMainWindow):
         if valid_urls:
             _insert_url_lines(self.url_input, valid_urls)
             self.validate_urls()
+            event.acceptProposedAction()
 
 
 if __name__ == "__main__":

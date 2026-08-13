@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.14
+#!/usr/bin/env python3
 """4Charm - Advanced 4chan Media Downloader.
 
 A high-performance GUI application for bulk downloading media from 4chan threads and boards.
@@ -46,8 +46,7 @@ def get_version() -> str:
                     break
         except Exception as e:
             logger.warning("Could not read version from Info.plist: %s", e)
-        # Frozen apps should have version in plist; if not, return hardcoded
-        return "1.0.0"
+        return razorcore_get_version(default="2.0.1", package_name=PACKAGE_NAME)
 
     # 2. Development: razorcore version resolution
     pyproject_path = Path(__file__).resolve().parent.parent.parent / "pyproject.toml"
