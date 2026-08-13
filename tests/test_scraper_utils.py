@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-import four_charm.config as config
+from four_charm import config
 from four_charm.core.models import MediaFile
 from four_charm.core.scraper import FourChanScraper, _rc_sanitize_filename
 
@@ -200,3 +200,54 @@ def test_download_file_resumes_partial_instead_of_skipping(
     assert scraper.download_file(media, "g-123") is True
     assert captured_headers.get("Range") == "bytes=2-"
     assert dest.read_bytes() == b"data"
+
+
+def test_check_existing_file_quarantines_oversized_file(tmp_path: Path) -> None:
+    """An oversized file is moved to the .4charm-oversized.bak sidecar, not deleted."""
+    scraper = FourChanScraper()
+    media = MediaFile("https://i.4cdn.org/g/123.jpg", "123.jpg")
+    media.size = 2
+    path = tmp_path / "123.jpg"
+    path.write_bytes(b"data")
+
+    assert scraper._check_existing_file(path, media) is False
+    assert not path.exists()
+    backup = path.with_name(path.name + ".4charm-oversized.bak")
+    assert backup.exists()
+    assert backup.read_bytes() == b"data"
+
+
+def test_download_file_restores_oversized_on_failure(
+    monkeypatch, tmp_path: Path
+) -> None:
+    """If re-download of an oversized file fails, the original bytes are restored."""
+
+    class FailingBoardApi:
+        def stream_range(self, url, *, headers=None, timeout=None):
+            raise Exception("network failure")
+
+        def fetch_thread(self, board, thread_id):
+            raise NotImplementedError
+
+        def fetch_catalog(self, board):
+            raise NotImplementedError
+
+    scraper = FourChanScraper(board_api=FailingBoardApi())
+    scraper.download_dir = tmp_path
+
+    original = b"this file is too big"
+    media = MediaFile("https://i.4cdn.org/g/123.jpg", "123.jpg")
+    media.size = 4
+
+    dest = tmp_path / "g-123" / "123.jpg"
+    dest.parent.mkdir()
+    dest.write_bytes(original)
+
+    monkeypatch.setattr(scraper, "check_disk_space", lambda required_mb=0: True)
+    monkeypatch.setattr(config, "MAX_RETRIES", 1)
+    monkeypatch.setattr(scraper, "calculate_retry_delay", lambda attempt: 0)
+
+    assert scraper.download_file(media, "g-123") is False
+    assert dest.exists()
+    assert dest.read_bytes() == original
+    assert not (dest.parent / (dest.name + ".4charm-oversized.bak")).exists()
