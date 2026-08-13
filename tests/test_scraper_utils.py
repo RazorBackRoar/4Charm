@@ -122,3 +122,81 @@ def test_download_file_registers_hash_in_dedup_tracker(
     assert scraper.download_file(media, "g-123") is True
     # Hash should now be known to the dedup tracker
     assert scraper.dedup.check_and_register("hash-123") is True
+
+
+def test_check_existing_file_resumes_partial_when_size_known(tmp_path: Path) -> None:
+    """A shorter-than-expected file must not be treated as already complete."""
+    scraper = FourChanScraper()
+    media = MediaFile("https://i.4cdn.org/g/123.jpg", "123.jpg")
+    media.size = 100
+    path = tmp_path / "123.jpg"
+    path.write_bytes(b"partial")
+
+    assert scraper._check_existing_file(path, media) is False
+    assert path.exists()
+    assert media.skip_reason is None
+
+
+def test_check_existing_file_skips_complete_size_match(tmp_path: Path) -> None:
+    scraper = FourChanScraper()
+    media = MediaFile("https://i.4cdn.org/g/123.jpg", "123.jpg")
+    media.size = 4
+    path = tmp_path / "123.jpg"
+    path.write_bytes(b"data")
+
+    assert scraper._check_existing_file(path, media) is True
+    assert media.skip_reason == "skipped"
+
+
+def test_check_existing_file_redownloads_oversized(tmp_path: Path) -> None:
+    scraper = FourChanScraper()
+    media = MediaFile("https://i.4cdn.org/g/123.jpg", "123.jpg")
+    media.size = 2
+    path = tmp_path / "123.jpg"
+    path.write_bytes(b"data")
+
+    assert scraper._check_existing_file(path, media) is False
+    assert not path.exists()
+
+
+def test_download_file_resumes_partial_instead_of_skipping(
+    monkeypatch, tmp_path: Path
+) -> None:
+    """Failed leftover bytes should be Range-resumed, not skipped as complete."""
+    captured_headers: dict[str, str] = {}
+
+    class FakeResponse:
+        status_code = 206
+        headers = {"content-length": "2"}
+
+        @staticmethod
+        def iter_content(chunk_size: int):
+            _ = chunk_size
+            yield b"ta"
+
+    class FakeBoardApi:
+        def stream_range(self, url, *, headers=None, timeout=None):
+            _ = url, timeout
+            captured_headers.update(headers or {})
+            return FakeResponse()
+
+        def fetch_thread(self, board, thread_id):
+            raise NotImplementedError
+
+        def fetch_catalog(self, board):
+            raise NotImplementedError
+
+    scraper = FourChanScraper(board_api=FakeBoardApi())
+    scraper.download_dir = tmp_path
+    dest = tmp_path / "g-123" / "123.jpg"
+    dest.parent.mkdir()
+    dest.write_bytes(b"da")
+
+    media = MediaFile("https://i.4cdn.org/g/123.jpg", "123.jpg")
+    media.size = 4
+    monkeypatch.setattr(scraper, "check_disk_space", lambda required_mb=0: True)
+    monkeypatch.setattr(media, "calculate_hash", lambda _path: "hash-resume")
+
+    assert scraper.download_file(media, "g-123") is True
+    assert captured_headers.get("Range") == "bytes=2-"
+    assert dest.read_bytes() == b"data"

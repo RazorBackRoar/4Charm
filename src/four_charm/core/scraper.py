@@ -208,6 +208,20 @@ class FourChanScraper:
         if not file_path.exists() or file_path.stat().st_size == 0:
             return False
 
+        actual_size = file_path.stat().st_size
+        expected_size = media_file.size
+        if expected_size and expected_size > 0:
+            if actual_size < expected_size:
+                # Partial file from a failed attempt — resume instead of skipping.
+                return False
+            if actual_size > expected_size:
+                logger.warning(
+                    f"Existing file larger than expected for {media_file.filename}: "
+                    f"{actual_size} > {expected_size}, re-downloading"
+                )
+                file_path.unlink(missing_ok=True)
+                return False
+
         try:
             file_hash = media_file.calculate_hash(file_path)
 
@@ -630,14 +644,14 @@ class FourChanScraper:
                 mode, total_size = self._handle_download_response(
                     response, file_path, existing_size
                 )
+                # 200 means the server ignored Range and we started a fresh file.
+                downloaded_size = existing_size if mode == "ab" else 0
 
                 # Select optimal chunk size based on file size
                 chunk_size = self.select_chunk_size(total_size)
                 logger.debug(
                     f"Using {chunk_size} byte chunks for {media_file.filename} ({total_size} bytes)"
                 )
-
-                downloaded_size = existing_size
 
                 with open(file_path, mode) as f:
                     for chunk in response.iter_content(chunk_size=chunk_size):

@@ -920,6 +920,12 @@ class MainWindow(QMainWindow):
         """Handle download completion. This should ONLY update the UI."""
         self._update_ui_for_state("idle")
 
+        if self.scraper.cancelled:
+            self.progress_label.setText("Cancelled")
+            self.status_bar.setProperty("statusState", "idle")
+            self._set_status_message("Download cancelled", "idle")
+            return
+
         total, downloaded, size_mb, duplicates = (
             stats.get("total", 0),
             stats.get("downloaded", 0),
@@ -1152,6 +1158,7 @@ class MainWindow(QMainWindow):
         if valid_urls:
             _insert_url_lines(self.url_input, valid_urls)
             self.validate_urls()
+            event.acceptProposedAction()
 
 
 if __name__ == "__main__":
