@@ -9,6 +9,16 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
 
 
+def test_format_storage_size_uses_mb_until_one_gb() -> None:
+    from four_charm.gui.main_window import _format_storage_size
+
+    assert _format_storage_size(0.0) == "0.0MB"
+    assert _format_storage_size(3.5) == "3.5MB"
+    assert _format_storage_size(1023.94) == "1023.9MB"
+    assert _format_storage_size(1024.0) == "1.0GB"
+    assert _format_storage_size(1536.0) == "1.5GB"
+
+
 def _app() -> QApplication:
     existing = QApplication.instance()
     if existing is None:
@@ -225,7 +235,7 @@ def test_premium_idle_ui_contract() -> None:
         assert window.progress_label.text() == "Ready"
         assert window.folders_card.value_label.text() == "0"
         assert window.files_card.value_label.text() == "0"
-        assert window.storage_card.value_label.text() == "0.0GB"
+        assert window.storage_card.value_label.text() == "0.0MB"
         assert window.status_message.text() == "Engine Status: Ready"
     finally:
         window.deleteLater()

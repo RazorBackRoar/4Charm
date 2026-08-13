@@ -228,6 +228,13 @@ def _build_url_paste_text(
     return paste_text
 
 
+def _format_storage_size(size_mb: float) -> str:
+    """Format session download size. Use MB until the total reaches 1GB."""
+    if size_mb >= 1024.0:
+        return f"{size_mb / 1024.0:.1f}GB"
+    return f"{size_mb:.1f}MB"
+
+
 def _insert_url_lines(editor: QPlainTextEdit, urls: list[str]) -> None:
     existing = _existing_url_keys(editor)
     new_urls = [
@@ -671,7 +678,7 @@ class MainWindow(QMainWindow):
         )
         self.storage_card = StatCard(
             "STORAGE",
-            "0.0GB",
+            _format_storage_size(0.0),
             create_interface_icon("drive", size=30),
         )
 
@@ -736,7 +743,7 @@ class MainWindow(QMainWindow):
         self.session_folders.clear()
         self.folders_card.set_value("0")
         self.files_card.set_value("0")
-        self.storage_card.set_value("0.0GB")
+        self.storage_card.set_value(_format_storage_size(0.0))
 
         # Reset scraper stats
         self.scraper.stats["downloaded"] = 0
@@ -1029,8 +1036,7 @@ class MainWindow(QMainWindow):
         self.folders_card.set_value(str(len(self.session_folders)))
 
         size_mb = self.scraper.stats.get("size_mb", 0.0)
-        size_gb = size_mb / 1024.0
-        self.storage_card.set_value(f"{size_gb:.1f}GB")
+        self.storage_card.set_value(_format_storage_size(size_mb))
 
         # Reuse the BandwidthMonitor ETA formatter — the rules belong in
         # one place (the data layer), not duplicated in the UI.
@@ -1072,8 +1078,7 @@ class MainWindow(QMainWindow):
             self.files_card.set_value(str(file_count))
 
             size_mb = self.scraper.stats.get("size_mb", 0.0)
-            size_gb = size_mb / 1024.0
-            self.storage_card.set_value(f"{size_gb:.1f}GB")
+            self.storage_card.set_value(_format_storage_size(size_mb))
         except Exception as e:
             logger.warning(f"Could not update session download stats: {e}")
 
