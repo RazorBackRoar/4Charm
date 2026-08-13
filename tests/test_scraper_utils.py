@@ -202,6 +202,115 @@ def test_download_file_resumes_partial_instead_of_skipping(
     assert dest.read_bytes() == b"data"
 
 
+def test_extract_thread_title_prefers_subject_over_comment() -> None:
+    posts = [{"sub": "Subject line", "com": "<p>Comment body</p>"}]
+    assert FourChanScraper._extract_thread_title(posts) == "Subject line"
+
+
+def test_extract_thread_title_strips_html_and_limits_comment() -> None:
+    posts = [
+        {
+            "com": "<blockquote>Line one</blockquote><br>Line   two " + ("x" * 80),
+        }
+    ]
+    title = FourChanScraper._extract_thread_title(posts)
+    assert title is not None
+    assert "<" not in title
+    assert len(title) <= 60
+    assert title.startswith("Line one")
+
+
+def test_extract_thread_title_returns_none_for_empty_posts() -> None:
+    assert FourChanScraper._extract_thread_title([]) is None
+    assert FourChanScraper._extract_thread_title([{"com": "   "}]) is None
+    assert FourChanScraper._extract_thread_title([{"sub": ""}]) is None
+
+
+def test_extract_thread_title_falls_through_empty_subject_to_comment() -> None:
+    posts = [{"sub": "", "com": "<b>Fallback</b> title"}]
+    assert FourChanScraper._extract_thread_title(posts) == "Fallback title"
+
+
+def test_mark_download_cancelled_restores_oversized_backup(tmp_path: Path) -> None:
+    """Cancellation after quarantine must put the original bytes back on disk."""
+    scraper = FourChanScraper()
+    dest = tmp_path / "123.jpg"
+    backup = dest.with_name(dest.name + ".4charm-oversized.bak")
+    original = b"original oversized bytes"
+    backup.write_bytes(original)
+
+    assert scraper._mark_download_cancelled("https://i.4cdn.org/g/123.jpg", dest) is False
+
+    assert dest.exists()
+    assert dest.read_bytes() == original
+    assert not backup.exists()
+
+
+def test_download_success_discards_oversized_backup(monkeypatch, tmp_path: Path) -> None:
+    """A successful re-download removes the quarantine sidecar."""
+
+    class FakeResponse:
+        status_code = 200
+        headers = {"content-length": "4"}
+
+        @staticmethod
+        def iter_content(chunk_size: int):
+            _ = chunk_size
+            yield b"data"
+
+    class FakeBoardApi:
+        def stream_range(self, url, *, headers=None, timeout=None):
+            return FakeResponse()
+
+        def fetch_thread(self, board, thread_id):
+            raise NotImplementedError
+
+        def fetch_catalog(self, board):
+            raise NotImplementedError
+
+    scraper = FourChanScraper(board_api=FakeBoardApi())
+    scraper.download_dir = tmp_path
+
+    original = b"too big"
+    media = MediaFile("https://i.4cdn.org/g/123.jpg", "123.jpg")
+    media.size = 4
+
+    dest = tmp_path / "g-123" / "123.jpg"
+    dest.parent.mkdir()
+    dest.write_bytes(original)
+    backup = dest.with_name(dest.name + ".4charm-oversized.bak")
+
+    monkeypatch.setattr(scraper, "check_disk_space", lambda required_mb=0: True)
+    monkeypatch.setattr(media, "calculate_hash", lambda _path: "hash-success")
+
+    assert scraper.download_file(media, "g-123") is True
+    assert dest.read_bytes() == b"data"
+    assert not backup.exists()
+
+
+def test_download_disk_space_failure_restores_oversized_backup(
+    monkeypatch, tmp_path: Path
+) -> None:
+    scraper = FourChanScraper()
+    scraper.download_dir = tmp_path
+
+    original = b"oversized original"
+    media = MediaFile("https://i.4cdn.org/g/123.jpg", "123.jpg")
+    media.size = 4
+
+    dest = tmp_path / "g-123" / "123.jpg"
+    dest.parent.mkdir()
+    dest.write_bytes(original)
+
+    monkeypatch.setattr(scraper, "check_disk_space", lambda required_mb=0: False)
+
+    assert scraper.download_file(media, "g-123") is False
+    assert dest.exists()
+    assert dest.read_bytes() == original
+    backup = dest.with_name(dest.name + ".4charm-oversized.bak")
+    assert not backup.exists()
+
+
 def test_check_existing_file_quarantines_oversized_file(tmp_path: Path) -> None:
     """An oversized file is moved to the .4charm-oversized.bak sidecar, not deleted."""
     scraper = FourChanScraper()

@@ -446,3 +446,25 @@ def test_stylesheet_contains_dark_green_chrome() -> None:
     finally:
         window.deleteLater()
         app.processEvents()
+
+
+def test_download_finished_shows_cancelled_status_when_scraper_cancelled() -> None:
+    """Cancelled runs must not show the success Complete summary."""
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+    from four_charm.gui.main_window import MainWindow
+
+    app = _app()
+    window = MainWindow()
+
+    try:
+        window.scraper.cancel_downloads()
+        window.download_finished(
+            {"total": 5, "downloaded": 3, "size_mb": 12.0, "duplicates": 1}
+        )
+
+        assert window.progress_label.text() == "Cancelled"
+        assert window.status_bar.property("statusState") == "idle"
+    finally:
+        window.deleteLater()
+        app.processEvents()
