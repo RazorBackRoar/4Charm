@@ -1089,7 +1089,7 @@ class MainWindow(QMainWindow):
                 if url.rstrip("/").lower() not in existing_before
             ]
             if new_urls:
-                _insert_url_lines(self.url_input, valid_urls)
+                _insert_url_lines(self.url_input, new_urls)
                 skipped = len(dedupe_preserve_order(valid_urls)) - len(new_urls)
                 if skipped:
                     self.add_log_message(f"Skipped {skipped} duplicate link(s)")
