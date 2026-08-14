@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import cast
 
+from four_charm.core.models import MediaFile
 from four_charm.core.scraper import FourChanScraper
 from four_charm.gui import workers
 
@@ -224,3 +225,96 @@ def test_emit_summary_skips_complete_message_when_cancelled() -> None:
 
     assert finished_payloads == [scraper.stats]
     assert not any("Complete!" in message for message in log_messages)
+
+
+def test_download_all_stops_processing_when_cancelled_mid_batch(monkeypatch) -> None:
+    """Cancel during a batch should stop result processing and emit a cancellation log."""
+    monkeypatch.setattr(workers.config, "MAX_WORKERS", 1)
+
+    class CancellingScraper(_FakeScraper):
+        cancelled = False
+        download_calls = 0
+
+        def download_file(
+            self,
+            media_file,
+            folder_name=None,
+            progress_callback=None,
+        ) -> bool:
+            self.download_calls += 1
+            if self.download_calls == 1:
+                self.cancelled = True
+            return True
+
+    scraper = CancellingScraper()
+    worker = workers.DownloadWorker(cast(FourChanScraper, scraper), {})
+    downloads = [
+        (
+            MediaFile("https://i.4cdn.org/g/1.jpg", "1.jpg"),
+            "folder",
+            "thread",
+            1,
+        ),
+        (
+            MediaFile("https://i.4cdn.org/g/2.jpg", "2.jpg"),
+            "folder",
+            "thread",
+            1,
+        ),
+        (
+            MediaFile("https://i.4cdn.org/g/3.jpg", "3.jpg"),
+            "folder",
+            "thread",
+            1,
+        ),
+    ]
+
+    log_messages: list[str] = []
+    progress_events: list[object] = []
+    worker.log_message.connect(log_messages.append)
+    worker.progress.connect(progress_events.append)
+
+    worker._download_all(downloads, len(downloads))
+
+    assert any("cancelled" in message.lower() for message in log_messages)
+    assert progress_events == []
+    assert scraper.download_calls >= 1
+
+
+def test_download_all_emits_progress_for_completed_downloads(monkeypatch) -> None:
+    """Successful downloads should emit progress tasks with filenames and counts."""
+    monkeypatch.setattr(workers.config, "MAX_WORKERS", 2)
+    scraper = _FakeScraper()
+    scraper.stats["start_time"] = 100.0
+    scraper.stats["size_mb"] = 10.0
+    scraper.download_file = lambda media_file, folder_name=None, progress_callback=None: True  # ty: ignore[invalid-assignment]
+
+    worker = workers.DownloadWorker(cast(FourChanScraper, scraper), {})
+    downloads = [
+        (
+            MediaFile("https://i.4cdn.org/g/1.jpg", "first.jpg"),
+            "folder",
+            "Thread A",
+            1,
+        ),
+        (
+            MediaFile("https://i.4cdn.org/g/2.jpg", "second.jpg"),
+            "folder",
+            "Thread A",
+            1,
+        ),
+    ]
+
+    progress_events: list[object] = []
+    worker.progress.connect(progress_events.append)
+    monkeypatch.setattr(workers.time, "time", lambda: 110.0)
+
+    worker._download_all(downloads, 2)
+
+    assert len(progress_events) == 2
+    first = progress_events[0]
+    assert first.completed == 1
+    assert first.total == 2
+    assert first.filename in {"first.jpg", "second.jpg"}
+    assert first.thread_title == "Thread A"
+    assert {event.filename for event in progress_events} == {"first.jpg", "second.jpg"}
