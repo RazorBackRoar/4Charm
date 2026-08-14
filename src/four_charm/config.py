@@ -1,12 +1,12 @@
 import json
 import multiprocessing
 import pathlib
-from typing import Any
+from typing import Any, ClassVar
 
 
 class Config:
     # Default configuration values
-    _DEFAULTS = {
+    _DEFAULTS: ClassVar[dict[str, Any]] = {
         "MAX_WORKERS": min(5, multiprocessing.cpu_count()),
         "DOWNLOAD_TIMEOUT": (10, 60),
         "RATE_LIMIT_DELAY": 0.3,
@@ -33,7 +33,7 @@ class Config:
     }
 
     # Safe validation ranges for user configuration
-    _VALIDATION_RULES = {
+    _VALIDATION_RULES: ClassVar[dict[str, dict[str, Any]]] = {
         "MAX_WORKERS": {"min": 1, "max": 20, "type": int},
         "RATE_LIMIT_DELAY": {"min": 0.1, "max": 5.0, "type": float},
         "MAX_RETRIES": {"min": 0, "max": 10, "type": int},
@@ -179,7 +179,7 @@ class Config:
         """Get the path to the configuration file."""
         return str(self._config_path)
 
-    MEDIA_EXTENSIONS = {
+    MEDIA_EXTENSIONS: ClassVar[set[str]] = {
         ".jpg",
         ".jpeg",
         ".png",
@@ -197,9 +197,16 @@ class Config:
         ".rar",
     }
 
-    PHOTO_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"}
+    PHOTO_EXTENSIONS: ClassVar[set[str]] = {
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".gif",
+        ".webp",
+        ".bmp",
+    }
 
-    VIDEO_EXTENSIONS = {".webm", ".mp4", ".mov", ".avi", ".mkv"}
+    VIDEO_EXTENSIONS: ClassVar[set[str]] = {".webm", ".mp4", ".mov", ".avi", ".mkv"}
 
     USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
 

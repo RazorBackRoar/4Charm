@@ -18,7 +18,6 @@ from typing import Any
 
 import requests
 
-
 logger = logging.getLogger("4Charm")
 
 

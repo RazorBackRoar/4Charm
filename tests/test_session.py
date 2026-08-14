@@ -25,9 +25,11 @@ def test_safe_get_blocks_disallowed_redirect() -> None:
     redirect_response.headers = {"Location": "https://evil.com/secret"}
     redirect_response.close = MagicMock()
 
-    with patch.object(session, "get", return_value=redirect_response) as mock_get:
-        with pytest.raises(requests.exceptions.RequestException, match="Blocked redirect"):
-            safe_get(session, "https://i.4cdn.org/g/1.jpg", timeout=5)
+    with (
+        patch.object(session, "get", return_value=redirect_response) as mock_get,
+        pytest.raises(requests.exceptions.RequestException, match="Blocked redirect"),
+    ):
+        safe_get(session, "https://i.4cdn.org/g/1.jpg", timeout=5)
 
     mock_get.assert_called_once()
     assert mock_get.call_args.kwargs.get("allow_redirects") is False

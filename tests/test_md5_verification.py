@@ -45,7 +45,7 @@ def test_verify_download_empty_file(tmp_path):
 def test_verify_download_size_mismatch(temp_file):
     """Test verification fails when file size doesn't match."""
     scraper = FourChanScraper()
-    file_path, content = temp_file
+    file_path, _content = temp_file
 
     media_file = MediaFile("http://example.com/test.jpg", "test.jpg")
     media_file.size = 999  # Wrong size

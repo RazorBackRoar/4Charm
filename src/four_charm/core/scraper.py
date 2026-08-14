@@ -42,6 +42,7 @@ _sanitize_folder_component = sanitize_folder_component
 # keep working when the scraper delegates to a BoardApi.
 __all__ = [
     "BoardApi",
+    "DownloadError",
     "FourChanScraper",
     "LiveBoardApi",
     "PathBuilder",
@@ -55,6 +56,20 @@ OVERSIZED_BACKUP_SUFFIX = ".4charm-oversized.bak"
 
 
 logger = logging.getLogger("4Charm")
+
+
+class DownloadError(Exception):
+    """Raised when a downloaded file is empty or fails integrity checks."""
+
+
+_DOWNLOAD_ERRORS = (
+    DownloadError,
+    OSError,
+    TypeError,
+    ValueError,
+    requests.RequestException,
+)
+_NETWORK_ERRORS = (OSError, TypeError, ValueError, requests.RequestException)
 
 
 class ScraperStats(TypedDict):
@@ -417,7 +432,7 @@ class FourChanScraper:
 
             try:
                 expected_md5_hex = base64.b64decode(media_file.expected_md5).hex()
-            except Exception:
+            except (TypeError, ValueError):
                 # If decoding fails, assume it's already hex
                 expected_md5_hex = media_file.expected_md5
 
@@ -441,7 +456,7 @@ class FourChanScraper:
             free_space_bytes = shutil.disk_usage(self.download_dir).free
             free_space_mb = free_space_bytes / (1024 * 1024)
             return free_space_mb > (config.MIN_FREE_SPACE_MB + required_mb)
-        except Exception as e:
+        except OSError as e:
             logger.warning(f"Could not check disk space: {e}")
             return True
 
@@ -488,7 +503,7 @@ class FourChanScraper:
             elif len(path_parts) >= 2 and path_parts[1] == "catalog":
                 result["type"] = "catalog"
             return result
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError) as e:
             logger.error(f"URL parsing error: {e}")
             return None
 
@@ -519,7 +534,7 @@ class FourChanScraper:
             )
             self.adaptive_delay(success=True)  # Success, reduce delay
             return thread_data
-        except Exception as e:
+        except _NETWORK_ERRORS as e:
             error_info = self.handle_network_error(e, api_url, "getting thread data")
             if error_info.get("category") == "rate_limited":
                 # Retry once after rate limit handling
@@ -532,7 +547,7 @@ class FourChanScraper:
                         thread_data.get("posts", [])
                     )
                     return thread_data
-                except Exception as e2:
+                except _NETWORK_ERRORS as e2:
                     logger.error(f"Retry failed for {api_url}: {e2}")
                     return None
             return None
@@ -547,7 +562,7 @@ class FourChanScraper:
             catalog_data = response.json()
             self.adaptive_delay(success=True)  # Success, reduce delay
             return catalog_data
-        except Exception as e:
+        except _NETWORK_ERRORS as e:
             error_info = self.handle_network_error(e, api_url, "getting catalog data")
             if error_info.get("category") == "rate_limited":
                 # Retry once after rate limit handling
@@ -556,7 +571,7 @@ class FourChanScraper:
                     response = self._board_api.fetch_catalog(board)
                     response.raise_for_status()
                     return response.json()
-                except Exception as e2:
+                except _NETWORK_ERRORS as e2:
                     logger.error(f"Retry failed for {api_url}: {e2}")
                     return None
             return None
@@ -720,7 +735,7 @@ class FourChanScraper:
                 file_size = file_path.stat().st_size
                 if file_size == 0:
                     file_path.unlink(missing_ok=True)
-                    raise Exception("Downloaded file is empty")
+                    raise DownloadError("Downloaded file is empty")
 
                 # Verify download integrity (MD5 and size check)
                 if not self.verify_download(file_path, media_file):
@@ -728,14 +743,14 @@ class FourChanScraper:
                         f"Verification failed for {media_file.filename}, deleting and retrying"
                     )
                     file_path.unlink(missing_ok=True)
-                    raise Exception("Download verification failed")
+                    raise DownloadError("Download verification failed")
 
                 self._discard_oversized_backup(file_path)
 
                 try:
                     media_file.hash = media_file.calculate_hash(file_path)
                     self.dedup.add(media_file.hash)
-                except Exception as e:
+                except OSError as e:
                     logger.warning(
                         f"Could not calculate hash for {media_file.filename}: {e}"
                     )
@@ -744,7 +759,7 @@ class FourChanScraper:
                 self.download_queue.complete_download(media_file.url)
                 return True
 
-            except Exception as e:
+            except _DOWNLOAD_ERRORS as e:
                 if not self._handle_download_retry(media_file, attempt, e):
                     if file_path is not None:
                         file_path.unlink(missing_ok=True)
@@ -752,7 +767,7 @@ class FourChanScraper:
                     return False
 
         self.download_queue.fail_download(
-            media_file.url, Exception("Max retries exceeded")
+            media_file.url, DownloadError("Max retries exceeded")
         )
         return False
 

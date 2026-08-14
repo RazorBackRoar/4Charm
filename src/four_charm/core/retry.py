@@ -14,7 +14,7 @@ from __future__ import annotations
 import random
 import time
 
-import four_charm.config as config
+from four_charm import config
 
 
 class RetryPolicy:

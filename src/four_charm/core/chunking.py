@@ -7,7 +7,7 @@ flow through automatically.
 
 from __future__ import annotations
 
-import four_charm.config as config
+from four_charm import config
 
 
 class ChunkSelector:

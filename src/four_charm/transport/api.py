@@ -20,7 +20,7 @@ from typing import Protocol
 
 import requests
 
-import four_charm.config as config
+from four_charm import config
 from four_charm.transport.session import safe_get
 
 

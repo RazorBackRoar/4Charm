@@ -16,8 +16,9 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-import four_charm.config as config
 from razorcore.filesystem import sanitize_filename as _rc_sanitize
+
+from four_charm import config
 
 
 def sanitize_filename(name: str, replacement: str = "_") -> str:

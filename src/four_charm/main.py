@@ -10,12 +10,11 @@ from pathlib import Path
 
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
-
-from four_charm.gui.main_window import MainWindow
-from four_charm.utils.logging_setup import setup_logging
 from razorcore.appinfo import print_startup_info
 from razorcore.config import get_version as razorcore_get_version
 
+from four_charm.gui.main_window import MainWindow
+from four_charm.utils.logging_setup import setup_logging
 
 # Setup logging
 logger = setup_logging()
@@ -44,7 +43,7 @@ def get_version() -> str:
                         if version:
                             return str(version)
                     break
-        except Exception as e:
+        except (OSError, TypeError, ValueError, KeyError) as e:
             logger.warning("Could not read version from Info.plist: %s", e)
         return razorcore_get_version(default="2.0.1", package_name=PACKAGE_NAME)
 

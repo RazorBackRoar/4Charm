@@ -5,7 +5,6 @@ from __future__ import annotations
 import re
 from urllib.parse import urlparse
 
-
 URL_PATTERN = re.compile(r"https?://[^\s<>\"']+")
 _TRAILING_PUNCT = re.compile(r"[.,;:)\]}>]+$")
 

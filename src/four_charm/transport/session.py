@@ -12,9 +12,8 @@ from urllib.parse import urljoin, urlparse
 import requests
 from requests.adapters import HTTPAdapter
 
-import four_charm.config as config
+from four_charm import config
 from four_charm.core.urls import is_allowed_fetch_host
-
 
 MAX_REDIRECTS = 5
 _REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})

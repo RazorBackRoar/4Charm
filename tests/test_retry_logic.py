@@ -1,6 +1,6 @@
 """Tests for exponential backoff retry logic."""
 
-import four_charm.config as config
+from four_charm import config
 from four_charm.core.scraper import FourChanScraper
 
 

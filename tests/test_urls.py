@@ -29,11 +29,9 @@ def test_extract_supported_urls_rejects_spoofed_hosts() -> None:
 
 
 def test_extract_supported_urls_accepts_4channel_and_media_hosts() -> None:
-    text = "\n".join(
-        [
-            "https://boards.4channel.org/g/thread/99",
-            "https://i.4cdn.org/g/12345.jpg",
-        ]
+    text = (
+        "https://boards.4channel.org/g/thread/99\n"
+        "https://i.4cdn.org/g/12345.jpg"
     )
     urls = extract_supported_4chan_urls(text)
 

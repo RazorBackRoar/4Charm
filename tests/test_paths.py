@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-import four_charm.config as config
+from four_charm import config
 from four_charm.core.models import MediaFile
 from four_charm.core.paths import (
     PathBuilder,
