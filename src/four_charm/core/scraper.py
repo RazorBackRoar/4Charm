@@ -225,23 +225,36 @@ class FourChanScraper:
         return file_path.with_name(file_path.name + OVERSIZED_BACKUP_SUFFIX)
 
     def _quarantine_oversized_file(self, file_path: Path) -> bool:
+        """Move an oversized file aside until a verified re-download succeeds."""
         backup = self._oversized_backup_path(file_path)
         backup.unlink(missing_ok=True)
         try:
             file_path.rename(backup)
             return True
-        except OSError:
+        except OSError as exc:
+            logger.warning(
+                f"Could not quarantine oversized file {file_path}: {exc}; "
+                "leaving it in place"
+            )
             return False
 
     def _discard_oversized_backup(self, file_path: Path) -> None:
         self._oversized_backup_path(file_path).unlink(missing_ok=True)
 
     def _restore_oversized_backup(self, file_path: Path) -> bool:
+        """Put the quarantined file back when re-download did not finish."""
         backup = self._oversized_backup_path(file_path)
         if not backup.exists() or file_path.exists():
             return False
-        backup.rename(file_path)
-        return True
+        try:
+            backup.rename(file_path)
+            logger.info(f"Restored oversized backup for {file_path.name}")
+            return True
+        except OSError as exc:
+            logger.warning(
+                f"Could not restore oversized backup for {file_path}: {exc}"
+            )
+            return False
 
     def _check_existing_file(self, file_path: Path, media_file: MediaFile) -> bool:
         """Check for existing complete file and handle duplicates."""

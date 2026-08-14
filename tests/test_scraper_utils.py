@@ -158,9 +158,47 @@ def test_check_existing_file_redownloads_oversized(tmp_path: Path) -> None:
     media.size = 2
     path = tmp_path / "123.jpg"
     path.write_bytes(b"data")
+    backup = path.with_name(path.name + ".4charm-oversized.bak")
 
     assert scraper._check_existing_file(path, media) is False
     assert not path.exists()
+    assert backup.exists()
+    assert backup.read_bytes() == b"data"
+
+
+def test_download_file_restores_oversized_backup_when_redownload_fails(
+    monkeypatch, tmp_path: Path
+) -> None:
+    """Quarantined oversized files must return if the replacement download fails."""
+    scraper = FourChanScraper()
+    scraper.download_dir = tmp_path
+    dest = tmp_path / "g-123" / "123.jpg"
+    dest.parent.mkdir()
+    dest.write_bytes(b"data")
+    backup = dest.with_name(dest.name + ".4charm-oversized.bak")
+
+    media = MediaFile("https://i.4cdn.org/g/123.jpg", "123.jpg")
+    media.size = 2
+
+    class FailingBoardApi:
+        def stream_range(self, url, *, headers=None, timeout=None):
+            _ = url, headers, timeout
+            raise ConnectionError("network down")
+
+        def fetch_thread(self, board, thread_id):
+            raise NotImplementedError
+
+        def fetch_catalog(self, board):
+            raise NotImplementedError
+
+    scraper._board_api = FailingBoardApi()
+    monkeypatch.setattr(scraper, "check_disk_space", lambda required_mb=0: True)
+    monkeypatch.setattr(config, "MAX_RETRIES", 1)
+
+    assert scraper.download_file(media, "g-123") is False
+    assert not backup.exists()
+    assert dest.exists()
+    assert dest.read_bytes() == b"data"
 
 
 def test_download_file_resumes_partial_instead_of_skipping(
