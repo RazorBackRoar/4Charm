@@ -1,8 +1,10 @@
 """Logic tests for FourChanScraper utilities."""
 
 from pathlib import Path
+from typing import ClassVar
 
 import pytest
+import requests
 
 from four_charm import config
 from four_charm.core.models import MediaFile
@@ -95,7 +97,7 @@ def test_download_file_registers_hash_in_dedup_tracker(
 
     class FakeResponse:
         status_code = 200
-        headers = {"content-length": "4"}
+        headers: ClassVar[dict[str, str]] = {"content-length": "4"}
 
         @staticmethod
         def iter_content(chunk_size: int):
@@ -167,7 +169,7 @@ def test_download_file_resumes_partial_instead_of_skipping(
 
     class FakeResponse:
         status_code = 206
-        headers = {"content-length": "2"}
+        headers: ClassVar[dict[str, str]] = {"content-length": "2"}
 
         @staticmethod
         def iter_content(chunk_size: int):
@@ -251,7 +253,7 @@ def test_download_success_discards_oversized_backup(monkeypatch, tmp_path: Path)
 
     class FakeResponse:
         status_code = 200
-        headers = {"content-length": "4"}
+        headers: ClassVar[dict[str, str]] = {"content-length": "4"}
 
         @staticmethod
         def iter_content(chunk_size: int):
@@ -333,7 +335,7 @@ def test_download_file_restores_oversized_on_failure(
 
     class FailingBoardApi:
         def stream_range(self, url, *, headers=None, timeout=None):
-            raise Exception("network failure")
+            raise requests.RequestException("network failure")
 
         def fetch_thread(self, board, thread_id):
             raise NotImplementedError

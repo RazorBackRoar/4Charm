@@ -1,10 +1,9 @@
 import hashlib
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
-import four_charm.config as config
-
+from four_charm import config
 
 logger = logging.getLogger("4Charm")
 
@@ -45,7 +44,11 @@ class DownloadQueue:
         if url not in self.completed:
             self.completed.append(url)
             self.history.append(
-                {"url": url, "completed_at": datetime.now(), "status": "completed"}
+                {
+                    "url": url,
+                    "completed_at": datetime.now(UTC),
+                    "status": "completed",
+                }
             )
 
     def fail_download(self, url: str, error: Exception | None = None) -> None:
@@ -57,7 +60,7 @@ class DownloadQueue:
             self.history.append(
                 {
                     "url": url,
-                    "completed_at": datetime.now(),
+                    "completed_at": datetime.now(UTC),
                     "status": "failed",
                     "error": str(error),
                 }

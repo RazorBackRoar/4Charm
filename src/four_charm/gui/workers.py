@@ -18,16 +18,27 @@ import traceback
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
+import requests
 from PySide6.QtCore import QObject, Signal
 
-import four_charm.config as config
+from four_charm import config
 from four_charm.core.models import MediaFile
 from four_charm.core.paths import sanitize_filename
-from four_charm.core.scraper import FourChanScraper
+from four_charm.core.scraper import DownloadError, FourChanScraper
 from four_charm.core.signals import DownloadTask
 
-
 logger = logging.getLogger("4Charm")
+
+_WORKER_ERRORS = (
+    AttributeError,
+    DownloadError,
+    KeyError,
+    OSError,
+    RuntimeError,
+    TypeError,
+    ValueError,
+    requests.RequestException,
+)
 
 
 class _BaseDownloadWorker(QObject):
@@ -150,7 +161,7 @@ class _BaseDownloadWorker(QObject):
                         self.log_message.emit(
                             f"❌ {prefix}Failed download: {media_file.filename}"
                         )
-                except Exception as e:
+                except _WORKER_ERRORS as e:
                     self.log_message.emit(
                         f"❌ {prefix}Error downloading {media_file.filename}: {e}"
                     )
@@ -258,7 +269,7 @@ class DownloadWorker(_BaseDownloadWorker):
             ]
             self._download_all(downloads, len(media_files))
             self._emit_summary()
-        except Exception as e:
+        except _WORKER_ERRORS as e:
             self._handle_run_error("DownloadWorker", e)
 
 
@@ -284,7 +295,7 @@ class MultiUrlDownloadWorker(_BaseDownloadWorker):
                         url_index=i,
                         use_thread_title_folder=True,
                     )
-                except Exception as e:
+                except _WORKER_ERRORS as e:
                     board = parsed_url.get("board", "unknown")
                     thread_id = parsed_url.get("thread_id")
                     source = (
@@ -332,5 +343,5 @@ class MultiUrlDownloadWorker(_BaseDownloadWorker):
             ]
             self._download_all(downloads, total_files)
             self._emit_summary(source_count=len(url_tasks))
-        except Exception as e:
+        except _WORKER_ERRORS as e:
             self._handle_run_error("MultiUrlDownloadWorker", e)

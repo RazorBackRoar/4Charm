@@ -51,7 +51,7 @@
 import logging
 import re
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import override
 
@@ -87,6 +87,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from razorcore.appinfo import AboutDialog
+from razorcore.updates import check_for_updates
 
 from four_charm.core.bandwidth import BandwidthMonitor
 from four_charm.core.scraper import FourChanScraper
@@ -106,9 +108,6 @@ from four_charm.gui.widgets import (
     create_interface_icon,
 )
 from four_charm.gui.workers import MultiUrlDownloadWorker
-from razorcore.appinfo import AboutDialog
-from razorcore.updates import check_for_updates
-
 
 logger = logging.getLogger("4Charm")
 
@@ -200,8 +199,7 @@ def _compute_clamped_heights(available_height: int) -> tuple[int, int]:
     usable = max(available_height - _SCREEN_SAFE_MARGIN, 400)
     min_h = min(_TARGET_MIN_HEIGHT, usable)
     default_h = min(_TARGET_DEFAULT_HEIGHT, usable)
-    if default_h < min_h:
-        default_h = min_h
+    default_h = max(default_h, min_h)
     return min_h, default_h
 
 
@@ -359,7 +357,7 @@ class MainWindow(QMainWindow):
                 sel_register_name(b"setTitleVisibility:"),
                 1,
             )
-        except Exception:
+        except (AttributeError, OSError, TypeError, ValueError):
             logger.warning("Could not apply the native macOS title-bar style")
 
     def _apply_startup_size(self) -> None:
@@ -490,7 +488,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(subtitle)
         return panel
 
-    def eventFilter(self, obj, event):  # noqa: N802 - Qt override
+    def eventFilter(self, obj, event):
         """Open About when the 4Charm title is double-clicked."""
         if (
             obj is getattr(self, "title_label", None)
@@ -1062,7 +1060,7 @@ class MainWindow(QMainWindow):
         self.speed_label.setText(f"{speed:.1f} MB/s")
 
     def add_log_message(self, message: str):
-        timestamp = datetime.now().strftime("%H:%M:%S")
+        timestamp = datetime.now(UTC).astimezone().strftime("%H:%M:%S")
         self.log_text.add_line(f"[{timestamp}] {message}")
         self.log_text.moveCursor(QTextCursor.MoveOperation.End)
         # Update stats after each log message
@@ -1079,7 +1077,7 @@ class MainWindow(QMainWindow):
 
             size_mb = self.scraper.stats.get("size_mb", 0.0)
             self.storage_card.set_value(_format_storage_size(size_mb))
-        except Exception as e:
+        except (AttributeError, KeyError, TypeError) as e:
             logger.warning(f"Could not update session download stats: {e}")
 
     def paste_from_clipboard(self):

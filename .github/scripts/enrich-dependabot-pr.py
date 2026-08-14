@@ -12,7 +12,6 @@ import urllib.error
 import urllib.request
 from dataclasses import dataclass
 
-
 BUMP_TITLE_RE = re.compile(
     r"(?:bump|update)\s+([^\s]+)\s+from\s+([^\s]+)\s+to\s+([^\s]+)",
     re.IGNORECASE,
