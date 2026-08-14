@@ -18,7 +18,9 @@ In the RazorBackRoar workspace layout, run the same command from `Apps/` after
 works.
 
 Standalone clones without the full workspace still build when `razorbuild` (or
-`4charmbuild`) is installed and `uv sync` has succeeded.
+`4charmbuild`) is installed and `uv sync` has succeeded. GitHub Actions also
+packages the Apple Silicon DMG on tag `v*` via `.github/workflows/release.yml`
+(`scripts/package-macos.sh`).
 
 ## Repo-specific inputs
 

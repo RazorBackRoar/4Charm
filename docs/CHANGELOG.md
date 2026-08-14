@@ -8,6 +8,17 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [2.0.2] - 2026-08-14
+
+### Fixed
+
+- Oversized on-disk files are quarantined and restored if re-download does not succeed
+- Quarantine/restore I/O failures are logged
+
+### Added
+
+- Architecture guide and expanded download-pipeline tests
+
 ## [2.0.1] - 2026-07-12
 
 ### Security
