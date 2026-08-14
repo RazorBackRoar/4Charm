@@ -45,7 +45,7 @@ def get_version() -> str:
                     break
         except (OSError, TypeError, ValueError, KeyError) as e:
             logger.warning("Could not read version from Info.plist: %s", e)
-        return razorcore_get_version(default="2.0.1", package_name=PACKAGE_NAME)
+        return razorcore_get_version(default="2.0.2", package_name=PACKAGE_NAME)
 
     # 2. Development: razorcore version resolution
     pyproject_path = Path(__file__).resolve().parent.parent.parent / "pyproject.toml"

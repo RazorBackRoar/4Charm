@@ -5,6 +5,16 @@ All notable changes to 4Charm will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.2] - 2026-08-14
+
+### Fixed
+- Oversized files already on disk are quarantined to a `.4charm-oversized.bak` sidecar before re-download, then restored if the replacement fails, is cancelled, or cannot start (disk space)
+- Quarantine and restore failures are logged instead of failing silently
+
+### Added
+- Architecture guide (`docs/ARCHITECTURE.md`) and contributor testing notes
+- Broader unit coverage for download queue, SHA-256 dedup, media extraction, MD5 verify-retry, workers, and config validation
+
 ## [2.0.1] - 2026-07-12
 
 ### Security
@@ -72,6 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adaptive rate limiting
 - Apple Silicon optimization
 
+[2.0.2]: https://github.com/RazorBackRoar/4Charm/compare/v2.0.1...v2.0.2
 [2.0.1]: https://github.com/RazorBackRoar/4Charm/releases/tag/v2.0.1
 [4.12.0]: https://github.com/RazorBackRoar/4Charm/compare/v4.11.8...v4.12.0
 [4.11.8]: https://github.com/RazorBackRoar/4Charm/compare/v4.11.7...v4.11.8
