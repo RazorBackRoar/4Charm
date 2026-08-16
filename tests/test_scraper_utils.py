@@ -158,12 +158,12 @@ def test_check_existing_file_redownloads_oversized(tmp_path: Path) -> None:
     media.size = 2
     path = tmp_path / "123.jpg"
     path.write_bytes(b"data")
-    backup = path.with_name(path.name + ".4charm-oversized.bak")
 
     assert scraper._check_existing_file(path, media) is False
-    assert not path.exists()
-    assert backup.exists()
-    assert backup.read_bytes() == b"data"
+    assert path.exists()
+    assert path.read_bytes() == b"data"
+    backup = path.with_name(path.name + ".4charm-oversized.bak")
+    assert not backup.exists()
 
 
 def test_download_file_restores_oversized_backup_when_redownload_fails(
@@ -288,8 +288,8 @@ def test_mark_download_cancelled_restores_oversized_backup(tmp_path: Path) -> No
     assert not backup.exists()
 
 
-def test_download_success_discards_oversized_backup(monkeypatch, tmp_path: Path) -> None:
-    """A successful re-download removes the quarantine sidecar."""
+def test_download_success_keeps_unrelated_existing_file(monkeypatch, tmp_path: Path) -> None:
+    """A different file that already occupies the dest name must not be replaced."""
 
     class FakeResponse:
         status_code = 200
@@ -320,14 +320,16 @@ def test_download_success_discards_oversized_backup(monkeypatch, tmp_path: Path)
     dest = tmp_path / "g-123" / "123.jpg"
     dest.parent.mkdir()
     dest.write_bytes(original)
-    backup = dest.with_name(dest.name + ".4charm-oversized.bak")
 
     monkeypatch.setattr(scraper, "check_disk_space", lambda required_mb=0: True)
     monkeypatch.setattr(media, "calculate_hash", lambda _path: "hash-success")
 
     assert scraper.download_file(media, "g-123") is True
-    assert dest.read_bytes() == b"data"
-    assert not backup.exists()
+    assert dest.read_bytes() == original
+    unique = dest.with_name("123 2.jpg")
+    assert unique.read_bytes() == b"data"
+    assert not dest.with_name(dest.name + ".4charm-oversized.bak").exists()
+    assert not dest.with_name(dest.name + ".4charm.part").exists()
 
 
 def test_download_disk_space_failure_restores_oversized_backup(
@@ -353,8 +355,8 @@ def test_download_disk_space_failure_restores_oversized_backup(
     assert not backup.exists()
 
 
-def test_check_existing_file_quarantines_oversized_file(tmp_path: Path) -> None:
-    """An oversized file is moved to the .4charm-oversized.bak sidecar, not deleted."""
+def test_check_existing_file_leaves_oversized_file_in_place(tmp_path: Path) -> None:
+    """An oversized occupant is left alone so a later download can uniquify."""
     scraper = FourChanScraper()
     media = MediaFile("https://i.4cdn.org/g/123.jpg", "123.jpg")
     media.size = 2
@@ -362,10 +364,10 @@ def test_check_existing_file_quarantines_oversized_file(tmp_path: Path) -> None:
     path.write_bytes(b"data")
 
     assert scraper._check_existing_file(path, media) is False
-    assert not path.exists()
+    assert path.exists()
+    assert path.read_bytes() == b"data"
     backup = path.with_name(path.name + ".4charm-oversized.bak")
-    assert backup.exists()
-    assert backup.read_bytes() == b"data"
+    assert not backup.exists()
 
 
 def test_download_file_restores_oversized_on_failure(

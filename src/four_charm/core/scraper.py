@@ -1,6 +1,8 @@
 import logging
+import os
 import re
 import shutil
+import stat
 import time
 from pathlib import Path
 from typing import TypedDict
@@ -53,6 +55,7 @@ __all__ = [
 
 
 OVERSIZED_BACKUP_SUFFIX = ".4charm-oversized.bak"
+DOWNLOAD_PART_SUFFIX = ".4charm.part"
 
 
 logger = logging.getLogger("4Charm")
@@ -154,6 +157,78 @@ class FourChanScraper:
         self, media_file: MediaFile, url_folder_name: str | None
     ) -> tuple[Path, Path]:
         return self._path_builder.build(media_file, url_folder_name)
+
+    def _unique_available_path(self, path: Path) -> Path:
+        return self._path_builder.unique_available_path(path)
+
+    def _part_path(self, dest: Path) -> Path:
+        return self._assert_within_download_dir(
+            dest.with_name(dest.name + DOWNLOAD_PART_SUFFIX)
+        )
+
+    def _open_nofollow(self, path: Path, mode: str):
+        """Open `path` for writing without following symlinks."""
+        path = self._assert_within_download_dir(path)
+        if path.is_symlink():
+            raise DownloadError("Refusing to write through a symlink")
+        flags = os.O_NOFOLLOW | os.O_CLOEXEC | os.O_CREAT
+        if "a" in mode:
+            flags |= os.O_WRONLY | os.O_APPEND
+        else:
+            flags |= os.O_WRONLY | os.O_TRUNC
+        try:
+            fd = os.open(path, flags, 0o644)
+        except OSError as exc:
+            raise DownloadError(f"Could not open download file: {exc}") from exc
+        return os.fdopen(fd, mode)
+
+    def _open_nofollow_read(self, path: Path):
+        """Open `path` for reading without following symlinks."""
+        path = self._assert_within_download_dir(path)
+        try:
+            fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC)
+        except OSError as exc:
+            raise DownloadError(f"Could not open download file: {exc}") from exc
+        return os.fdopen(fd, "rb")
+
+    def _dest_is_resume_prefix(self, dest: Path, part_path: Path) -> bool:
+        """True when `dest` is a byte prefix of the verified part file."""
+        try:
+            dest_stat = dest.lstat()
+            part_stat = part_path.lstat()
+        except OSError:
+            return False
+        if stat.S_ISLNK(dest_stat.st_mode) or stat.S_ISLNK(part_stat.st_mode):
+            return False
+        dest_size = dest_stat.st_size
+        part_size = part_stat.st_size
+        if dest_size <= 0 or dest_size >= part_size:
+            return False
+        try:
+            with self._open_nofollow_read(dest) as dest_handle, self._open_nofollow_read(
+                part_path
+            ) as part_handle:
+                return dest_handle.read(dest_size) == part_handle.read(dest_size)
+        except (OSError, DownloadError):
+            return False
+
+    def _promote_verified_download(self, part_path: Path, dest: Path) -> Path:
+        """Move a verified part file into place without replacing unrelated files."""
+        part_path = self._assert_within_download_dir(part_path)
+        dest = self._assert_within_download_dir(dest)
+        try:
+            dest_stat = dest.lstat()
+        except OSError:
+            dest_stat = None
+        if dest.is_symlink() or (
+            dest_stat is not None
+            and stat.S_ISREG(dest_stat.st_mode)
+            and dest_stat.st_size > 0
+            and not self._dest_is_resume_prefix(dest, part_path)
+        ):
+            dest = self._unique_available_path(dest)
+        os.replace(part_path, dest)
+        return dest
 
     def _sanitize_folder_component(self, name: str) -> str:
         return sanitize_folder_component(name)
@@ -258,6 +333,8 @@ class FourChanScraper:
 
     def _check_existing_file(self, file_path: Path, media_file: MediaFile) -> bool:
         """Check for existing complete file and handle duplicates."""
+        if file_path.is_symlink():
+            return False
         if not file_path.exists() or file_path.stat().st_size == 0:
             return False
 
@@ -270,9 +347,8 @@ class FourChanScraper:
             if actual_size > expected_size:
                 logger.warning(
                     f"Existing file larger than expected for {media_file.filename}: "
-                    f"{actual_size} > {expected_size}, re-downloading"
+                    f"{actual_size} > {expected_size}; leaving it in place"
                 )
-                self._quarantine_oversized_file(file_path)
                 return False
 
         try:
@@ -311,6 +387,8 @@ class FourChanScraper:
         if response.status_code == 206:
             return "ab", int(response.headers.get("content-length", 0)) + existing_size
         elif response.status_code == 200:
+            if file_path.is_symlink():
+                raise DownloadError("Refusing to replace a symlink")
             if file_path.exists():
                 file_path.unlink()
             return "wb", int(response.headers.get("content-length", 0))
@@ -669,28 +747,54 @@ class FourChanScraper:
         if not self._ensure_active_download(media_file.url):
             return False
 
-        file_path: Path | None = None
+        dest_path: Path | None = None
+        part_path: Path | None = None
 
         for attempt in range(config.MAX_RETRIES):
             try:
-                file_path, _save_dir = self._prepare_download_path(
+                dest_path, _save_dir = self._prepare_download_path(
                     media_file, url_folder_name
                 )
+                if dest_path.is_symlink():
+                    dest_path = self._unique_available_path(dest_path)
 
-                if self._check_existing_file(file_path, media_file):
+                if self._check_existing_file(dest_path, media_file):
                     return True
+
+                part_path = self._part_path(dest_path)
+                if part_path.is_symlink():
+                    part_path.unlink()
+                    part_path = self._unique_available_path(part_path)
+
+                try:
+                    dest_stat = dest_path.lstat()
+                except OSError:
+                    dest_stat = None
+                if (
+                    not part_path.exists()
+                    and dest_stat is not None
+                    and stat.S_ISREG(dest_stat.st_mode)
+                    and media_file.size
+                    and dest_stat.st_size < media_file.size
+                ):
+                    with self._open_nofollow_read(dest_path) as src, self._open_nofollow(
+                        part_path, "wb"
+                    ) as out:
+                        shutil.copyfileobj(src, out)
 
                 if not self.check_disk_space():
                     logger.error("Insufficient disk space")
                     self._record_failed_download(
                         media_file.url, Exception("Insufficient disk space")
                     )
-                    if file_path is not None:
-                        self._restore_oversized_backup(file_path)
+                    if part_path is not None:
+                        part_path.unlink(missing_ok=True)
+                    if dest_path is not None:
+                        self._restore_oversized_backup(dest_path)
                     return False
 
                 headers, existing_size = self._build_resume_headers(
-                    file_path, media_file.filename
+                    part_path, media_file.filename
                 )
 
                 media_file.start_time = time.time()
@@ -701,7 +805,7 @@ class FourChanScraper:
                 )
 
                 mode, total_size = self._handle_download_response(
-                    response, file_path, existing_size
+                    response, part_path, existing_size
                 )
                 # 200 means the server ignored Range and we started a fresh file.
                 downloaded_size = existing_size if mode == "ab" else 0
@@ -712,9 +816,9 @@ class FourChanScraper:
                     f"Using {chunk_size} byte chunks for {media_file.filename} ({total_size} bytes)"
                 )
 
-                with open(file_path, mode) as f:
+                with self._open_nofollow(part_path, mode) as f:
                     for chunk in response.iter_content(chunk_size=chunk_size):
-                        if not self._ensure_active_download(media_file.url, file_path):
+                        if not self._ensure_active_download(media_file.url, part_path):
                             return False
 
                         if not chunk:
@@ -745,38 +849,40 @@ class FourChanScraper:
                                 # Fallback for old signature (progress, speed)
                                 progress_callback(progress, current_speed)
 
-                file_size = file_path.stat().st_size
+                file_size = part_path.stat().st_size
                 if file_size == 0:
-                    file_path.unlink(missing_ok=True)
+                    part_path.unlink(missing_ok=True)
                     raise DownloadError("Downloaded file is empty")
 
                 # Verify download integrity (MD5 and size check)
-                if not self.verify_download(file_path, media_file):
+                if not self.verify_download(part_path, media_file):
                     logger.warning(
                         f"Verification failed for {media_file.filename}, deleting and retrying"
                     )
-                    file_path.unlink(missing_ok=True)
+                    part_path.unlink(missing_ok=True)
                     raise DownloadError("Download verification failed")
 
-                self._discard_oversized_backup(file_path)
+                dest_path = self._promote_verified_download(part_path, dest_path)
+                self._discard_oversized_backup(dest_path)
 
                 try:
-                    media_file.hash = media_file.calculate_hash(file_path)
+                    media_file.hash = media_file.calculate_hash(dest_path)
                     self.dedup.add(media_file.hash)
                 except OSError as e:
                     logger.warning(
                         f"Could not calculate hash for {media_file.filename}: {e}"
                     )
 
-                self._update_stats_on_success(file_path, media_file)
+                self._update_stats_on_success(dest_path, media_file)
                 self.download_queue.complete_download(media_file.url)
                 return True
 
             except _DOWNLOAD_ERRORS as e:
                 if not self._handle_download_retry(media_file, attempt, e):
-                    if file_path is not None:
-                        file_path.unlink(missing_ok=True)
-                        self._restore_oversized_backup(file_path)
+                    if part_path is not None:
+                        part_path.unlink(missing_ok=True)
+                    if dest_path is not None:
+                        self._restore_oversized_backup(dest_path)
                     return False
 
         self.download_queue.fail_download(

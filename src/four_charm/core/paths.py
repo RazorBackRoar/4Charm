@@ -16,9 +16,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from razorcore.filesystem import sanitize_filename as _rc_sanitize
-
 from four_charm import config
+from razorcore.filesystem import sanitize_filename as _rc_sanitize
 
 
 def sanitize_filename(name: str, replacement: str = "_") -> str:
@@ -120,6 +119,24 @@ class PathBuilder:
         file_path = save_dir / sanitize_filename(media_file.filename)
         self.within_download_dir(file_path)
         return file_path, save_dir
+
+    def unique_available_path(self, path: Path) -> Path:
+        """Return `path`, or `stem 2.ext`, `stem 3.ext`, … if that name is taken.
+
+        Symlinks count as taken so a colliding name never writes through a link.
+        """
+        candidate = self.within_download_dir(path)
+        if not candidate.exists() and not candidate.is_symlink():
+            return candidate
+        stem = candidate.stem
+        suffix = candidate.suffix
+        number = 2
+        while True:
+            next_path = candidate.with_name(f"{stem} {number}{suffix}")
+            next_path = self.within_download_dir(next_path)
+            if not next_path.exists() and not next_path.is_symlink():
+                return next_path
+            number += 1
 
     # ------------------------------------------------------------------
     # Session / thread folder naming

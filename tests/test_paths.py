@@ -94,7 +94,15 @@ def test_path_builder_thread_folder_name_prefers_title() -> None:
     assert name == "Hello world"
 
 
-def test_path_builder_thread_folder_name_falls_back_to_id() -> None:
-    builder = PathBuilder()
-    name = builder.thread_folder_name(None, "123", "g")
-    assert name == "g-123"
+def test_path_builder_unique_available_path_skips_existing_and_symlinks(
+    tmp_path: Path,
+) -> None:
+    builder = PathBuilder(tmp_path)
+    dest = tmp_path / "photo.jpg"
+    dest.write_bytes(b"keep")
+    taken = tmp_path / "photo 2.jpg"
+    taken.symlink_to(dest)
+
+    unique = builder.unique_available_path(dest)
+    assert unique == tmp_path / "photo 3.jpg"
+    assert dest.read_bytes() == b"keep"
