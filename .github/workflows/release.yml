@@ -32,10 +32,6 @@ jobs:
       - name: Sync
         run: uv sync --all-extras --dev
 
-      - name: Install create-dmg
-        continue-on-error: true
-        run: brew install create-dmg
-
       - name: Package app and DMG
         run: bash scripts/package-macos.sh
 

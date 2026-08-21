@@ -87,10 +87,10 @@ RazorBackRoar apps.
 
 ## DMG assets
 
-Window positions and background art for the release DMG live under `assets/`:
+DMG background art for the release DMG lives under `assets/`:
 
-- `assets/dmg-layout.json` — icon positions and background path
-- `assets/dmg-background.png` — DMG background image
+- `assets/dmg-background.png` — DMG background image used by the shared packager if present
+- `assets/dmg-layout.json` — (legacy) no longer read; the locked layout lives in `Apps/.razorcore/dmg-settings.py`
 
 See [docs/DMG_BUILD_README.md](docs/DMG_BUILD_README.md) for packaging
 troubleshooting.

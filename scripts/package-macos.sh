@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Package 4Charm as an Apple Silicon .app and .dmg.
-# Requires macOS (hdiutil / codesign). Intended for GitHub Actions macos-15
-# and local `razorbuild` fallbacks.
+# Uses the shared workspace packager (package-dmg.sh) for the locked 500×420 layout.
+# For local runs, package-dmg.sh installs to /Applications and smoke-launches.
+# CI/GitHub Actions skips the local handoff.
 set -euo pipefail
 
 if [[ "$(uname -s)" != "Darwin" ]]; then
@@ -15,9 +16,7 @@ cd "$ROOT"
 APP_NAME="4Charm"
 APP_PATH="dist/${APP_NAME}.app"
 DMG_PATH="dist/${APP_NAME}.dmg"
-STAGE="dist/dmg-stage"
-ICON="assets/icons/4Charm.icns"
-BACKGROUND="assets/dmg-background.png"
+RAZORCORE_DIR="$(cd "$ROOT/../.razorcore" && pwd)"
 
 if [[ ! -x ".venv/bin/pyinstaller" ]] && ! command -v uv >/dev/null 2>&1; then
   echo "error: uv is required (https://docs.astral.sh/uv/)" >&2
@@ -25,7 +24,7 @@ if [[ ! -x ".venv/bin/pyinstaller" ]] && ! command -v uv >/dev/null 2>&1; then
 fi
 
 echo "==> PyInstaller"
-rm -rf build dist
+rm -rf build dist dist/.previous-build
 uv run pyinstaller --noconfirm --clean "${APP_NAME}.spec"
 
 if [[ ! -d "${APP_PATH}" ]]; then
@@ -33,49 +32,26 @@ if [[ ! -d "${APP_PATH}" ]]; then
   exit 1
 fi
 
+echo "==> Branding"
+"$RAZORCORE_DIR/patch-app-branding.sh" "${APP_PATH}"
+
 echo "==> Ad-hoc codesign"
 codesign --force --deep --sign - "${APP_PATH}"
 
-rm -rf "${STAGE}" "${DMG_PATH}"
-mkdir -p "${STAGE}"
-cp -R "${APP_PATH}" "${STAGE}/"
-
 echo "==> DMG"
-packaged=0
-if command -v create-dmg >/dev/null 2>&1; then
-  if create-dmg \
-    --volname "${APP_NAME}" \
-    --volicon "${ICON}" \
-    --background "${BACKGROUND}" \
-    --window-pos 200 120 \
-    --window-size 500 420 \
-    --icon-size 96 \
-    --icon "${APP_NAME}.app" 130 160 \
-    --hide-extension "${APP_NAME}.app" \
-    --app-drop-link 370 160 \
-    "${DMG_PATH}" \
-    "${STAGE}"; then
-    packaged=1
-  else
-    echo "warning: create-dmg failed; falling back to hdiutil" >&2
-    rm -f "${DMG_PATH}"
-  fi
-fi
-
-if [[ "${packaged}" -eq 0 ]]; then
-  ln -s /Applications "${STAGE}/Applications"
-  hdiutil create \
-    -volname "${APP_NAME}" \
-    -srcfolder "${STAGE}" \
-    -ov \
-    -format UDZO \
-    "${DMG_PATH}"
-fi
+"$RAZORCORE_DIR/package-dmg.sh" \
+  --app "${APP_PATH}" \
+  --dmg "${DMG_PATH}" \
+  --app-name "${APP_NAME}" \
+  --volname "${APP_NAME}"
 
 if [[ ! -f "${DMG_PATH}" ]]; then
   echo "error: DMG was not created at ${DMG_PATH}" >&2
   exit 1
 fi
 
+# Keep only the DMG in-tree — /Applications is the runnable copy.
+rm -rf "${APP_PATH}" dist/.previous-build
+
 shasum -a 256 "${DMG_PATH}" | tee dist/4Charm.dmg.sha256
-echo "==> Built ${APP_PATH} and ${DMG_PATH}"
+echo "==> Built ${DMG_PATH}"
