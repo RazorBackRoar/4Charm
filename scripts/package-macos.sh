@@ -16,7 +16,15 @@ cd "$ROOT"
 APP_NAME="4Charm"
 APP_PATH="dist/${APP_NAME}.app"
 DMG_PATH="dist/${APP_NAME}.dmg"
-RAZORCORE_DIR="$(cd "$ROOT/../.razorcore" && pwd)"
+if [[ -n "${RAZORCORE_DIR:-}" && -d "${RAZORCORE_DIR}" ]]; then
+  RAZORCORE_DIR="$(cd "${RAZORCORE_DIR}" && pwd)"
+elif [[ -d "$ROOT/../.razorcore" ]]; then
+  RAZORCORE_DIR="$(cd "$ROOT/../.razorcore" && pwd)"
+else
+  echo "error: shared packager not found (set RAZORCORE_DIR or use a sibling Apps/.razorcore)" >&2
+  echo "GitHub-hosted runners cannot see private razorcore; build locally with razorbuild 4Charm." >&2
+  exit 1
+fi
 
 if [[ ! -x ".venv/bin/pyinstaller" ]] && ! command -v uv >/dev/null 2>&1; then
   echo "error: uv is required (https://docs.astral.sh/uv/)" >&2

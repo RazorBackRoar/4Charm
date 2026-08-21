@@ -35,9 +35,6 @@ jobs:
       - name: Package app and DMG
         run: bash scripts/package-macos.sh
 
-      - name: Zip .app for GitHub Release
-        run: ditto -c -k --keepParent dist/4Charm.app dist/4Charm.app.zip
-
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -45,7 +42,6 @@ jobs:
           path: |
             dist/4Charm.dmg
             dist/4Charm.dmg.sha256
-            dist/4Charm.app.zip
           if-no-files-found: error
 
       - name: Publish GitHub Release
@@ -65,8 +61,6 @@ jobs:
             echo "## Install"
             echo "Open \`4Charm.dmg\`, drag **4Charm** into Applications, then eject the disk image."
             echo
-            echo "A zipped \`4Charm.app\` is also attached if you prefer not to use the disk image."
-            echo
             echo "## What’s new"
             echo "- Oversized files already on disk are quarantined before re-download and restored if replacement fails"
             echo "- Architecture guide and expanded download-pipeline tests"
@@ -77,13 +71,12 @@ jobs:
           } > "${notes}"
 
           if gh release view "${tag}" >/dev/null 2>&1; then
-            gh release upload "${tag}" dist/4Charm.dmg dist/4Charm.dmg.sha256 dist/4Charm.app.zip --clobber
+            gh release upload "${tag}" dist/4Charm.dmg dist/4Charm.dmg.sha256 --clobber
             gh release edit "${tag}" --title "4Charm ${version}" --notes-file "${notes}"
           else
             gh release create "${tag}" \
               dist/4Charm.dmg \
               dist/4Charm.dmg.sha256 \
-              dist/4Charm.app.zip \
               --title "4Charm ${version}" \
               --notes-file "${notes}" \
               --target "${GITHUB_SHA}"
