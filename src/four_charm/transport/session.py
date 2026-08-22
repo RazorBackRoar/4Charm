@@ -15,6 +15,7 @@ from requests.adapters import HTTPAdapter
 from four_charm import config
 from four_charm.core.urls import is_allowed_fetch_host
 
+
 MAX_REDIRECTS = 5
 _REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
 

@@ -10,11 +10,12 @@ from pathlib import Path
 
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
-from razorcore.appinfo import print_startup_info
-from razorcore.config import get_version as razorcore_get_version
 
 from four_charm.gui.main_window import MainWindow
 from four_charm.utils.logging_setup import setup_logging
+from razorcore.appinfo import print_startup_info
+from razorcore.config import get_version as razorcore_get_version
+
 
 # Setup logging
 logger = setup_logging()

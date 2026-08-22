@@ -5,6 +5,7 @@ from pathlib import Path
 
 from four_charm import config
 
+
 logger = logging.getLogger("4Charm")
 
 

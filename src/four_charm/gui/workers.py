@@ -27,6 +27,7 @@ from four_charm.core.paths import sanitize_filename
 from four_charm.core.scraper import DownloadError, FourChanScraper
 from four_charm.core.signals import DownloadTask
 
+
 logger = logging.getLogger("4Charm")
 
 _WORKER_ERRORS = (

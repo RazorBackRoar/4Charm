@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # Package 4Charm as an Apple Silicon .app and .dmg.
 # Uses the shared workspace packager (package-dmg.sh) for the locked 500×420 layout.
-# For local runs, package-dmg.sh installs to /Applications and smoke-launches.
-# CI/GitHub Actions skips the local handoff.
+# Local runs keep dist/<App>.dmg and copy ~/Desktop/<App>.dmg. Do not mount.
 set -euo pipefail
 
 if [[ "$(uname -s)" != "Darwin" ]]; then
@@ -53,13 +52,13 @@ echo "==> DMG"
   --app-name "${APP_NAME}" \
   --volname "${APP_NAME}"
 
+# Delete the staging .app.
+rm -rf "${APP_PATH}" dist/.previous-build
+
 if [[ ! -f "${DMG_PATH}" ]]; then
   echo "error: DMG was not created at ${DMG_PATH}" >&2
   exit 1
 fi
-
-# Keep only the DMG in-tree — /Applications is the runnable copy.
-rm -rf "${APP_PATH}" dist/.previous-build
 
 shasum -a 256 "${DMG_PATH}" | tee dist/4Charm.dmg.sha256
 echo "==> Built ${DMG_PATH}"

@@ -87,8 +87,6 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from razorcore.appinfo import AboutDialog
-from razorcore.updates import check_for_updates
 
 from four_charm.core.bandwidth import BandwidthMonitor
 from four_charm.core.scraper import FourChanScraper
@@ -108,6 +106,9 @@ from four_charm.gui.widgets import (
     create_interface_icon,
 )
 from four_charm.gui.workers import MultiUrlDownloadWorker
+from razorcore.appinfo import AboutDialog
+from razorcore.updates import check_for_updates
+
 
 logger = logging.getLogger("4Charm")
 

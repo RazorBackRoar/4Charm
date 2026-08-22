@@ -6,6 +6,7 @@ import json
 import struct
 from pathlib import Path
 
+
 ROOT = Path(__file__).resolve().parents[1]
 LAYOUT_PATH = ROOT / "assets" / "dmg-layout.json"
 BACKGROUND_PATH = ROOT / "assets" / "dmg-background.png"
