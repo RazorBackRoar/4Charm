@@ -27,7 +27,7 @@ Download entire threads, catalogs, or boards with intelligent organization, fail
 
 ## Features
 
-- **Bulk Downloading** — queue up to 20 threads or catalogs simultaneously
+- **Bulk Downloading** — queue up to 50 threads or catalogs simultaneously
 - **Smart Organization** — automatic folder structure with WEBM separation
 - **Fail-Safe Resume** — automatically resumes interrupted downloads
 - **Duplicate Prevention** — SHA-256 hashing prevents re-downloading files

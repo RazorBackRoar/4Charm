@@ -747,6 +747,17 @@ class FourChanScraper:
         if not self._ensure_active_download(media_file.url):
             return False
 
+        reservation_key = media_file.expected_md5 or media_file.url
+        if not self.dedup.reserve(reservation_key):
+            media_file.skip_reason = "duplicate"
+            self.stats_mutex.lock()
+            try:
+                self.stats["duplicates"] += 1
+            finally:
+                self.stats_mutex.unlock()
+            self.download_queue.complete_download(media_file.url)
+            return True
+
         dest_path: Path | None = None
         part_path: Path | None = None
 
@@ -759,6 +770,7 @@ class FourChanScraper:
                     dest_path = self._unique_available_path(dest_path)
 
                 if self._check_existing_file(dest_path, media_file):
+                    self.dedup.add(reservation_key)
                     return True
 
                 part_path = self._part_path(dest_path)
@@ -868,6 +880,7 @@ class FourChanScraper:
                 try:
                     media_file.hash = media_file.calculate_hash(dest_path)
                     self.dedup.add(media_file.hash)
+                    self.dedup.add(reservation_key)
                 except OSError as e:
                     logger.warning(
                         f"Could not calculate hash for {media_file.filename}: {e}"
@@ -879,12 +892,14 @@ class FourChanScraper:
 
             except _DOWNLOAD_ERRORS as e:
                 if not self._handle_download_retry(media_file, attempt, e):
+                    self.dedup.release(reservation_key)
                     if part_path is not None:
                         part_path.unlink(missing_ok=True)
                     if dest_path is not None:
                         self._restore_oversized_backup(dest_path)
                     return False
 
+        self.dedup.release(reservation_key)
         self.download_queue.fail_download(
             media_file.url, DownloadError("Max retries exceeded")
         )

@@ -1,9 +1,9 @@
-name: Release
+# Disabled automated release: GitHub-hosted runners cannot access private razorcore
+# packaging scripts, and workspace policy requires local human UAT prior to publishing.
+# Releases are built locally via `razorbuild 4Charm` and published via `razorapps ship`.
+name: Release (Manual Only)
 
 on:
-  push:
-    tags:
-      - "v*"
   workflow_dispatch:
 
 permissions:

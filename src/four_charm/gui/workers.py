@@ -132,6 +132,9 @@ class _BaseDownloadWorker(QObject):
             for future in as_completed(future_to_file):
                 if self.scraper.cancelled:
                     self.log_message.emit("🛑 Download cancelled")
+                    for pending_future in future_to_file:
+                        pending_future.cancel()
+                    executor.shutdown(wait=False, cancel_futures=True)
                     break
 
                 media_file, thread_title, thread_index = future_to_file[future]

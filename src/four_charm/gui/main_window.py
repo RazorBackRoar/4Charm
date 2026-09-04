@@ -1127,14 +1127,13 @@ class MainWindow(QMainWindow):
             logger.info("Cancelling active downloads")
             self.cancel_download()
 
-        # Wait for thread to finish (with timeout)
+        # Wait for thread to finish gracefully (with timeout)
         if self.download_thread:
             logger.info("Waiting for download thread to finish")
             self.download_thread.quit()
             if not self.download_thread.wait(3000):  # 3 second timeout
-                logger.warning("Thread did not finish gracefully, terminating")
-                self.download_thread.terminate()
-                self.download_thread.wait(1000)  # Final wait for termination
+                logger.warning("Download thread still shutting down, waiting up to 2s more")
+                self.download_thread.wait(2000)
 
         # Force garbage collection
         import gc

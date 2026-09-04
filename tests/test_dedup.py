@@ -36,3 +36,21 @@ def test_check_and_register_is_thread_safe() -> None:
         thread.join()
 
     assert seen_duplicates
+
+
+def test_reserve_prevents_duplicate_in_flight_and_release_allows_retry() -> None:
+    tracker = DedupTracker()
+
+    assert tracker.reserve("item-1") is True
+    # Second concurrent reservation fails
+    assert tracker.reserve("item-1") is False
+
+    # Once added, reserve still fails (already known)
+    tracker.add("item-1")
+    assert tracker.reserve("item-1") is False
+
+    # A failed attempt released allows re-reservation
+    assert tracker.reserve("item-2") is True
+    assert tracker.reserve("item-2") is False
+    tracker.release("item-2")
+    assert tracker.reserve("item-2") is True

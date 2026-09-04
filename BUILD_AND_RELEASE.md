@@ -61,12 +61,9 @@ RazorBackRoar apps.
 
 1. Ensure `main` is green (CI) and the working tree is clean.
 2. Confirm the version in `pyproject.toml` matches the intended release.
-3. Build the DMG (`razorbuild 4Charm`), or push a `vX.Y.Z` tag to run
-   `.github/workflows/release.yml` on `macos-15`.
-4. Smoke-test the `.app` (launch, core happy path, quit cleanly).
-5. Create a GitHub Release on
-   [RazorBackRoar/4Charm/releases](https://github.com/RazorBackRoar/4Charm/releases)
-   and attach `dist/4Charm.dmg` (the tag workflow does this automatically).
+3. Build the DMG locally: `razorbuild 4Charm`.
+4. Smoke-test the packaged DMG (launch, permissions, download test, quit cleanly).
+5. Publish the GitHub Release via `razorapps ship` (or `gh release create`).
 6. Tag the release to match the version (for example `vX.Y.Z`).
 
 ## Versioning Expectations
